@@ -1,0 +1,16 @@
+{
+  "name": "my-electron-app",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run server\" \"npm run client\" \"npm run electron\"",
+    "server": "node server/server.js",
+    "client": "cd client && npm run dev",
+    "electron": "wait-on http://localhost:5173 && electron electron/main.js",
+    "build": "cd client && npm run build && cd .. && electron-builder"
+  },
+  "devDependencies": {
+    "concurrently": "^9.0.0",
+    "wait-on": "^7.0.1",
+    "electron": "^32.0.0"
+  }
+}
