@@ -47,6 +47,11 @@ const Sidebar = () => {
           { label: 'Accessories', to: '/inventory/accessories', icon: MdHeadphones },
         ]} />
 
+        <SidebarItem label="Update Stock" icon={MdInventory2} childrenItems={[
+          { label: 'Mobiles', to: '/stock/mobiles', icon: MdSmartphone },
+          { label: 'Accessories', to: '/stock/accessories', icon: MdHeadphones },
+        ]} />
+
         <SidebarItem label="Services" icon={MdBuild} childrenItems={[
           { label: 'Service Requests', to: '/services/requests' },
           { label: 'Service History', to: '/services/history' },

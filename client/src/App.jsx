@@ -24,6 +24,8 @@ import ProfitReport from './pages/Reports/ProfitReport'
 import Settings from './pages/Settings/Settings'
 import Profile from './pages/Settings/Profile'
 import BackupRestore from './pages/Settings/BackupRestore'
+import MobilesStock from './pages/Stock/MobilesStock'
+import AccessoriesStock from './pages/Stock/AccessoriesStock'
 
 const RequireAuth = ({ children }) => {
   const { auth } = useAuth()
@@ -75,6 +77,9 @@ const AppShell = () => {
                 <Route path="/settings" element={<RequireAuth><Settings /></RequireAuth>} />
                 <Route path="/settings/profile" element={<RequireAuth><Profile /></RequireAuth>} />
                 <Route path="/settings/backup-restore" element={<RequireAuth><BackupRestore /></RequireAuth>} />
+
+                <Route path="/stock/mobiles" element={<RequireAuth><MobilesStock /></RequireAuth>} />
+                <Route path="/stock/accessories" element={<RequireAuth><AccessoriesStock /></RequireAuth>} />
 
                 <Route path="*" element={<div className="p-4">Not Found</div>} />
               </Routes>

@@ -1,17 +1,20 @@
 import React, { useState, useEffect } from 'react'
 import { FiPlus, FiTrash2, FiSave } from 'react-icons/fi'
 
-const generatePurchaseId = () => `PUR-${Date.now().toString().slice(-6)}`
-const generateInvoiceNumber = () => `INV-${Date.now().toString().slice(-8)}`
-const storageKey = 'mobilebill:purchases'
-const dealersStorageKey = 'mobilebill:dealers'
-const inventoryStorageKey = 'mobilebill:inventory'
+const apiBase = ''
+const generateInvoiceNumber = () => {
+  const now = new Date()
+  const yy = String(now.getFullYear()).slice(-2)
+  const mm = String(now.getMonth() + 1).padStart(2, '0')
+  const dd = String(now.getDate()).padStart(2, '0')
+  const ms = String(now.getTime()).slice(-5)
+  return `INV-${yy}${mm}${dd}-${ms}`
+}
 
 const AddPurchase = () => {
   const [dealers, setDealers] = useState([])
   const [products, setProducts] = useState([])
   const [form, setForm] = useState({
-    id: generatePurchaseId(),
     dealerId: '',
     purchaseDate: new Date().toISOString().split('T')[0],
     invoiceNumber: generateInvoiceNumber(),
@@ -35,65 +38,25 @@ const AddPurchase = () => {
   })
 
   useEffect(() => {
-    // Load dealers
-    try {
-      const savedDealers = JSON.parse(localStorage.getItem(dealersStorageKey) || '[]')
-      if (savedDealers.length === 0) {
-        // Add dummy dealers if none exist
-        const dummyDealers = [
-          {
-            id: 'DLR-001',
-            name: 'Mobile World',
-            phone: '+91 98765 43210',
-            address: '123 Main Street, Mumbai',
-            email: 'contact@mobileworld.com',
-            gst: '27ABCDE1234F1Z5',
-            notes: 'Primary mobile dealer'
-          },
-          {
-            id: 'DLR-002',
-            name: 'Tech Accessories Hub',
-            phone: '+91 98765 43211',
-            address: '456 Tech Park, Delhi',
-            email: 'sales@techhub.com',
-            gst: '07FGHIJ5678K2L6',
-            notes: 'Accessories specialist'
-          },
-          {
-            id: 'DLR-003',
-            name: 'Gadget Zone',
-            phone: '+91 98765 43212',
-            address: '789 Electronics Market, Bangalore',
-            email: 'info@gadgetzone.com',
-            gst: '29MNOPQ9012R3S7',
-            notes: 'Service items and repairs'
-          }
-        ]
-        localStorage.setItem(dealersStorageKey, JSON.stringify(dummyDealers))
-        setDealers(dummyDealers)
-      } else {
-        setDealers(Array.isArray(savedDealers) ? savedDealers : [])
+    const load = async () => {
+      try {
+        const res = await fetch(`${apiBase}/api/dealers`)
+        const data = await res.json()
+        setDealers(Array.isArray(data) ? data : [])
+      } catch {
+        setDealers([])
       }
-    } catch {
-      setDealers([])
     }
-
-    // Load existing products for dropdown
-    try {
-      const savedProducts = JSON.parse(localStorage.getItem(inventoryStorageKey) || '[]')
-      setProducts(Array.isArray(savedProducts) ? savedProducts : [])
-    } catch {
-      setProducts([])
-    }
+    load()
   }, [])
 
   const calculateItemTotal = (item) => {
     return item.quantity * item.purchasePrice
   }
 
-  const calculateTotals = (items) => {
+  const calculateTotals = (items, gstEnabled, gstPercentage) => {
     const totalAmount = items.reduce((sum, item) => sum + calculateItemTotal(item), 0)
-    const gstAmount = form.gstEnabled ? (totalAmount * form.gstPercentage) / 100 : 0
+    const gstAmount = gstEnabled ? (totalAmount * (parseFloat(gstPercentage) || 0)) / 100 : 0
     const grandTotal = totalAmount + gstAmount
 
     setForm(prev => ({
@@ -118,7 +81,7 @@ const AddPurchase = () => {
 
     const updatedItems = [...form.items, item]
     setForm(prev => ({ ...prev, items: updatedItems }))
-    calculateTotals(updatedItems)
+    calculateTotals(updatedItems, form.gstEnabled, form.gstPercentage)
 
     // Reset new item form
     setNewItem({
@@ -135,10 +98,17 @@ const AddPurchase = () => {
   const removeItem = (index) => {
     const updatedItems = form.items.filter((_, i) => i !== index)
     setForm(prev => ({ ...prev, items: updatedItems }))
-    calculateTotals(updatedItems)
+    calculateTotals(updatedItems, form.gstEnabled, form.gstPercentage)
   }
 
-  const savePurchase = () => {
+  useEffect(() => {
+    // Recalculate totals when GST toggle or percentage changes
+    calculateTotals(form.items, form.gstEnabled, form.gstPercentage)
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [form.gstEnabled, form.gstPercentage])
+
+
+  const savePurchase = async () => {
     if (!form.dealerId) {
       alert('Please select a dealer')
       return
@@ -150,24 +120,17 @@ const AddPurchase = () => {
     }
 
     try {
-      const savedPurchases = JSON.parse(localStorage.getItem(storageKey) || '[]')
-      const newPurchase = {
-        ...form,
-        id: generatePurchaseId(),
-        createdAt: new Date().toISOString()
+      const res = await fetch(`${apiBase}/api/purchases`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      })
+      if (!res.ok) {
+        const msg = await res.json().catch(() => ({}))
+        throw new Error(msg.error || 'Failed to save purchase')
       }
-
-      const updatedPurchases = [...savedPurchases, newPurchase]
-      localStorage.setItem(storageKey, JSON.stringify(updatedPurchases))
-
-      // Update inventory
-      updateInventory(newPurchase.items)
-
       alert('Purchase saved successfully!')
-      
-      // Reset form
       setForm({
-        id: generatePurchaseId(),
         dealerId: '',
         purchaseDate: new Date().toISOString().split('T')[0],
         invoiceNumber: generateInvoiceNumber(),
@@ -184,42 +147,7 @@ const AddPurchase = () => {
     }
   }
 
-  const updateInventory = (items) => {
-    try {
-      const existingInventory = JSON.parse(localStorage.getItem(inventoryStorageKey) || '[]')
-      
-      items.forEach(item => {
-        const existingProductIndex = existingInventory.findIndex(
-          p => p.productName === item.productName && p.model === item.model
-        )
-
-        if (existingProductIndex >= 0) {
-          // Update existing product stock
-          existingInventory[existingProductIndex].stock += item.quantity
-          existingInventory[existingProductIndex].purchasePrice = item.purchasePrice
-          if (item.sellingPrice > 0) {
-            existingInventory[existingProductIndex].sellingPrice = item.sellingPrice
-          }
-        } else {
-          // Add new product to inventory
-          existingInventory.push({
-            id: `PROD-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
-            category: item.category,
-            productName: item.productName,
-            model: item.model,
-            stock: item.quantity,
-            purchasePrice: item.purchasePrice,
-            sellingPrice: item.sellingPrice || 0,
-            createdAt: new Date().toISOString()
-          })
-        }
-      })
-
-      localStorage.setItem(inventoryStorageKey, JSON.stringify(existingInventory))
-    } catch (error) {
-      console.error('Error updating inventory:', error)
-    }
-  }
+  const updateInventory = () => {}
 
   const selectedDealer = dealers.find(d => d.id === form.dealerId)
 
@@ -269,7 +197,7 @@ const AddPurchase = () => {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Invoice Number</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Invoice Number (auto)</label>
                 <input
                   type="text"
                   value={form.invoiceNumber}
@@ -367,10 +295,18 @@ const AddPurchase = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Quantity *</label>
                 <input
                   type="number"
-                  value={newItem.quantity}
-                  onChange={(e) => setNewItem({ ...newItem, quantity: parseInt(e.target.value) || 0 })}
+                  inputMode="numeric"
+                  pattern="\\d*"
+                  value={newItem.quantity || ''}
+                  onChange={(e) => {
+                    const digits = String(e.target.value || '').replace(/\D/g, '')
+                    const cleaned = digits.replace(/^0+/, '')
+                    const next = cleaned ? parseInt(cleaned, 10) : 0
+                    setNewItem({ ...newItem, quantity: next })
+                  }}
                   className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
                   min="1"
+                  placeholder="e.g., 1"
                 />
               </div>
 
@@ -378,11 +314,16 @@ const AddPurchase = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Purchase Price *</label>
                 <input
                   type="number"
-                  value={newItem.purchasePrice}
-                  onChange={(e) => setNewItem({ ...newItem, purchasePrice: parseFloat(e.target.value) || 0 })}
+                  inputMode="decimal"
+                  value={newItem.purchasePrice || ''}
+                  onChange={(e) => {
+                    const cleaned = String(e.target.value || '').replace(/^0+(?=\d)/, '')
+                    setNewItem({ ...newItem, purchasePrice: parseFloat(cleaned) || 0 })
+                  }}
                   className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
-                  min="0"
+                  min="0.01"
                   step="0.01"
+                  placeholder="e.g., 1500"
                 />
               </div>
 
@@ -390,11 +331,16 @@ const AddPurchase = () => {
                 <label className="block text-sm font-medium text-slate-700 mb-1">Selling Price</label>
                 <input
                   type="number"
-                  value={newItem.sellingPrice}
-                  onChange={(e) => setNewItem({ ...newItem, sellingPrice: parseFloat(e.target.value) || 0 })}
+                  inputMode="decimal"
+                  value={newItem.sellingPrice || ''}
+                  onChange={(e) => {
+                    const cleaned = String(e.target.value || '').replace(/^0+(?=\d)/, '')
+                    setNewItem({ ...newItem, sellingPrice: parseFloat(cleaned) || 0 })
+                  }}
                   className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
-                  min="0"
+                  min="0.01"
                   step="0.01"
+                  placeholder="e.g., 1999.99"
                 />
               </div>
 

@@ -219,10 +219,7 @@ const TransferHistory = () => {
     }
   }
 
-  const getStoreName = (storeId) => {
-    const store = stores.find(s => s.id === storeId)
-    return store ? store.name : 'Unknown'
-  }
+  const getStoreName = (storeText) => storeText || 'Unknown'
 
   const exportToPDF = () => {
     const doc = new jsPDF()
@@ -530,7 +527,6 @@ const TransferHistory = () => {
                 <th className="py-3 px-4">Total</th>
                 <th className="py-3 px-4">Payment Mode</th>
                 <th className="py-3 px-4">Date</th>
-                <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4">Actions</th>
               </tr>
             </thead>
@@ -560,11 +556,6 @@ const TransferHistory = () => {
                       </td>
                       <td className="py-3 px-4">{transfer.transferDetails.transferDate}</td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 text-xs rounded-full ${getStatusColor(transfer.status)}`}>
-                          {transfer.status}
-                        </span>
-                      </td>
-                      <td className="py-3 px-4">
                         <div className="flex gap-2">
                           <button
                             onClick={() => viewTransferDetails(transfer)}
@@ -580,16 +571,20 @@ const TransferHistory = () => {
                           >
                             <FiPrinter className="w-4 h-4" />
                           </button>
-                          <select
-                            value={transfer.status}
-                            onChange={(e) => updateTransferStatus(transfer.id, e.target.value)}
-                            className="text-xs border border-slate-300 rounded px-1 py-1"
-                            onClick={(e) => e.stopPropagation()}
+                          <button
+                            onClick={() => {/* Implement edit modal trigger */}}
+                            className="text-slate-700 hover:text-slate-900"
+                            title="Edit"
                           >
-                            <option value="Completed">Completed</option>
-                            <option value="Pending">Pending</option>
-                            <option value="Cancelled">Cancelled</option>
-                          </select>
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => {/* Implement delete via backend */}}
+                            className="text-red-600 hover:text-red-800"
+                            title="Delete"
+                          >
+                            Delete
+                          </button>
                         </div>
                       </td>
                     </tr>
