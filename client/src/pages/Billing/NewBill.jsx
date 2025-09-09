@@ -2,6 +2,8 @@ import React, { useMemo, useState, useRef } from 'react'
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 
+const apiBase = (typeof window !== 'undefined' && window?.process?.versions?.electron) ? 'http://localhost:5000' : ''
+
 const emptyItem = () => ({ name: '', imei: '', quantity: 1, price: 0, gstPercent: 18, discountType: 'percent', discountValue: 0 })
 
 const NewBill = () => {
@@ -274,7 +276,14 @@ const NewBill = () => {
           <div className="mt-4 flex gap-2">
             <button onClick={printInvoice} className="px-3 py-2 rounded-md bg-slate-900 text-white hover:bg-slate-800">Print</button>
             <button onClick={exportPdf} className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50">Export PDF</button>
-            <button className="px-3 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-500">Checkout & Save</button>
+            <button onClick={async ()=>{
+              try {
+                const payload = { items: items.map(it=>({ name: it.name, model: it.model, imei: it.imei, productId: it.productId, quantity: Number(it.quantity)||0 })) }
+                const res = await fetch(`${apiBase}/api/sale`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+                if(!res.ok){ const m = await res.json().catch(()=>({})); throw new Error(m.error||'Failed to save') }
+                alert('Sale recorded and stock updated')
+              } catch(ex){ alert(ex.message) }
+            }} className="px-3 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-500">Checkout & Save</button>
           </div>
         </div>
       </div>

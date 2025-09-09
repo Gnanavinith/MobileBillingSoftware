@@ -1,6 +1,8 @@
 const express = require('express')
 const router = express.Router()
 const ctrl = require('../controllers/stockController')
+const StoreStock = require('../models/StoreStock')
+const saleCtrl = require('../controllers/saleController')
 
 // Mobiles
 router.post('/mobiles', ctrl.createMobile)
@@ -15,5 +17,22 @@ router.put('/accessories/:id', ctrl.updateAccessory)
 router.delete('/accessories/:id', ctrl.deleteAccessory)
 
 module.exports = router
+
+// Extra endpoint: per-store stock query
+router.get('/store-stock', async (req, res) => {
+  try {
+    const { storeId, productId } = req.query
+    const q = {}
+    if (storeId) q.storeId = storeId
+    if (productId) q.productId = productId
+    const rows = await StoreStock.find(q).lean()
+    res.json(rows)
+  } catch (err) {
+    res.status(500).json({ error: 'Internal Server Error', details: String(err?.message || err) })
+  }
+})
+
+// Record a sale and reduce stock by IMEI or product
+router.post('/sale', saleCtrl.createSale)
 
 
