@@ -1,0 +1,731 @@
+import React, { useState, useEffect, useMemo } from 'react'
+import { FiFilter, FiDownload, FiEye, FiSearch } from 'react-icons/fi'
+import { jsPDF } from 'jspdf'
+import 'jspdf-autotable'
+
+const storageKey = 'mobilebill:purchases'
+const dealersStorageKey = 'mobilebill:dealers'
+const inventoryStorageKey = 'mobilebill:inventory'
+const salesStorageKey = 'mobilebill:sales'
+
+const PurchaseHistory = () => {
+  const [purchases, setPurchases] = useState([])
+  const [dealers, setDealers] = useState([])
+  const [inventory, setInventory] = useState([])
+  const [sales, setSales] = useState([])
+  const [filters, setFilters] = useState({
+    dealerId: '',
+    dateFrom: '',
+    dateTo: '',
+    category: '',
+    search: ''
+  })
+  const [selectedPurchase, setSelectedPurchase] = useState(null)
+  const [showModal, setShowModal] = useState(false)
+
+  useEffect(() => {
+    loadData()
+  }, [])
+
+  const loadData = () => {
+    try {
+      const savedPurchases = JSON.parse(localStorage.getItem(storageKey) || '[]')
+      if (savedPurchases.length === 0) {
+        // Add dummy purchase data if none exist
+        const dummyPurchases = [
+          {
+            id: 'PUR-001',
+            dealerId: 'DLR-001',
+            purchaseDate: '2024-01-15',
+            invoiceNumber: 'INV-2024-001',
+            paymentMode: 'UPI',
+            gstEnabled: true,
+            gstPercentage: 18,
+            totalAmount: 15000,
+            gstAmount: 2700,
+            grandTotal: 17700,
+            items: [
+              {
+                category: 'Accessories',
+                productName: 'Ear Buds',
+                model: 'OnePlus Buds Z2',
+                quantity: 20,
+                purchasePrice: 750,
+                sellingPrice: 1200,
+                totalPrice: 15000
+              }
+            ],
+            createdAt: '2024-01-15T10:30:00Z'
+          },
+          {
+            id: 'PUR-002',
+            dealerId: 'DLR-001',
+            purchaseDate: '2024-01-20',
+            invoiceNumber: 'INV-2024-002',
+            paymentMode: 'Bank',
+            gstEnabled: true,
+            gstPercentage: 18,
+            totalAmount: 19000,
+            gstAmount: 3420,
+            grandTotal: 22420,
+            items: [
+              {
+                category: 'Accessories',
+                productName: 'Mobile Cover',
+                model: 'Redmi Note 12 Pro',
+                quantity: 19,
+                purchasePrice: 1000,
+                sellingPrice: 1500,
+                totalPrice: 19000
+              }
+            ],
+            createdAt: '2024-01-20T14:15:00Z'
+          },
+          {
+            id: 'PUR-003',
+            dealerId: 'DLR-002',
+            purchaseDate: '2024-01-25',
+            invoiceNumber: 'INV-2024-003',
+            paymentMode: 'Cash',
+            gstEnabled: false,
+            gstPercentage: 0,
+            totalAmount: 10000,
+            gstAmount: 0,
+            grandTotal: 10000,
+            items: [
+              {
+                category: 'Accessories',
+                productName: 'Charger',
+                model: 'Samsung Fast Charger',
+                quantity: 10,
+                purchasePrice: 1000,
+                sellingPrice: 1500,
+                totalPrice: 10000
+              }
+            ],
+            createdAt: '2024-01-25T09:45:00Z'
+          },
+          {
+            id: 'PUR-004',
+            dealerId: 'DLR-003',
+            purchaseDate: '2024-02-01',
+            invoiceNumber: 'INV-2024-004',
+            paymentMode: 'UPI',
+            gstEnabled: true,
+            gstPercentage: 18,
+            totalAmount: 25000,
+            gstAmount: 4500,
+            grandTotal: 29500,
+            items: [
+              {
+                category: 'Mobile',
+                productName: 'Smartphone',
+                model: 'Samsung Galaxy A54',
+                quantity: 5,
+                purchasePrice: 5000,
+                sellingPrice: 6500,
+                totalPrice: 25000
+              }
+            ],
+            createdAt: '2024-02-01T11:20:00Z'
+          },
+          {
+            id: 'PUR-005',
+            dealerId: 'DLR-002',
+            purchaseDate: '2024-02-05',
+            invoiceNumber: 'INV-2024-005',
+            paymentMode: 'Bank',
+            gstEnabled: true,
+            gstPercentage: 18,
+            totalAmount: 12000,
+            gstAmount: 2160,
+            grandTotal: 14160,
+            items: [
+              {
+                category: 'Service Item',
+                productName: 'Screen Protector',
+                model: 'Tempered Glass Universal',
+                quantity: 50,
+                purchasePrice: 240,
+                sellingPrice: 400,
+                totalPrice: 12000
+              }
+            ],
+            createdAt: '2024-02-05T16:30:00Z'
+          }
+        ]
+        localStorage.setItem(storageKey, JSON.stringify(dummyPurchases))
+        setPurchases(dummyPurchases)
+      } else {
+        setPurchases(Array.isArray(savedPurchases) ? savedPurchases : [])
+      }
+
+      const savedDealers = JSON.parse(localStorage.getItem(dealersStorageKey) || '[]')
+      if (savedDealers.length === 0) {
+        // Add dummy dealers if none exist
+        const dummyDealers = [
+          {
+            id: 'DLR-001',
+            name: 'Mobile World',
+            phone: '+91 98765 43210',
+            address: '123 Main Street, Mumbai',
+            email: 'contact@mobileworld.com',
+            gst: '27ABCDE1234F1Z5',
+            notes: 'Primary mobile dealer'
+          },
+          {
+            id: 'DLR-002',
+            name: 'Tech Accessories Hub',
+            phone: '+91 98765 43211',
+            address: '456 Tech Park, Delhi',
+            email: 'sales@techhub.com',
+            gst: '07FGHIJ5678K2L6',
+            notes: 'Accessories specialist'
+          },
+          {
+            id: 'DLR-003',
+            name: 'Gadget Zone',
+            phone: '+91 98765 43212',
+            address: '789 Electronics Market, Bangalore',
+            email: 'info@gadgetzone.com',
+            gst: '29MNOPQ9012R3S7',
+            notes: 'Service items and repairs'
+          }
+        ]
+        localStorage.setItem(dealersStorageKey, JSON.stringify(dummyDealers))
+        setDealers(dummyDealers)
+      } else {
+        setDealers(Array.isArray(savedDealers) ? savedDealers : [])
+      }
+
+      const savedInventory = JSON.parse(localStorage.getItem(inventoryStorageKey) || '[]')
+      if (savedInventory.length === 0) {
+        // Add dummy inventory data
+        const dummyInventory = [
+          {
+            id: 'PROD-001',
+            category: 'Accessories',
+            productName: 'Ear Buds',
+            model: 'OnePlus Buds Z2',
+            stock: 20,
+            purchasePrice: 750,
+            sellingPrice: 1200,
+            createdAt: '2024-01-15T10:30:00Z'
+          },
+          {
+            id: 'PROD-002',
+            category: 'Accessories',
+            productName: 'Mobile Cover',
+            model: 'Redmi Note 12 Pro',
+            stock: 19,
+            purchasePrice: 1000,
+            sellingPrice: 1500,
+            createdAt: '2024-01-20T14:15:00Z'
+          },
+          {
+            id: 'PROD-003',
+            category: 'Accessories',
+            productName: 'Charger',
+            model: 'Samsung Fast Charger',
+            stock: 10,
+            purchasePrice: 1000,
+            sellingPrice: 1500,
+            createdAt: '2024-01-25T09:45:00Z'
+          },
+          {
+            id: 'PROD-004',
+            category: 'Mobile',
+            productName: 'Smartphone',
+            model: 'Samsung Galaxy A54',
+            stock: 5,
+            purchasePrice: 5000,
+            sellingPrice: 6500,
+            createdAt: '2024-02-01T11:20:00Z'
+          },
+          {
+            id: 'PROD-005',
+            category: 'Service Item',
+            productName: 'Screen Protector',
+            model: 'Tempered Glass Universal',
+            stock: 50,
+            purchasePrice: 240,
+            sellingPrice: 400,
+            createdAt: '2024-02-05T16:30:00Z'
+          }
+        ]
+        localStorage.setItem(inventoryStorageKey, JSON.stringify(dummyInventory))
+        setInventory(dummyInventory)
+      } else {
+        setInventory(Array.isArray(savedInventory) ? savedInventory : [])
+      }
+
+      const savedSales = JSON.parse(localStorage.getItem(salesStorageKey) || '[]')
+      if (savedSales.length === 0) {
+        // Add dummy sales data to show stock reduction
+        const dummySales = [
+          {
+            id: 'SALE-001',
+            items: [
+              {
+                productName: 'Ear Buds',
+                model: 'OnePlus Buds Z2',
+                quantity: 5
+              }
+            ],
+            createdAt: '2024-01-18T10:30:00Z'
+          },
+          {
+            id: 'SALE-002',
+            items: [
+              {
+                productName: 'Mobile Cover',
+                model: 'Redmi Note 12 Pro',
+                quantity: 7
+              }
+            ],
+            createdAt: '2024-01-22T14:15:00Z'
+          }
+        ]
+        localStorage.setItem(salesStorageKey, JSON.stringify(dummySales))
+        setSales(dummySales)
+      } else {
+        setSales(Array.isArray(savedSales) ? savedSales : [])
+      }
+    } catch (error) {
+      console.error('Error loading data:', error)
+    }
+  }
+
+  const calculateRemainingStock = (productName, model) => {
+    // Get total purchased quantity
+    const totalPurchased = purchases.reduce((sum, purchase) => {
+      return sum + purchase.items.reduce((itemSum, item) => {
+        if (item.productName === productName && item.model === model) {
+          return itemSum + item.quantity
+        }
+        return itemSum
+      }, 0)
+    }, 0)
+
+    // Get total sold/used quantity (this would need to be implemented based on sales/service data)
+    const totalSold = sales.reduce((sum, sale) => {
+      return sum + (sale.items || []).reduce((itemSum, item) => {
+        if (item.productName === productName && item.model === model) {
+          return itemSum + item.quantity
+        }
+        return itemSum
+      }, 0)
+    }, 0)
+
+    return totalPurchased - totalSold
+  }
+
+  const filteredPurchases = useMemo(() => {
+    let filtered = purchases
+
+    if (filters.dealerId) {
+      filtered = filtered.filter(p => p.dealerId === filters.dealerId)
+    }
+
+    if (filters.dateFrom) {
+      filtered = filtered.filter(p => p.purchaseDate >= filters.dateFrom)
+    }
+
+    if (filters.dateTo) {
+      filtered = filtered.filter(p => p.purchaseDate <= filters.dateTo)
+    }
+
+    if (filters.category) {
+      filtered = filtered.filter(p => 
+        p.items.some(item => item.category === filters.category)
+      )
+    }
+
+    if (filters.search) {
+      const searchLower = filters.search.toLowerCase()
+      filtered = filtered.filter(p => 
+        p.invoiceNumber.toLowerCase().includes(searchLower) ||
+        p.items.some(item => 
+          item.productName.toLowerCase().includes(searchLower) ||
+          item.model.toLowerCase().includes(searchLower)
+        )
+      )
+    }
+
+    return filtered.sort((a, b) => new Date(b.purchaseDate) - new Date(a.purchaseDate))
+  }, [purchases, filters])
+
+  const exportToPDF = () => {
+    const doc = new jsPDF()
+    
+    // Title
+    doc.setFontSize(20)
+    doc.text('Purchase History Report', 14, 22)
+    
+    // Date range
+    doc.setFontSize(10)
+    const dateRange = filters.dateFrom && filters.dateTo 
+      ? `${filters.dateFrom} to ${filters.dateTo}`
+      : 'All Time'
+    doc.text(`Date Range: ${dateRange}`, 14, 30)
+    
+    // Dealer filter
+    if (filters.dealerId) {
+      const dealer = dealers.find(d => d.id === filters.dealerId)
+      doc.text(`Dealer: ${dealer ? dealer.name : 'Unknown'}`, 14, 35)
+    }
+
+    // Table data
+    const tableData = []
+    filteredPurchases.forEach(purchase => {
+      const dealer = dealers.find(d => d.id === purchase.dealerId)
+      purchase.items.forEach(item => {
+        tableData.push([
+          dealer ? dealer.name : 'Unknown',
+          item.productName,
+          item.model,
+          item.category,
+          item.quantity,
+          calculateRemainingStock(item.productName, item.model),
+          `₹${item.purchasePrice.toFixed(2)}`,
+          `₹${item.sellingPrice.toFixed(2)}`,
+          `₹${item.totalPrice.toFixed(2)}`,
+          purchase.paymentMode,
+          purchase.purchaseDate,
+          purchase.invoiceNumber
+        ])
+      })
+    })
+
+    // Table headers
+    const headers = [
+      'Dealer', 'Product', 'Model', 'Category', 'Qty Purchased', 
+      'Remaining Stock', 'Purchase Price', 'Selling Price', 'Total', 
+      'Payment Mode', 'Date', 'Invoice'
+    ]
+
+    // Generate table
+    doc.autoTable({
+      head: [headers],
+      body: tableData,
+      startY: 40,
+      styles: { fontSize: 8 },
+      headStyles: { fillColor: [71, 85, 105] }
+    })
+
+    // Save the PDF
+    doc.save('purchase-history.pdf')
+  }
+
+  const exportToExcel = () => {
+    // Create CSV content
+    const headers = [
+      'Dealer', 'Product', 'Model', 'Category', 'Qty Purchased', 
+      'Remaining Stock', 'Purchase Price', 'Selling Price', 'Total', 
+      'Payment Mode', 'Date', 'Invoice', 'GST Applied', 'GST Amount', 'Grand Total'
+    ]
+    
+    const csvContent = [
+      headers.join(','),
+      ...filteredPurchases.map(purchase => {
+        const dealer = dealers.find(d => d.id === purchase.dealerId)
+        return purchase.items.map(item => [
+          `"${dealer ? dealer.name : 'Unknown'}"`,
+          `"${item.productName}"`,
+          `"${item.model}"`,
+          `"${item.category}"`,
+          item.quantity,
+          calculateRemainingStock(item.productName, item.model),
+          item.purchasePrice.toFixed(2),
+          item.sellingPrice.toFixed(2),
+          item.totalPrice.toFixed(2),
+          `"${purchase.paymentMode}"`,
+          purchase.purchaseDate,
+          `"${purchase.invoiceNumber}"`,
+          purchase.gstEnabled ? 'Yes' : 'No',
+          purchase.gstAmount.toFixed(2),
+          purchase.grandTotal.toFixed(2)
+        ].join(','))
+      }).flat()
+    ].join('\n')
+
+    // Download CSV
+    const blob = new Blob([csvContent], { type: 'text/csv' })
+    const url = window.URL.createObjectURL(blob)
+    const a = document.createElement('a')
+    a.href = url
+    a.download = 'purchase-history.csv'
+    a.click()
+    window.URL.revokeObjectURL(url)
+  }
+
+  const viewPurchaseDetails = (purchase) => {
+    setSelectedPurchase(purchase)
+    setShowModal(true)
+  }
+
+  const getDealerName = (dealerId) => {
+    const dealer = dealers.find(d => d.id === dealerId)
+    return dealer ? dealer.name : 'Unknown'
+  }
+
+  return (
+    <div className="p-4">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-semibold">Purchase History</h1>
+        <div className="flex gap-2">
+          <button
+            onClick={exportToPDF}
+            className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+          >
+            <FiDownload className="w-4 h-4" />
+            <span>Export PDF</span>
+          </button>
+          <button
+            onClick={exportToExcel}
+            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+          >
+            <FiDownload className="w-4 h-4" />
+            <span>Export Excel</span>
+          </button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm mb-6">
+        <div className="flex items-center space-x-2 mb-4">
+          <FiFilter className="w-4 h-4" />
+          <h2 className="text-lg font-semibold">Filters</h2>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Dealer</label>
+            <select
+              value={filters.dealerId}
+              onChange={(e) => setFilters({ ...filters, dealerId: e.target.value })}
+              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+            >
+              <option value="">All Dealers</option>
+              {dealers.map(dealer => (
+                <option key={dealer.id} value={dealer.id}>
+                  {dealer.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Date From</label>
+            <input
+              type="date"
+              value={filters.dateFrom}
+              onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
+              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Date To</label>
+            <input
+              type="date"
+              value={filters.dateTo}
+              onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
+              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Category</label>
+            <select
+              value={filters.category}
+              onChange={(e) => setFilters({ ...filters, category: e.target.value })}
+              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+            >
+              <option value="">All Categories</option>
+              <option value="Mobile">Mobile</option>
+              <option value="Accessories">Accessories</option>
+              <option value="Service Item">Service Item</option>
+              <option value="Other">Other</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Search</label>
+            <div className="relative">
+              <input
+                type="text"
+                value={filters.search}
+                onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+                placeholder="Product, model, invoice..."
+                className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 pl-8"
+              />
+              <FiSearch className="absolute left-2 top-2.5 w-4 h-4 text-slate-400" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Purchase History Table */}
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div className="p-4 border-b border-slate-200">
+          <h2 className="text-lg font-semibold">
+            Purchase Records ({filteredPurchases.length})
+          </h2>
+        </div>
+        
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-left text-slate-500 text-xs uppercase border-b">
+                <th className="py-3 px-4">Dealer</th>
+                <th className="py-3 px-4">Product</th>
+                <th className="py-3 px-4">Model</th>
+                <th className="py-3 px-4">Category</th>
+                <th className="py-3 px-4">Qty Purchased</th>
+                <th className="py-3 px-4">Remaining Stock</th>
+                <th className="py-3 px-4">Purchase Price</th>
+                <th className="py-3 px-4">Selling Price</th>
+                <th className="py-3 px-4">Total</th>
+                <th className="py-3 px-4">Payment Mode</th>
+                <th className="py-3 px-4">Date</th>
+                <th className="py-3 px-4">Invoice</th>
+                <th className="py-3 px-4">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {filteredPurchases.length === 0 ? (
+                <tr>
+                  <td className="py-8 px-4 text-center text-slate-500" colSpan={13}>
+                    No purchases found matching the current filters.
+                  </td>
+                </tr>
+              ) : (
+                filteredPurchases.map(purchase => 
+                  purchase.items.map((item, itemIndex) => (
+                    <tr key={`${purchase.id}-${itemIndex}`} className="border-b border-slate-100 hover:bg-slate-50">
+                      <td className="py-3 px-4">{getDealerName(purchase.dealerId)}</td>
+                      <td className="py-3 px-4">{item.productName}</td>
+                      <td className="py-3 px-4">{item.model}</td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-700">
+                          {item.category}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">{item.quantity}</td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 text-xs rounded-full ${
+                          calculateRemainingStock(item.productName, item.model) > 0 
+                            ? 'bg-green-100 text-green-700' 
+                            : 'bg-red-100 text-red-700'
+                        }`}>
+                          {calculateRemainingStock(item.productName, item.model)}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">₹{item.purchasePrice.toFixed(2)}</td>
+                      <td className="py-3 px-4">₹{item.sellingPrice.toFixed(2)}</td>
+                      <td className="py-3 px-4">₹{item.totalPrice.toFixed(2)}</td>
+                      <td className="py-3 px-4">
+                        <span className="px-2 py-1 text-xs rounded-full bg-blue-100 text-blue-700">
+                          {purchase.paymentMode}
+                        </span>
+                      </td>
+                      <td className="py-3 px-4">{purchase.purchaseDate}</td>
+                      <td className="py-3 px-4">{purchase.invoiceNumber}</td>
+                      <td className="py-3 px-4">
+                        <button
+                          onClick={() => viewPurchaseDetails(purchase)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          <FiEye className="w-4 h-4" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))
+                )
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* Purchase Details Modal */}
+      {showModal && selectedPurchase && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-semibold">Purchase Details</h2>
+              <button
+                onClick={() => setShowModal(false)}
+                className="text-slate-500 hover:text-slate-700"
+              >
+                ✕
+              </button>
+            </div>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+              <div>
+                <h3 className="font-semibold mb-2">Purchase Information</h3>
+                <div className="space-y-2 text-sm">
+                  <p><span className="font-medium">Invoice:</span> {selectedPurchase.invoiceNumber}</p>
+                  <p><span className="font-medium">Date:</span> {selectedPurchase.purchaseDate}</p>
+                  <p><span className="font-medium">Dealer:</span> {getDealerName(selectedPurchase.dealerId)}</p>
+                  <p><span className="font-medium">Payment Mode:</span> {selectedPurchase.paymentMode}</p>
+                  <p><span className="font-medium">GST Applied:</span> {selectedPurchase.gstEnabled ? 'Yes' : 'No'}</p>
+                  {selectedPurchase.gstEnabled && (
+                    <p><span className="font-medium">GST %:</span> {selectedPurchase.gstPercentage}%</p>
+                  )}
+                </div>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-2">Amount Summary</h3>
+                <div className="space-y-2 text-sm">
+                  <p><span className="font-medium">Subtotal:</span> ₹{selectedPurchase.totalAmount.toFixed(2)}</p>
+                  {selectedPurchase.gstEnabled && (
+                    <p><span className="font-medium">GST Amount:</span> ₹{selectedPurchase.gstAmount.toFixed(2)}</p>
+                  )}
+                  <p className="text-lg font-semibold"><span className="font-medium">Grand Total:</span> ₹{selectedPurchase.grandTotal.toFixed(2)}</p>
+                </div>
+              </div>
+            </div>
+
+            <div>
+              <h3 className="font-semibold mb-2">Products Purchased</h3>
+              <div className="overflow-x-auto">
+                <table className="min-w-full text-sm">
+                  <thead>
+                    <tr className="text-left text-slate-500 text-xs uppercase border-b">
+                      <th className="py-2 pr-4">Category</th>
+                      <th className="py-2 pr-4">Product</th>
+                      <th className="py-2 pr-4">Model</th>
+                      <th className="py-2 pr-4">Quantity</th>
+                      <th className="py-2 pr-4">Purchase Price</th>
+                      <th className="py-2 pr-4">Selling Price</th>
+                      <th className="py-2 pr-4">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {selectedPurchase.items.map((item, index) => (
+                      <tr key={index} className="border-b border-slate-100">
+                        <td className="py-2 pr-4">{item.category}</td>
+                        <td className="py-2 pr-4">{item.productName}</td>
+                        <td className="py-2 pr-4">{item.model}</td>
+                        <td className="py-2 pr-4">{item.quantity}</td>
+                        <td className="py-2 pr-4">₹{item.purchasePrice.toFixed(2)}</td>
+                        <td className="py-2 pr-4">₹{item.sellingPrice.toFixed(2)}</td>
+                        <td className="py-2 pr-4">₹{item.totalPrice.toFixed(2)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export default PurchaseHistory

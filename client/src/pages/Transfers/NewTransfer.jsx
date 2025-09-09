@@ -1,0 +1,594 @@
+import React, { useState, useEffect } from 'react'
+import { FiSave, FiPlus, FiTrash2, FiTruck, FiPackage } from 'react-icons/fi'
+
+const generateTransferId = () => `TRF-${Date.now().toString().slice(-6)}`
+const storageKey = 'mobilebill:transfers'
+const inventoryStorageKey = 'mobilebill:inventory'
+
+const NewTransfer = () => {
+  const [inventory, setInventory] = useState([])
+  const [form, setForm] = useState({
+    id: generateTransferId(),
+    transferDetails: {
+      fromStore: '',
+      toStore: '',
+      transferDate: new Date().toISOString().split('T')[0],
+      transferTime: new Date().toTimeString().slice(0, 5),
+      paymentMode: 'Cash',
+      remarks: ''
+    },
+    products: [],
+    totalAmount: 0
+  })
+
+  const [newProduct, setNewProduct] = useState({
+    productId: '',
+    quantity: 1,
+    unitPrice: 0,
+    totalPrice: 0
+  })
+
+  // Mock stores/persons for demonstration
+  const stores = [
+    { id: 'STORE-001', name: 'Main Store', type: 'Store' },
+    { id: 'STORE-002', name: 'Branch Store - Mumbai', type: 'Store' },
+    { id: 'STORE-003', name: 'Branch Store - Delhi', type: 'Store' },
+    { id: 'PERSON-001', name: 'John Doe (Sales Rep)', type: 'Person' },
+    { id: 'PERSON-002', name: 'Jane Smith (Field Rep)', type: 'Person' },
+    { id: 'PERSON-003', name: 'Mike Johnson (Service Tech)', type: 'Person' }
+  ]
+
+  useEffect(() => {
+    loadInventory()
+  }, [])
+
+  const loadInventory = () => {
+    try {
+      const savedInventory = JSON.parse(localStorage.getItem(inventoryStorageKey) || '[]')
+      if (savedInventory.length === 0) {
+        // Add dummy inventory data if none exist
+        const dummyInventory = [
+          {
+            id: 'PROD-001',
+            category: 'Mobile',
+            productName: 'Smartphone',
+            model: 'Samsung Galaxy A54',
+            stock: 5,
+            purchasePrice: 5000,
+            sellingPrice: 6500,
+            sku: 'SAM-A54-001',
+            createdAt: '2024-02-01T11:20:00Z'
+          },
+          {
+            id: 'PROD-002',
+            category: 'Accessories',
+            productName: 'Ear Buds',
+            model: 'OnePlus Buds Z2',
+            stock: 20,
+            purchasePrice: 750,
+            sellingPrice: 1200,
+            sku: 'OP-BUDS-002',
+            createdAt: '2024-01-15T10:30:00Z'
+          },
+          {
+            id: 'PROD-003',
+            category: 'Accessories',
+            productName: 'Mobile Cover',
+            model: 'Redmi Note 12 Pro',
+            stock: 19,
+            purchasePrice: 1000,
+            sellingPrice: 1500,
+            sku: 'RM-COVER-003',
+            createdAt: '2024-01-20T14:15:00Z'
+          },
+          {
+            id: 'PROD-004',
+            category: 'Service Item',
+            productName: 'Screen Protector',
+            model: 'Tempered Glass Universal',
+            stock: 50,
+            purchasePrice: 240,
+            sellingPrice: 400,
+            sku: 'SP-UNIV-004',
+            createdAt: '2024-02-05T16:30:00Z'
+          },
+          {
+            id: 'PROD-005',
+            category: 'Accessories',
+            productName: 'Charger',
+            model: 'Samsung Fast Charger',
+            stock: 10,
+            purchasePrice: 1000,
+            sellingPrice: 1500,
+            sku: 'SAM-CHG-005',
+            createdAt: '2024-01-25T09:45:00Z'
+          }
+        ]
+        localStorage.setItem(inventoryStorageKey, JSON.stringify(dummyInventory))
+        setInventory(dummyInventory)
+      } else {
+        setInventory(Array.isArray(savedInventory) ? savedInventory : [])
+      }
+    } catch (error) {
+      console.error('Error loading inventory:', error)
+    }
+  }
+
+  const calculateProductTotal = (quantity, unitPrice) => {
+    return quantity * unitPrice
+  }
+
+  const calculateTotalAmount = (products) => {
+    return products.reduce((sum, product) => sum + product.totalPrice, 0)
+  }
+
+  const addProduct = () => {
+    if (!newProduct.productId || newProduct.quantity <= 0 || newProduct.unitPrice <= 0) {
+      alert('Please fill all required fields for the product')
+      return
+    }
+
+    const selectedProduct = inventory.find(item => item.id === newProduct.productId)
+    if (!selectedProduct) {
+      alert('Selected product not found in inventory')
+      return
+    }
+
+    // Check if product already exists in transfer
+    const existingProductIndex = form.products.findIndex(p => p.productId === newProduct.productId)
+    
+    if (existingProductIndex >= 0) {
+      // Update existing product quantity
+      const updatedProducts = [...form.products]
+      updatedProducts[existingProductIndex].quantity += newProduct.quantity
+      updatedProducts[existingProductIndex].totalPrice = calculateProductTotal(
+        updatedProducts[existingProductIndex].quantity, 
+        updatedProducts[existingProductIndex].unitPrice
+      )
+      setForm(prev => ({
+        ...prev,
+        products: updatedProducts,
+        totalAmount: calculateTotalAmount(updatedProducts)
+      }))
+    } else {
+      // Add new product
+      const product = {
+        ...newProduct,
+        productName: selectedProduct.productName,
+        productModel: selectedProduct.model,
+        productSku: selectedProduct.sku,
+        totalPrice: calculateProductTotal(newProduct.quantity, newProduct.unitPrice)
+      }
+
+      const updatedProducts = [...form.products, product]
+      setForm(prev => ({
+        ...prev,
+        products: updatedProducts,
+        totalAmount: calculateTotalAmount(updatedProducts)
+      }))
+    }
+
+    // Reset new product form
+    setNewProduct({
+      productId: '',
+      quantity: 1,
+      unitPrice: 0,
+      totalPrice: 0
+    })
+  }
+
+  const removeProduct = (index) => {
+    const updatedProducts = form.products.filter((_, i) => i !== index)
+    setForm(prev => ({
+      ...prev,
+      products: updatedProducts,
+      totalAmount: calculateTotalAmount(updatedProducts)
+    }))
+  }
+
+  const updateProductQuantity = (index, quantity) => {
+    const updatedProducts = [...form.products]
+    updatedProducts[index].quantity = quantity
+    updatedProducts[index].totalPrice = calculateProductTotal(quantity, updatedProducts[index].unitPrice)
+    
+    setForm(prev => ({
+      ...prev,
+      products: updatedProducts,
+      totalAmount: calculateTotalAmount(updatedProducts)
+    }))
+  }
+
+  const updateProductPrice = (index, unitPrice) => {
+    const updatedProducts = [...form.products]
+    updatedProducts[index].unitPrice = unitPrice
+    updatedProducts[index].totalPrice = calculateProductTotal(updatedProducts[index].quantity, unitPrice)
+    
+    setForm(prev => ({
+      ...prev,
+      products: updatedProducts,
+      totalAmount: calculateTotalAmount(updatedProducts)
+    }))
+  }
+
+  const saveTransfer = () => {
+    if (!form.transferDetails.fromStore || !form.transferDetails.toStore) {
+      alert('Please select both From and To stores/persons')
+      return
+    }
+
+    if (form.products.length === 0) {
+      alert('Please add at least one product to transfer')
+      return
+    }
+
+    if (form.transferDetails.fromStore === form.transferDetails.toStore) {
+      alert('From and To stores/persons cannot be the same')
+      return
+    }
+
+    try {
+      const savedTransfers = JSON.parse(localStorage.getItem(storageKey) || '[]')
+      const newTransfer = {
+        ...form,
+        id: generateTransferId(),
+        status: 'Completed',
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+      }
+
+      const updatedTransfers = [...savedTransfers, newTransfer]
+      localStorage.setItem(storageKey, JSON.stringify(updatedTransfers))
+
+      // Update inventory - deduct from source, add to destination
+      updateInventory(newTransfer.products, form.transferDetails.fromStore, form.transferDetails.toStore)
+
+      alert('Transfer saved successfully!')
+      
+      // Reset form
+      setForm({
+        id: generateTransferId(),
+        transferDetails: {
+          fromStore: '',
+          toStore: '',
+          transferDate: new Date().toISOString().split('T')[0],
+          transferTime: new Date().toTimeString().slice(0, 5),
+          paymentMode: 'Cash',
+          remarks: ''
+        },
+        products: [],
+        totalAmount: 0
+      })
+    } catch (error) {
+      alert('Error saving transfer: ' + error.message)
+    }
+  }
+
+  const updateInventory = (products, fromStore, toStore) => {
+    try {
+      const existingInventory = JSON.parse(localStorage.getItem(inventoryStorageKey) || '[]')
+      
+      products.forEach(product => {
+        const productIndex = existingInventory.findIndex(item => item.id === product.productId)
+        if (productIndex >= 0) {
+          // Deduct from source store (assuming main inventory is source)
+          existingInventory[productIndex].stock -= product.quantity
+          if (existingInventory[productIndex].stock < 0) {
+            existingInventory[productIndex].stock = 0
+          }
+        }
+      })
+
+      localStorage.setItem(inventoryStorageKey, JSON.stringify(existingInventory))
+    } catch (error) {
+      console.error('Error updating inventory:', error)
+    }
+  }
+
+  const getStoreName = (storeId) => {
+    const store = stores.find(s => s.id === storeId)
+    return store ? store.name : 'Unknown'
+  }
+
+  return (
+    <div className="p-4">
+      <h1 className="text-2xl font-semibold mb-4">New Transfer</h1>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Transfer Details */}
+        <div className="lg:col-span-1">
+          <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
+            <div className="flex items-center space-x-2 mb-4">
+              <FiTruck className="w-5 h-5 text-blue-600" />
+              <h2 className="text-lg font-semibold">Transfer Details</h2>
+            </div>
+            
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Transfer ID</label>
+                <input
+                  type="text"
+                  value={form.id}
+                  readOnly
+                  className="w-full rounded-md border border-slate-300 bg-slate-50"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">From Store/Person *</label>
+                <select
+                  value={form.transferDetails.fromStore}
+                  onChange={(e) => setForm({
+                    ...form,
+                    transferDetails: { ...form.transferDetails, fromStore: e.target.value }
+                  })}
+                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  required
+                >
+                  <option value="">Select Source</option>
+                  {stores.map(store => (
+                    <option key={store.id} value={store.id}>
+                      {store.name} ({store.type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">To Store/Person *</label>
+                <select
+                  value={form.transferDetails.toStore}
+                  onChange={(e) => setForm({
+                    ...form,
+                    transferDetails: { ...form.transferDetails, toStore: e.target.value }
+                  })}
+                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  required
+                >
+                  <option value="">Select Destination</option>
+                  {stores.map(store => (
+                    <option key={store.id} value={store.id}>
+                      {store.name} ({store.type})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Transfer Date *</label>
+                <input
+                  type="date"
+                  value={form.transferDetails.transferDate}
+                  onChange={(e) => setForm({
+                    ...form,
+                    transferDetails: { ...form.transferDetails, transferDate: e.target.value }
+                  })}
+                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  required
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Transfer Time</label>
+                <input
+                  type="time"
+                  value={form.transferDetails.transferTime}
+                  onChange={(e) => setForm({
+                    ...form,
+                    transferDetails: { ...form.transferDetails, transferTime: e.target.value }
+                  })}
+                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Payment Mode</label>
+                <select
+                  value={form.transferDetails.paymentMode}
+                  onChange={(e) => setForm({
+                    ...form,
+                    transferDetails: { ...form.transferDetails, paymentMode: e.target.value }
+                  })}
+                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="Bank">Bank Transfer</option>
+                  <option value="UPI">UPI</option>
+                  <option value="Credit">Credit</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Remarks / Notes</label>
+                <textarea
+                  value={form.transferDetails.remarks}
+                  onChange={(e) => setForm({
+                    ...form,
+                    transferDetails: { ...form.transferDetails, remarks: e.target.value }
+                  })}
+                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  rows={3}
+                  placeholder="Additional notes about the transfer..."
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Product Selection */}
+        <div className="lg:col-span-2">
+          <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
+            <div className="flex items-center space-x-2 mb-4">
+              <FiPackage className="w-5 h-5 text-green-600" />
+              <h2 className="text-lg font-semibold">Product Details</h2>
+            </div>
+            
+            {/* Add Product Form */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-slate-50 rounded-lg">
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Product *</label>
+                <select
+                  value={newProduct.productId}
+                  onChange={(e) => {
+                    const selectedProduct = inventory.find(item => item.id === e.target.value)
+                    setNewProduct({
+                      ...newProduct,
+                      productId: e.target.value,
+                      unitPrice: selectedProduct ? selectedProduct.sellingPrice : 0
+                    })
+                  }}
+                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                >
+                  <option value="">Select Product</option>
+                  {inventory.map(product => (
+                    <option key={product.id} value={product.id}>
+                      {product.productName} - {product.model} (Stock: {product.stock})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Quantity *</label>
+                <input
+                  type="number"
+                  value={newProduct.quantity}
+                  onChange={(e) => setNewProduct({ ...newProduct, quantity: parseInt(e.target.value) || 0 })}
+                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  min="1"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Unit Price *</label>
+                <input
+                  type="number"
+                  value={newProduct.unitPrice}
+                  onChange={(e) => setNewProduct({ ...newProduct, unitPrice: parseFloat(e.target.value) || 0 })}
+                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  min="0"
+                  step="0.01"
+                />
+              </div>
+
+              <div className="flex items-end">
+                <button
+                  type="button"
+                  onClick={addProduct}
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                >
+                  <FiPlus className="w-4 h-4" />
+                  <span>Add Product</span>
+                </button>
+              </div>
+            </div>
+
+            {/* Product List */}
+            {form.products.length > 0 && (
+              <div className="mb-4">
+                <h3 className="text-md font-semibold mb-2">Products to Transfer</h3>
+                <div className="overflow-x-auto">
+                  <table className="min-w-full text-sm">
+                    <thead>
+                      <tr className="text-left text-slate-500 text-xs uppercase border-b">
+                        <th className="py-2 pr-4">Product Name</th>
+                        <th className="py-2 pr-4">Model</th>
+                        <th className="py-2 pr-4">SKU</th>
+                        <th className="py-2 pr-4">Quantity</th>
+                        <th className="py-2 pr-4">Unit Price</th>
+                        <th className="py-2 pr-4">Total</th>
+                        <th className="py-2 pr-2">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {form.products.map((product, index) => (
+                        <tr key={index} className="border-b border-slate-100">
+                          <td className="py-2 pr-4">{product.productName}</td>
+                          <td className="py-2 pr-4">{product.productModel}</td>
+                          <td className="py-2 pr-4">{product.productSku}</td>
+                          <td className="py-2 pr-4">
+                            <input
+                              type="number"
+                              value={product.quantity}
+                              onChange={(e) => updateProductQuantity(index, parseInt(e.target.value) || 0)}
+                              className="w-16 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                              min="1"
+                            />
+                          </td>
+                          <td className="py-2 pr-4">
+                            <input
+                              type="number"
+                              value={product.unitPrice}
+                              onChange={(e) => updateProductPrice(index, parseFloat(e.target.value) || 0)}
+                              className="w-20 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                              min="0"
+                              step="0.01"
+                            />
+                          </td>
+                          <td className="py-2 pr-4">₹{product.totalPrice.toFixed(2)}</td>
+                          <td className="py-2 pr-2">
+                            <button
+                              onClick={() => removeProduct(index)}
+                              className="text-red-600 hover:text-red-800"
+                            >
+                              <FiTrash2 className="w-4 h-4" />
+                            </button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            )}
+
+            {/* Transfer Summary */}
+            {form.products.length > 0 && (
+              <div className="bg-slate-50 p-4 rounded-lg">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="font-medium">Transfer Summary:</span>
+                </div>
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span>From:</span>
+                    <span>{getStoreName(form.transferDetails.fromStore)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>To:</span>
+                    <span>{getStoreName(form.transferDetails.toStore)}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Total Products:</span>
+                    <span>{form.products.length}</span>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    <span>Total Quantity:</span>
+                    <span>{form.products.reduce((sum, product) => sum + product.quantity, 0)}</span>
+                  </div>
+                  <div className="flex justify-between items-center text-lg font-semibold border-t pt-2">
+                    <span>Total Amount:</span>
+                    <span>₹{form.totalAmount.toFixed(2)}</span>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Save Button */}
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={saveTransfer}
+                disabled={form.products.length === 0 || !form.transferDetails.fromStore || !form.transferDetails.toStore}
+                className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-slate-400 disabled:cursor-not-allowed"
+              >
+                <FiSave className="w-4 h-4" />
+                <span>Save Transfer</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export default NewTransfer
