@@ -1,12 +1,9 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { FiFilter, FiDownload, FiEye, FiSearch } from 'react-icons/fi'
 import { jsPDF } from 'jspdf'
-import 'jspdf-autotable'
+import autoTable from 'jspdf-autotable'
 
-const storageKey = 'mobilebill:purchases'
-const dealersStorageKey = 'mobilebill:dealers'
-const inventoryStorageKey = 'mobilebill:inventory'
-const salesStorageKey = 'mobilebill:sales'
+const apiBase = ''
 
 const PurchaseHistory = () => {
   const [purchases, setPurchases] = useState([])
@@ -24,300 +21,27 @@ const PurchaseHistory = () => {
   const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
-    loadData()
+    const load = async () => {
+      try {
+        const [pRes, dRes] = await Promise.all([
+          fetch(`${apiBase}/api/purchases`),
+          fetch(`${apiBase}/api/dealers`),
+        ])
+        const p = await pRes.json()
+        const d = await dRes.json()
+        setPurchases(Array.isArray(p) ? p : [])
+        setDealers(Array.isArray(d) ? d : [])
+      } catch (e) {
+        console.error('Failed to load purchases/dealers', e)
+        setPurchases([])
+        setDealers([])
+      }
+    }
+    load()
   }, [])
 
-  const loadData = () => {
-    try {
-      const savedPurchases = JSON.parse(localStorage.getItem(storageKey) || '[]')
-      if (savedPurchases.length === 0) {
-        // Add dummy purchase data if none exist
-        const dummyPurchases = [
-          {
-            id: 'PUR-001',
-            dealerId: 'DLR-001',
-            purchaseDate: '2024-01-15',
-            invoiceNumber: 'INV-2024-001',
-            paymentMode: 'UPI',
-            gstEnabled: true,
-            gstPercentage: 18,
-            totalAmount: 15000,
-            gstAmount: 2700,
-            grandTotal: 17700,
-            items: [
-              {
-                category: 'Accessories',
-                productName: 'Ear Buds',
-                model: 'OnePlus Buds Z2',
-                quantity: 20,
-                purchasePrice: 750,
-                sellingPrice: 1200,
-                totalPrice: 15000
-              }
-            ],
-            createdAt: '2024-01-15T10:30:00Z'
-          },
-          {
-            id: 'PUR-002',
-            dealerId: 'DLR-001',
-            purchaseDate: '2024-01-20',
-            invoiceNumber: 'INV-2024-002',
-            paymentMode: 'Bank',
-            gstEnabled: true,
-            gstPercentage: 18,
-            totalAmount: 19000,
-            gstAmount: 3420,
-            grandTotal: 22420,
-            items: [
-              {
-                category: 'Accessories',
-                productName: 'Mobile Cover',
-                model: 'Redmi Note 12 Pro',
-                quantity: 19,
-                purchasePrice: 1000,
-                sellingPrice: 1500,
-                totalPrice: 19000
-              }
-            ],
-            createdAt: '2024-01-20T14:15:00Z'
-          },
-          {
-            id: 'PUR-003',
-            dealerId: 'DLR-002',
-            purchaseDate: '2024-01-25',
-            invoiceNumber: 'INV-2024-003',
-            paymentMode: 'Cash',
-            gstEnabled: false,
-            gstPercentage: 0,
-            totalAmount: 10000,
-            gstAmount: 0,
-            grandTotal: 10000,
-            items: [
-              {
-                category: 'Accessories',
-                productName: 'Charger',
-                model: 'Samsung Fast Charger',
-                quantity: 10,
-                purchasePrice: 1000,
-                sellingPrice: 1500,
-                totalPrice: 10000
-              }
-            ],
-            createdAt: '2024-01-25T09:45:00Z'
-          },
-          {
-            id: 'PUR-004',
-            dealerId: 'DLR-003',
-            purchaseDate: '2024-02-01',
-            invoiceNumber: 'INV-2024-004',
-            paymentMode: 'UPI',
-            gstEnabled: true,
-            gstPercentage: 18,
-            totalAmount: 25000,
-            gstAmount: 4500,
-            grandTotal: 29500,
-            items: [
-              {
-                category: 'Mobile',
-                productName: 'Smartphone',
-                model: 'Samsung Galaxy A54',
-                quantity: 5,
-                purchasePrice: 5000,
-                sellingPrice: 6500,
-                totalPrice: 25000
-              }
-            ],
-            createdAt: '2024-02-01T11:20:00Z'
-          },
-          {
-            id: 'PUR-005',
-            dealerId: 'DLR-002',
-            purchaseDate: '2024-02-05',
-            invoiceNumber: 'INV-2024-005',
-            paymentMode: 'Bank',
-            gstEnabled: true,
-            gstPercentage: 18,
-            totalAmount: 12000,
-            gstAmount: 2160,
-            grandTotal: 14160,
-            items: [
-              {
-                category: 'Service Item',
-                productName: 'Screen Protector',
-                model: 'Tempered Glass Universal',
-                quantity: 50,
-                purchasePrice: 240,
-                sellingPrice: 400,
-                totalPrice: 12000
-              }
-            ],
-            createdAt: '2024-02-05T16:30:00Z'
-          }
-        ]
-        localStorage.setItem(storageKey, JSON.stringify(dummyPurchases))
-        setPurchases(dummyPurchases)
-      } else {
-        setPurchases(Array.isArray(savedPurchases) ? savedPurchases : [])
-      }
-
-      const savedDealers = JSON.parse(localStorage.getItem(dealersStorageKey) || '[]')
-      if (savedDealers.length === 0) {
-        // Add dummy dealers if none exist
-        const dummyDealers = [
-          {
-            id: 'DLR-001',
-            name: 'Mobile World',
-            phone: '+91 98765 43210',
-            address: '123 Main Street, Mumbai',
-            email: 'contact@mobileworld.com',
-            gst: '27ABCDE1234F1Z5',
-            notes: 'Primary mobile dealer'
-          },
-          {
-            id: 'DLR-002',
-            name: 'Tech Accessories Hub',
-            phone: '+91 98765 43211',
-            address: '456 Tech Park, Delhi',
-            email: 'sales@techhub.com',
-            gst: '07FGHIJ5678K2L6',
-            notes: 'Accessories specialist'
-          },
-          {
-            id: 'DLR-003',
-            name: 'Gadget Zone',
-            phone: '+91 98765 43212',
-            address: '789 Electronics Market, Bangalore',
-            email: 'info@gadgetzone.com',
-            gst: '29MNOPQ9012R3S7',
-            notes: 'Service items and repairs'
-          }
-        ]
-        localStorage.setItem(dealersStorageKey, JSON.stringify(dummyDealers))
-        setDealers(dummyDealers)
-      } else {
-        setDealers(Array.isArray(savedDealers) ? savedDealers : [])
-      }
-
-      const savedInventory = JSON.parse(localStorage.getItem(inventoryStorageKey) || '[]')
-      if (savedInventory.length === 0) {
-        // Add dummy inventory data
-        const dummyInventory = [
-          {
-            id: 'PROD-001',
-            category: 'Accessories',
-            productName: 'Ear Buds',
-            model: 'OnePlus Buds Z2',
-            stock: 20,
-            purchasePrice: 750,
-            sellingPrice: 1200,
-            createdAt: '2024-01-15T10:30:00Z'
-          },
-          {
-            id: 'PROD-002',
-            category: 'Accessories',
-            productName: 'Mobile Cover',
-            model: 'Redmi Note 12 Pro',
-            stock: 19,
-            purchasePrice: 1000,
-            sellingPrice: 1500,
-            createdAt: '2024-01-20T14:15:00Z'
-          },
-          {
-            id: 'PROD-003',
-            category: 'Accessories',
-            productName: 'Charger',
-            model: 'Samsung Fast Charger',
-            stock: 10,
-            purchasePrice: 1000,
-            sellingPrice: 1500,
-            createdAt: '2024-01-25T09:45:00Z'
-          },
-          {
-            id: 'PROD-004',
-            category: 'Mobile',
-            productName: 'Smartphone',
-            model: 'Samsung Galaxy A54',
-            stock: 5,
-            purchasePrice: 5000,
-            sellingPrice: 6500,
-            createdAt: '2024-02-01T11:20:00Z'
-          },
-          {
-            id: 'PROD-005',
-            category: 'Service Item',
-            productName: 'Screen Protector',
-            model: 'Tempered Glass Universal',
-            stock: 50,
-            purchasePrice: 240,
-            sellingPrice: 400,
-            createdAt: '2024-02-05T16:30:00Z'
-          }
-        ]
-        localStorage.setItem(inventoryStorageKey, JSON.stringify(dummyInventory))
-        setInventory(dummyInventory)
-      } else {
-        setInventory(Array.isArray(savedInventory) ? savedInventory : [])
-      }
-
-      const savedSales = JSON.parse(localStorage.getItem(salesStorageKey) || '[]')
-      if (savedSales.length === 0) {
-        // Add dummy sales data to show stock reduction
-        const dummySales = [
-          {
-            id: 'SALE-001',
-            items: [
-              {
-                productName: 'Ear Buds',
-                model: 'OnePlus Buds Z2',
-                quantity: 5
-              }
-            ],
-            createdAt: '2024-01-18T10:30:00Z'
-          },
-          {
-            id: 'SALE-002',
-            items: [
-              {
-                productName: 'Mobile Cover',
-                model: 'Redmi Note 12 Pro',
-                quantity: 7
-              }
-            ],
-            createdAt: '2024-01-22T14:15:00Z'
-          }
-        ]
-        localStorage.setItem(salesStorageKey, JSON.stringify(dummySales))
-        setSales(dummySales)
-      } else {
-        setSales(Array.isArray(savedSales) ? savedSales : [])
-      }
-    } catch (error) {
-      console.error('Error loading data:', error)
-    }
-  }
-
-  const calculateRemainingStock = (productName, model) => {
-    // Get total purchased quantity
-    const totalPurchased = purchases.reduce((sum, purchase) => {
-      return sum + purchase.items.reduce((itemSum, item) => {
-        if (item.productName === productName && item.model === model) {
-          return itemSum + item.quantity
-        }
-        return itemSum
-      }, 0)
-    }, 0)
-
-    // Get total sold/used quantity (this would need to be implemented based on sales/service data)
-    const totalSold = sales.reduce((sum, sale) => {
-      return sum + (sale.items || []).reduce((itemSum, item) => {
-        if (item.productName === productName && item.model === model) {
-          return itemSum + item.quantity
-        }
-        return itemSum
-      }, 0)
-    }, 0)
-
-    return totalPurchased - totalSold
+  const calculateRemainingStock = () => {
+    return '—'
   }
 
   const filteredPurchases = useMemo(() => {
@@ -405,7 +129,7 @@ const PurchaseHistory = () => {
     ]
 
     // Generate table
-    doc.autoTable({
+    autoTable(doc, {
       head: [headers],
       body: tableData,
       startY: 40,
@@ -457,6 +181,57 @@ const PurchaseHistory = () => {
     a.download = 'purchase-history.csv'
     a.click()
     window.URL.revokeObjectURL(url)
+  }
+
+  const downloadItemDetails = (purchase, item) => {
+    const dealer = dealers.find(d => d.id === purchase.dealerId)
+    const dealerName = dealer ? dealer.name : 'Unknown'
+    try {
+      const doc = new jsPDF()
+      doc.setFontSize(16)
+      doc.text('Purchase Item Report', 14, 18)
+      doc.setFontSize(10)
+      doc.text(`Dealer: ${dealerName}`, 14, 26)
+      doc.text(`Date: ${purchase.purchaseDate}`, 14, 31)
+      doc.text(`Invoice: ${purchase.invoiceNumber}`, 14, 36)
+
+      const body = [
+        ['Product', item.productName],
+        ['Model', item.model],
+        ['Category', item.category],
+        ['Quantity', String(item.quantity)],
+        ['Purchase Price', `₹${item.purchasePrice.toFixed(2)}`],
+        ['Selling Price', `₹${item.sellingPrice.toFixed(2)}`],
+        ['Line Total', `₹${item.totalPrice.toFixed(2)}`],
+        ['Payment Mode', purchase.paymentMode],
+      ]
+      autoTable(doc, {
+        startY: 42,
+        head: [['Field', 'Value']],
+        body,
+        styles: { fontSize: 10 },
+        headStyles: { fillColor: [71, 85, 105] },
+      })
+
+      const safe = (s) => String(s).replace(/[^a-z0-9-_]+/gi, '_')
+      const filename = `${safe(dealerName)}_${safe(purchase.purchaseDate)}.pdf`
+      try {
+        doc.save(filename)
+      } catch {
+        const blob = doc.output('blob')
+        const url = URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = filename
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+        URL.revokeObjectURL(url)
+      }
+    } catch (e) {
+      alert('Failed to generate PDF: ' + (e?.message || e))
+      console.error(e)
+    }
   }
 
   const viewPurchaseDetails = (purchase) => {
@@ -633,12 +408,22 @@ const PurchaseHistory = () => {
                       <td className="py-3 px-4">{purchase.purchaseDate}</td>
                       <td className="py-3 px-4">{purchase.invoiceNumber}</td>
                       <td className="py-3 px-4">
-                        <button
-                          onClick={() => viewPurchaseDetails(purchase)}
-                          className="text-blue-600 hover:text-blue-800"
-                        >
-                          <FiEye className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => viewPurchaseDetails(purchase)}
+                            className="text-blue-600 hover:text-blue-800"
+                            title="View"
+                          >
+                            <FiEye className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => downloadItemDetails(purchase, item)}
+                            className="text-green-600 hover:text-green-800"
+                            title="Download Item PDF"
+                          >
+                            <FiDownload className="w-4 h-4" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))

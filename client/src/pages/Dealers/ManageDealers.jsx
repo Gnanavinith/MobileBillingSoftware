@@ -1,14 +1,12 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
-const generateDealerId = () => `DLR-${Date.now().toString().slice(-6)}`
-const storageKey = 'mobilebill:dealers'
+const apiBase = '' // use Vite proxy: fetch('/api/...')
 
 const ManageDealers = () => {
   const [dealers, setDealers] = useState([])
   const [search, setSearch] = useState('')
   const [editingId, setEditingId] = useState(null)
   const [form, setForm] = useState({
-    id: generateDealerId(),
     name: '',
     phone: '',
     address: '',
@@ -16,14 +14,23 @@ const ManageDealers = () => {
     gst: '',
     notes: '',
   })
+  const [loading, setLoading] = useState(false)
+  const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(storageKey) || '[]')
-      setDealers(Array.isArray(saved) ? saved : [])
-    } catch {
-      setDealers([])
+    const load = async () => {
+      setLoading(true)
+      try {
+        const res = await fetch(`${apiBase}/api/dealers`)
+        const data = await res.json()
+        setDealers(Array.isArray(data) ? data : [])
+      } catch {
+        setDealers([])
+      } finally {
+        setLoading(false)
+      }
     }
+    load()
   }, [])
 
   const filtered = useMemo(() => {
@@ -38,13 +45,16 @@ const ManageDealers = () => {
   }, [dealers, search])
 
   const resetForm = () => {
-    setForm({ id: generateDealerId(), name: '', phone: '', address: '', email: '', gst: '', notes: '' })
+    setForm({ name: '', phone: '', address: '', email: '', gst: '', notes: '' })
     setEditingId(null)
   }
 
-  const saveToStorage = (next) => {
-    setDealers(next)
-    localStorage.setItem(storageKey, JSON.stringify(next))
+  const refreshList = async () => {
+    try {
+      const res = await fetch(`${apiBase}/api/dealers`)
+      const data = await res.json()
+      setDealers(Array.isArray(data) ? data : [])
+    } catch {}
   }
 
   const validateUnique = () => {
@@ -55,7 +65,7 @@ const ManageDealers = () => {
     return ''
   }
 
-  const onSubmit = (e) => {
+  const onSubmit = async (e) => {
     e.preventDefault()
     const err = validateUnique()
     if (err) {
@@ -66,15 +76,36 @@ const ManageDealers = () => {
       alert('Dealer Name and Phone are required')
       return
     }
-    if (editingId) {
-      const next = dealers.map(d => d.id === editingId ? { ...form, id: editingId } : d)
-      saveToStorage(next)
+    setSaving(true)
+    try {
+      if (editingId) {
+        const res = await fetch(`${apiBase}/api/dealers/${editingId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        if (!res.ok) {
+          const msg = await res.json().catch(() => ({}))
+          throw new Error(msg.error || 'Failed to update dealer')
+        }
+      } else {
+        const res = await fetch(`${apiBase}/api/dealers`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(form),
+        })
+        if (!res.ok) {
+          const msg = await res.json().catch(() => ({}))
+          throw new Error(msg.error || 'Failed to create dealer')
+        }
+      }
+      await refreshList()
       resetForm()
-      return
+    } catch (ex) {
+      alert(ex.message)
+    } finally {
+      setSaving(false)
     }
-    const next = [...dealers, { ...form }]
-    saveToStorage(next)
-    resetForm()
   }
 
   const onEdit = (dealer) => {
@@ -82,12 +113,19 @@ const ManageDealers = () => {
     setForm({ ...dealer })
   }
 
-  const onDelete = (dealer) => {
-    // Placeholder: in a real app, check linkage with purchases
+  const onDelete = async (dealer) => {
     if (!confirm('Delete this dealer? This action cannot be undone.')) return
-    const next = dealers.filter(d => d.id !== dealer.id)
-    saveToStorage(next)
-    if (editingId === dealer.id) resetForm()
+    try {
+      const res = await fetch(`${apiBase}/api/dealers/${dealer.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const msg = await res.json().catch(() => ({}))
+        throw new Error(msg.error || 'Failed to delete dealer')
+      }
+      await refreshList()
+      if (editingId === dealer.id) resetForm()
+    } catch (ex) {
+      alert(ex.message)
+    }
   }
 
   return (
@@ -100,7 +138,7 @@ const ManageDealers = () => {
           <form onSubmit={onSubmit} className="space-y-3">
             <div>
               <label className="text-sm text-slate-600">Dealer ID</label>
-              <input value={editingId || form.id} readOnly className="mt-1 w-full rounded-md border border-slate-300 bg-slate-50" />
+              <input value={editingId || 'Auto-generated'} readOnly className="mt-1 w-full rounded-md border border-slate-300 bg-slate-50" />
             </div>
             <div>
               <label className="text-sm text-slate-600">Dealer Name</label>
@@ -127,7 +165,7 @@ const ManageDealers = () => {
               <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" rows={3} />
             </div>
             <div className="flex gap-2">
-              <button type="submit" className="px-3 py-2 rounded-md bg-slate-900 text-white hover:bg-slate-800">{editingId ? 'Update' : 'Add Dealer'}</button>
+              <button disabled={saving} type="submit" className="px-3 py-2 rounded-md bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed">{saving ? 'Saving...' : editingId ? 'Update' : 'Add Dealer'}</button>
               <button type="button" onClick={resetForm} className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50">Clear</button>
             </div>
           </form>
@@ -151,7 +189,11 @@ const ManageDealers = () => {
                 </tr>
               </thead>
               <tbody>
-                {filtered.length === 0 ? (
+                {loading ? (
+                  <tr>
+                    <td className="py-3 pr-4" colSpan={6}>Loading...</td>
+                  </tr>
+                ) : filtered.length === 0 ? (
                   <tr>
                     <td className="py-3 pr-4" colSpan={6}>No dealers found.</td>
                   </tr>

@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react'
+import { jsPDF } from 'jspdf'
+import autoTable from 'jspdf-autotable'
 
-const purchasesKey = 'mobilebill:dealerPurchases'
-const dealersKey = 'mobilebill:dealers'
+const apiBase = ''
 
 const DealerHistory = () => {
   const [purchases, setPurchases] = useState([])
@@ -11,24 +12,47 @@ const DealerHistory = () => {
   const [to, setTo] = useState('')
 
   useEffect(() => {
-    try {
-      const saved = JSON.parse(localStorage.getItem(purchasesKey) || '[]')
-      setPurchases(Array.isArray(saved) ? saved : [])
-    } catch { setPurchases([]) }
-    try {
-      const savedDealers = JSON.parse(localStorage.getItem(dealersKey) || '[]')
-      setDealers(Array.isArray(savedDealers) ? savedDealers : [])
-    } catch { setDealers([]) }
+    const load = async () => {
+      try {
+        const [pRes, dRes] = await Promise.all([
+          fetch(`${apiBase}/api/purchases`),
+          fetch(`${apiBase}/api/dealers`),
+        ])
+        const p = await pRes.json()
+        const d = await dRes.json()
+        setPurchases(Array.isArray(p) ? p : [])
+        setDealers(Array.isArray(d) ? d : [])
+      } catch {
+        setPurchases([])
+        setDealers([])
+      }
+    }
+    load()
   }, [])
 
   const filtered = useMemo(() => {
     const ql = q.trim().toLowerCase()
     const fromTs = from ? new Date(from).getTime() : 0
     const toTs = to ? new Date(to).getTime() : Number.MAX_SAFE_INTEGER
-    return purchases.filter(p => {
-      const ts = new Date(p.date).getTime()
-      const matchesQ = !ql || p.dealerName.toLowerCase().includes(ql) || p.dealerId.toLowerCase().includes(ql)
-      return ts >= fromTs && ts <= toTs && matchesQ
+    return purchases.flatMap(p => {
+      const dealer = dealers.find(d => d.id === p.dealerId)
+      const dealerName = dealer ? dealer.name : 'Unknown'
+      const ts = new Date(p.purchaseDate).getTime()
+      if (ts < fromTs || ts > toTs) return []
+      const dealerMatches = !ql || dealerName.toLowerCase().includes(ql) || (p.dealerId || '').toLowerCase().includes(ql)
+      if (!dealerMatches) return []
+      return p.items.map(it => ({
+        dealerName,
+        dealerId: p.dealerId,
+        product: `${it.productName} ${it.model ? `(${it.model})` : ''}`.trim(),
+        quantity: it.quantity,
+        unitPrice: it.purchasePrice,
+        gstPercent: p.gstEnabled ? p.gstPercentage : 0,
+        discount: 0,
+        mode: p.paymentMode,
+        date: p.purchaseDate,
+        invoice: p.invoiceNumber,
+      }))
     })
   }, [purchases, q, from, to])
 
@@ -45,6 +69,50 @@ const DealerHistory = () => {
     })
     return { subtotal, gst, total }
   }, [filtered])
+
+  const makeInvoicePdf = (row) => {
+    const doc = new jsPDF()
+    const dealerLine = `${row.dealerName} (${row.dealerId})`
+
+    doc.setFontSize(16)
+    doc.text('Dealer Purchase Invoice', 14, 18)
+    doc.setFontSize(10)
+    doc.text(`Dealer: ${dealerLine}`, 14, 26)
+    doc.text(`Date: ${new Date(row.date).toLocaleDateString()}`, 14, 31)
+    doc.text(`Invoice: ${row.invoice}`, 14, 36)
+
+    autoTable(doc, {
+      startY: 42,
+      head: [['Product', 'Qty', 'Unit Price', 'GST%', 'Total']],
+      body: [[row.product, String(row.quantity), String(row.unitPrice), String(row.gstPercent || 0), (Math.max(row.unitPrice * row.quantity - (row.discount || 0), 0) * (1 + (row.gstPercent || 0)/100)).toFixed(2)]],
+      styles: { fontSize: 10 },
+      headStyles: { fillColor: [71, 85, 105] },
+    })
+
+    const safe = (s) => String(s).replace(/[^a-z0-9-_]+/gi, '_')
+    const filename = `${safe(row.dealerName)}_${safe(new Date(row.date).toLocaleDateString())}.pdf`
+    return { doc, filename }
+  }
+
+  const downloadInvoice = (row) => {
+    try {
+      const { doc, filename } = makeInvoicePdf(row)
+      doc.save(filename)
+    } catch (e) {
+      alert('Failed to download invoice: ' + (e?.message || e))
+    }
+  }
+
+  const printInvoice = (row) => {
+    try {
+      const { doc } = makeInvoicePdf(row)
+      doc.autoPrint()
+      const url = doc.output('bloburl')
+      window.open(url, '_blank')
+    } catch (e) {
+      alert('Failed to print invoice: ' + (e?.message || e))
+    }
+  }
 
   return (
     <div className="p-4">
@@ -72,6 +140,7 @@ const DealerHistory = () => {
                 <th className="py-2 pr-4">Mode</th>
                 <th className="py-2 pr-4">Date</th>
                 <th className="py-2 pr-2">Invoice</th>
+                <th className="py-2 pr-2">Actions</th>
               </tr>
             </thead>
             <tbody>
@@ -92,7 +161,13 @@ const DealerHistory = () => {
                       <td className="py-2 pr-4">{total.toFixed(2)}</td>
                       <td className="py-2 pr-4">{p.mode}</td>
                       <td className="py-2 pr-4">{new Date(p.date).toLocaleDateString()}</td>
-                      <td className="py-2 pr-2"><button className="text-blue-600 hover:underline">View</button></td>
+                      <td className="py-2 pr-2">{p.invoice}</td>
+                      <td className="py-2 pr-2">
+                        <div className="flex gap-2">
+                          <button onClick={() => printInvoice(p)} className="text-slate-700 hover:underline">Print</button>
+                          <button onClick={() => downloadInvoice(p)} className="text-blue-600 hover:underline">Download</button>
+                        </div>
+                      </td>
                     </tr>
                   )
                 })

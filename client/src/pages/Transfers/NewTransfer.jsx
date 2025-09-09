@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react'
 import { FiSave, FiPlus, FiTrash2, FiTruck, FiPackage } from 'react-icons/fi'
 
-const generateTransferId = () => `TRF-${Date.now().toString().slice(-6)}`
-const storageKey = 'mobilebill:transfers'
+const apiBase = ''
 const inventoryStorageKey = 'mobilebill:inventory'
 
 const NewTransfer = () => {
   const [inventory, setInventory] = useState([])
   const [form, setForm] = useState({
-    id: generateTransferId(),
+    id: '',
     transferDetails: {
-      fromStore: '',
+      fromStore: 'STORE-001',
       toStore: '',
       transferDate: new Date().toISOString().split('T')[0],
       transferTime: new Date().toTimeString().slice(0, 5),
@@ -27,90 +26,60 @@ const NewTransfer = () => {
     unitPrice: 0,
     totalPrice: 0
   })
+  const [lookupLoading, setLookupLoading] = useState(false)
+  const [lookupError, setLookupError] = useState('')
 
-  // Mock stores/persons for demonstration
-  const stores = [
-    { id: 'STORE-001', name: 'Main Store', type: 'Store' },
-    { id: 'STORE-002', name: 'Branch Store - Mumbai', type: 'Store' },
-    { id: 'STORE-003', name: 'Branch Store - Delhi', type: 'Store' },
-    { id: 'PERSON-001', name: 'John Doe (Sales Rep)', type: 'Person' },
-    { id: 'PERSON-002', name: 'Jane Smith (Field Rep)', type: 'Person' },
-    { id: 'PERSON-003', name: 'Mike Johnson (Service Tech)', type: 'Person' }
-  ]
+  // Free-text stores/persons
 
   useEffect(() => {
-    loadInventory()
+    // no local dummy; rely on backend lookup per product
   }, [])
 
-  const loadInventory = () => {
+  const lookupProduct = async () => {
+    setLookupError('')
+    const id = String(newProduct.productId || '').trim()
+    if (!id) {
+      setLookupError('Enter Product ID / IMEI to search')
+      return
+    }
+    setLookupLoading(true)
     try {
-      const savedInventory = JSON.parse(localStorage.getItem(inventoryStorageKey) || '[]')
-      if (savedInventory.length === 0) {
-        // Add dummy inventory data if none exist
-        const dummyInventory = [
-          {
-            id: 'PROD-001',
-            category: 'Mobile',
-            productName: 'Smartphone',
-            model: 'Samsung Galaxy A54',
-            stock: 5,
-            purchasePrice: 5000,
-            sellingPrice: 6500,
-            sku: 'SAM-A54-001',
-            createdAt: '2024-02-01T11:20:00Z'
-          },
-          {
-            id: 'PROD-002',
-            category: 'Accessories',
-            productName: 'Ear Buds',
-            model: 'OnePlus Buds Z2',
-            stock: 20,
-            purchasePrice: 750,
-            sellingPrice: 1200,
-            sku: 'OP-BUDS-002',
-            createdAt: '2024-01-15T10:30:00Z'
-          },
-          {
-            id: 'PROD-003',
-            category: 'Accessories',
-            productName: 'Mobile Cover',
-            model: 'Redmi Note 12 Pro',
-            stock: 19,
-            purchasePrice: 1000,
-            sellingPrice: 1500,
-            sku: 'RM-COVER-003',
-            createdAt: '2024-01-20T14:15:00Z'
-          },
-          {
-            id: 'PROD-004',
-            category: 'Service Item',
-            productName: 'Screen Protector',
-            model: 'Tempered Glass Universal',
-            stock: 50,
-            purchasePrice: 240,
-            sellingPrice: 400,
-            sku: 'SP-UNIV-004',
-            createdAt: '2024-02-05T16:30:00Z'
-          },
-          {
-            id: 'PROD-005',
-            category: 'Accessories',
-            productName: 'Charger',
-            model: 'Samsung Fast Charger',
-            stock: 10,
-            purchasePrice: 1000,
-            sellingPrice: 1500,
-            sku: 'SAM-CHG-005',
-            createdAt: '2024-01-25T09:45:00Z'
-          }
-        ]
-        localStorage.setItem(inventoryStorageKey, JSON.stringify(dummyInventory))
-        setInventory(dummyInventory)
-      } else {
-        setInventory(Array.isArray(savedInventory) ? savedInventory : [])
+      // Try accessories by productId
+      const accRes = await fetch(`${apiBase}/api/accessories?productId=${encodeURIComponent(id)}`)
+      const acc = await accRes.json()
+      if (Array.isArray(acc) && acc.length > 0) {
+        const a = acc[0]
+        setNewProduct({
+          ...newProduct,
+          productId: a.productId,
+          quantity: 1,
+          unitPrice: a.unitPrice || 0,
+          totalPrice: 0,
+        })
+        // stash in inventory cache for display if needed
+        setInventory([{ id: a.productId, productName: a.productName, model: '', sku: a.productId, stock: a.quantity }])
+        return
       }
-    } catch (error) {
-      console.error('Error loading inventory:', error)
+      // Fallback: fetch mobiles and filter by IMEI
+      const mobRes = await fetch(`${apiBase}/api/mobiles`)
+      const mobiles = await mobRes.json()
+      const m = Array.isArray(mobiles) ? mobiles.find(mo => mo.imeiNumber1 === id || mo.imeiNumber2 === id) : null
+      if (m) {
+        setNewProduct({
+          ...newProduct,
+          productId: id,
+          quantity: 1,
+          unitPrice: m.pricePerProduct || 0,
+          totalPrice: 0,
+        })
+        setInventory([{ id, productName: m.mobileName, model: m.modelNumber, sku: id, stock: m.totalQuantity }])
+        return
+      }
+      setLookupError('No product found for given ID')
+    } catch (e) {
+      setLookupError('Lookup failed')
+    } finally {
+      setLookupLoading(false)
     }
   }
 
@@ -210,7 +179,7 @@ const NewTransfer = () => {
     }))
   }
 
-  const saveTransfer = () => {
+  const saveTransfer = async () => {
     if (!form.transferDetails.fromStore || !form.transferDetails.toStore) {
       alert('Please select both From and To stores/persons')
       return
@@ -227,28 +196,27 @@ const NewTransfer = () => {
     }
 
     try {
-      const savedTransfers = JSON.parse(localStorage.getItem(storageKey) || '[]')
-      const newTransfer = {
-        ...form,
-        id: generateTransferId(),
-        status: 'Completed',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
+      const payload = {
+        fromStore: form.transferDetails.fromStore,
+        toStore: form.transferDetails.toStore,
+        transferDate: form.transferDetails.transferDate,
+        transferTime: form.transferDetails.transferTime,
+        paymentMode: form.transferDetails.paymentMode,
+        remarks: form.transferDetails.remarks,
+        products: form.products,
       }
-
-      const updatedTransfers = [...savedTransfers, newTransfer]
-      localStorage.setItem(storageKey, JSON.stringify(updatedTransfers))
-
-      // Update inventory - deduct from source, add to destination
-      updateInventory(newTransfer.products, form.transferDetails.fromStore, form.transferDetails.toStore)
-
+      const res = await fetch(`${apiBase}/api/transfers`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+      })
+      if (!res.ok) {
+        const msg = await res.json().catch(()=>({}))
+        throw new Error(msg.error || 'Failed to save transfer')
+      }
       alert('Transfer saved successfully!')
-      
-      // Reset form
       setForm({
-        id: generateTransferId(),
+        id: '',
         transferDetails: {
-          fromStore: '',
+          fromStore: 'STORE-001',
           toStore: '',
           transferDate: new Date().toISOString().split('T')[0],
           transferTime: new Date().toTimeString().slice(0, 5),
@@ -284,10 +252,7 @@ const NewTransfer = () => {
     }
   }
 
-  const getStoreName = (storeId) => {
-    const store = stores.find(s => s.id === storeId)
-    return store ? store.name : 'Unknown'
-  }
+  const getStoreName = (storeText) => storeText || 'Unknown'
 
   return (
     <div className="p-4">
@@ -303,54 +268,35 @@ const NewTransfer = () => {
             </div>
             
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Transfer ID</label>
-                <input
-                  type="text"
-                  value={form.id}
-                  readOnly
-                  className="w-full rounded-md border border-slate-300 bg-slate-50"
-                />
-              </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">From Store/Person *</label>
-                <select
+                <input
+                  type="text"
                   value={form.transferDetails.fromStore}
                   onChange={(e) => setForm({
                     ...form,
                     transferDetails: { ...form.transferDetails, fromStore: e.target.value }
                   })}
                   className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  placeholder="e.g., Main Store (Store)"
                   required
-                >
-                  <option value="">Select Source</option>
-                  {stores.map(store => (
-                    <option key={store.id} value={store.id}>
-                      {store.name} ({store.type})
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">To Store/Person *</label>
-                <select
+                <input
+                  type="text"
                   value={form.transferDetails.toStore}
                   onChange={(e) => setForm({
                     ...form,
                     transferDetails: { ...form.transferDetails, toStore: e.target.value }
                   })}
                   className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  placeholder="e.g., Branch Store - Delhi (Store)"
                   required
-                >
-                  <option value="">Select Destination</option>
-                  {stores.map(store => (
-                    <option key={store.id} value={store.id}>
-                      {store.name} ({store.type})
-                    </option>
-                  ))}
-                </select>
+                />
               </div>
 
               <div>
@@ -426,26 +372,20 @@ const NewTransfer = () => {
             {/* Add Product Form */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-slate-50 rounded-lg">
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Product *</label>
-                <select
-                  value={newProduct.productId}
-                  onChange={(e) => {
-                    const selectedProduct = inventory.find(item => item.id === e.target.value)
-                    setNewProduct({
-                      ...newProduct,
-                      productId: e.target.value,
-                      unitPrice: selectedProduct ? selectedProduct.sellingPrice : 0
-                    })
-                  }}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
-                >
-                  <option value="">Select Product</option>
-                  {inventory.map(product => (
-                    <option key={product.id} value={product.id}>
-                      {product.productName} - {product.model} (Stock: {product.stock})
-                    </option>
-                  ))}
-                </select>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Product ID / IMEI *</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newProduct.productId}
+                    onChange={(e) => setNewProduct({ ...newProduct, productId: e.target.value })}
+                    className="flex-1 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                    placeholder="Enter Product ID or IMEI"
+                  />
+                  <button type="button" onClick={lookupProduct} disabled={lookupLoading} className="px-3 py-2 rounded-md border">
+                    {lookupLoading ? 'Finding...' : 'Find'}
+                  </button>
+                </div>
+                {lookupError ? <div className="mt-1 text-xs text-red-600">{lookupError}</div> : null}
               </div>
 
               <div>
