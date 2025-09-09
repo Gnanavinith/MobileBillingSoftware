@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { FiSearch, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi'
 
-const inventoryStorageKey = 'mobilebill:inventory'
-const purchasesStorageKey = 'mobilebill:purchases'
-const salesStorageKey = 'mobilebill:sales'
+// Resolve API base
+const apiBase = (typeof window !== 'undefined' && window?.process?.versions?.electron) ? 'http://localhost:5000' : ''
 
 const Accessories = () => {
   const [inventory, setInventory] = useState([])
@@ -17,127 +16,27 @@ const Accessories = () => {
     loadData()
   }, [])
 
-  const loadData = () => {
+  const loadData = async () => {
     try {
-      const savedInventory = JSON.parse(localStorage.getItem(inventoryStorageKey) || '[]')
-      if (savedInventory.length === 0) {
-        // Add dummy inventory data
-        const dummyInventory = [
-          {
-            id: 'PROD-001',
-            category: 'Accessories',
-            productName: 'Ear Buds',
-            model: 'OnePlus Buds Z2',
-            stock: 20,
-            purchasePrice: 750,
-            sellingPrice: 1200,
-            createdAt: '2024-01-15T10:30:00Z'
-          },
-          {
-            id: 'PROD-002',
-            category: 'Accessories',
-            productName: 'Mobile Cover',
-            model: 'Redmi Note 12 Pro',
-            stock: 19,
-            purchasePrice: 1000,
-            sellingPrice: 1500,
-            createdAt: '2024-01-20T14:15:00Z'
-          },
-          {
-            id: 'PROD-003',
-            category: 'Accessories',
-            productName: 'Charger',
-            model: 'Samsung Fast Charger',
-            stock: 10,
-            purchasePrice: 1000,
-            sellingPrice: 1500,
-            createdAt: '2024-01-25T09:45:00Z'
-          },
-          {
-            id: 'PROD-004',
-            category: 'Service Item',
-            productName: 'Screen Protector',
-            model: 'Tempered Glass Universal',
-            stock: 50,
-            purchasePrice: 240,
-            sellingPrice: 400,
-            createdAt: '2024-02-05T16:30:00Z'
-          },
-          {
-            id: 'PROD-005',
-            category: 'Accessories',
-            productName: 'Power Bank',
-            model: 'Mi Power Bank 20000mAh',
-            stock: 15,
-            purchasePrice: 2000,
-            sellingPrice: 2800,
-            createdAt: '2024-01-30T12:00:00Z'
-          },
-          {
-            id: 'PROD-006',
-            category: 'Service Item',
-            productName: 'Data Cable',
-            model: 'USB-C to USB-C',
-            stock: 25,
-            purchasePrice: 300,
-            sellingPrice: 500,
-            createdAt: '2024-02-02T08:30:00Z'
-          }
-        ]
-        localStorage.setItem(inventoryStorageKey, JSON.stringify(dummyInventory))
-        setInventory(dummyInventory)
-      } else {
-        setInventory(Array.isArray(savedInventory) ? savedInventory : [])
-      }
-
-      const savedPurchases = JSON.parse(localStorage.getItem(purchasesStorageKey) || '[]')
-      setPurchases(Array.isArray(savedPurchases) ? savedPurchases : [])
-
-      const savedSales = JSON.parse(localStorage.getItem(salesStorageKey) || '[]')
-      if (savedSales.length === 0) {
-        // Add dummy sales data to show stock reduction
-        const dummySales = [
-          {
-            id: 'SALE-001',
-            items: [
-              {
-                productName: 'Ear Buds',
-                model: 'OnePlus Buds Z2',
-                quantity: 5
-              }
-            ],
-            createdAt: '2024-01-18T10:30:00Z'
-          },
-          {
-            id: 'SALE-002',
-            items: [
-              {
-                productName: 'Mobile Cover',
-                model: 'Redmi Note 12 Pro',
-                quantity: 7
-              }
-            ],
-            createdAt: '2024-01-22T14:15:00Z'
-          },
-          {
-            id: 'SALE-003',
-            items: [
-              {
-                productName: 'Screen Protector',
-                model: 'Tempered Glass Universal',
-                quantity: 10
-              }
-            ],
-            createdAt: '2024-02-07T09:20:00Z'
-          }
-        ]
-        localStorage.setItem(salesStorageKey, JSON.stringify(dummySales))
-        setSales(dummySales)
-      } else {
-        setSales(Array.isArray(savedSales) ? savedSales : [])
-      }
+      const res = await fetch(`${apiBase}/api/accessories`)
+      const data = await res.json()
+      const rows = Array.isArray(data) ? data : []
+      const mapped = rows.map(r => ({
+        id: r.id,
+        category: 'Accessories',
+        productName: r.productName,
+        model: r.productId,
+        stock: Number(r.quantity) || 0,
+        purchasePrice: Number(r.unitPrice) || 0,
+        sellingPrice: Number(r.unitPrice) || 0,
+        createdAt: r.createdAt || new Date().toISOString(),
+      }))
+      setInventory(mapped)
+      setPurchases([])
+      setSales([])
     } catch (error) {
-      console.error('Error loading data:', error)
+      console.error('Error loading accessories:', error)
+      setInventory([])
     }
   }
 
@@ -166,17 +65,9 @@ const Accessories = () => {
   }
 
   const accessoryInventory = useMemo(() => {
-    const accessoryItems = inventory.filter(item => 
-      item.category === 'Accessories' || 
-      item.category === 'Service Item' || 
-      item.category === 'Other'
-    )
-    
-    return accessoryItems.map(item => ({
-      ...item,
-      remainingStock: calculateRemainingStock(item.productName, item.model)
-    }))
-  }, [inventory, purchases, sales])
+    const accessoryItems = inventory
+    return accessoryItems.map(item => ({ ...item, remainingStock: item.stock }))
+  }, [inventory])
 
   const filteredInventory = useMemo(() => {
     let filtered = accessoryInventory

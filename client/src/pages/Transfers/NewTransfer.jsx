@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react'
 import { FiSave, FiPlus, FiTrash2, FiTruck, FiPackage } from 'react-icons/fi'
 
-const apiBase = ''
+// Resolve API base: in Electron packaged app, backend is on localhost:5000; in dev use Vite proxy with empty base
+const apiBase = (typeof window !== 'undefined' && window?.process?.versions?.electron) ? 'http://localhost:5000' : ''
 const inventoryStorageKey = 'mobilebill:inventory'
 
 const NewTransfer = () => {
@@ -98,10 +99,9 @@ const NewTransfer = () => {
     }
 
     const selectedProduct = inventory.find(item => item.id === newProduct.productId)
-    if (!selectedProduct) {
-      alert('Selected product not found in inventory')
-      return
-    }
+    // If not found in inventory (e.g., lookup failed), still allow manual add with entered values
+    // Product details will rely on manual fields; set fallback display values
+    const fallbackProduct = !selectedProduct ? { productName: newProduct.productId || 'Unknown', model: '', sku: newProduct.productId, stock: 0 } : selectedProduct
 
     // Check if product already exists in transfer
     const existingProductIndex = form.products.findIndex(p => p.productId === newProduct.productId)
@@ -123,9 +123,9 @@ const NewTransfer = () => {
       // Add new product
       const product = {
         ...newProduct,
-        productName: selectedProduct.productName,
-        productModel: selectedProduct.model,
-        productSku: selectedProduct.sku,
+        productName: fallbackProduct.productName,
+        productModel: fallbackProduct.model,
+        productSku: fallbackProduct.sku,
         totalPrice: calculateProductTotal(newProduct.quantity, newProduct.unitPrice)
       }
 
@@ -180,7 +180,7 @@ const NewTransfer = () => {
   }
 
   const saveTransfer = async () => {
-    if (!form.transferDetails.fromStore || !form.transferDetails.toStore) {
+    if (!String(form.transferDetails.fromStore || '').trim() || !String(form.transferDetails.toStore || '').trim()) {
       alert('Please select both From and To stores/persons')
       return
     }
@@ -190,15 +190,15 @@ const NewTransfer = () => {
       return
     }
 
-    if (form.transferDetails.fromStore === form.transferDetails.toStore) {
+    if (String(form.transferDetails.fromStore).trim() === String(form.transferDetails.toStore).trim()) {
       alert('From and To stores/persons cannot be the same')
       return
     }
 
     try {
       const payload = {
-        fromStore: form.transferDetails.fromStore,
-        toStore: form.transferDetails.toStore,
+        fromStore: String(form.transferDetails.fromStore).trim(),
+        toStore: String(form.transferDetails.toStore).trim(),
         transferDate: form.transferDetails.transferDate,
         transferTime: form.transferDetails.transferTime,
         paymentMode: form.transferDetails.paymentMode,
@@ -517,7 +517,11 @@ const NewTransfer = () => {
             <div className="mt-6 flex justify-end">
               <button
                 onClick={saveTransfer}
-                disabled={form.products.length === 0 || !form.transferDetails.fromStore || !form.transferDetails.toStore}
+                disabled={
+                  form.products.length === 0 ||
+                  !String(form.transferDetails.fromStore || '').trim() ||
+                  !String(form.transferDetails.toStore || '').trim()
+                }
                 className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-slate-400 disabled:cursor-not-allowed"
               >
                 <FiSave className="w-4 h-4" />

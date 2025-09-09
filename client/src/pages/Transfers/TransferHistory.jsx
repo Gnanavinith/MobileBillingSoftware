@@ -3,7 +3,8 @@ import { FiFilter, FiDownload, FiEye, FiSearch, FiPrinter } from 'react-icons/fi
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
 
-const storageKey = 'mobilebill:transfers'
+// Resolve API base: in Electron packaged app, backend is on localhost:5000; in dev use Vite proxy with empty base
+const apiBase = (typeof window !== 'undefined' && window?.process?.versions?.electron) ? 'http://localhost:5000' : ''
 
 const TransferHistory = () => {
   const [transfers, setTransfers] = useState([])
@@ -32,142 +33,14 @@ const TransferHistory = () => {
     loadData()
   }, [])
 
-  const loadData = () => {
+  const loadData = async () => {
     try {
-      const savedTransfers = JSON.parse(localStorage.getItem(storageKey) || '[]')
-      if (savedTransfers.length === 0) {
-        // Add dummy transfer data if none exist
-        const dummyTransfers = [
-          {
-            id: 'TRF-001',
-            transferDetails: {
-              fromStore: 'STORE-001',
-              toStore: 'STORE-002',
-              transferDate: '2024-01-15',
-              transferTime: '10:30',
-              paymentMode: 'Cash',
-              remarks: 'Regular stock transfer to Mumbai branch'
-            },
-            products: [
-              {
-                productId: 'PROD-002',
-                productName: 'Ear Buds',
-                productModel: 'OnePlus Buds Z2',
-                productSku: 'OP-BUDS-002',
-                quantity: 10,
-                unitPrice: 1200,
-                totalPrice: 12000
-              },
-              {
-                productId: 'PROD-003',
-                productName: 'Mobile Cover',
-                productModel: 'Redmi Note 12 Pro',
-                productSku: 'RM-COVER-003',
-                quantity: 5,
-                unitPrice: 1500,
-                totalPrice: 7500
-              }
-            ],
-            totalAmount: 19500,
-            status: 'Completed',
-            createdAt: '2024-01-15T10:30:00Z',
-            updatedAt: '2024-01-15T10:30:00Z'
-          },
-          {
-            id: 'TRF-002',
-            transferDetails: {
-              fromStore: 'STORE-001',
-              toStore: 'PERSON-001',
-              transferDate: '2024-01-20',
-              transferTime: '14:15',
-              paymentMode: 'UPI',
-              remarks: 'Field sales inventory for John Doe'
-            },
-            products: [
-              {
-                productId: 'PROD-001',
-                productName: 'Smartphone',
-                productModel: 'Samsung Galaxy A54',
-                productSku: 'SAM-A54-001',
-                quantity: 2,
-                unitPrice: 6500,
-                totalPrice: 13000
-              }
-            ],
-            totalAmount: 13000,
-            status: 'Completed',
-            createdAt: '2024-01-20T14:15:00Z',
-            updatedAt: '2024-01-20T14:15:00Z'
-          },
-          {
-            id: 'TRF-003',
-            transferDetails: {
-              fromStore: 'STORE-002',
-              toStore: 'STORE-003',
-              transferDate: '2024-01-25',
-              transferTime: '09:45',
-              paymentMode: 'Bank',
-              remarks: 'Inter-branch transfer for Delhi store'
-            },
-            products: [
-              {
-                productId: 'PROD-004',
-                productName: 'Screen Protector',
-                productModel: 'Tempered Glass Universal',
-                productSku: 'SP-UNIV-004',
-                quantity: 20,
-                unitPrice: 400,
-                totalPrice: 8000
-              },
-              {
-                productId: 'PROD-005',
-                productName: 'Charger',
-                productModel: 'Samsung Fast Charger',
-                productSku: 'SAM-CHG-005',
-                quantity: 3,
-                unitPrice: 1500,
-                totalPrice: 4500
-              }
-            ],
-            totalAmount: 12500,
-            status: 'Pending',
-            createdAt: '2024-01-25T09:45:00Z',
-            updatedAt: '2024-01-25T09:45:00Z'
-          },
-          {
-            id: 'TRF-004',
-            transferDetails: {
-              fromStore: 'STORE-001',
-              toStore: 'PERSON-002',
-              transferDate: '2024-02-01',
-              transferTime: '16:20',
-              paymentMode: 'Credit',
-              remarks: 'Service technician inventory for Jane Smith'
-            },
-            products: [
-              {
-                productId: 'PROD-004',
-                productName: 'Screen Protector',
-                productModel: 'Tempered Glass Universal',
-                productSku: 'SP-UNIV-004',
-                quantity: 15,
-                unitPrice: 400,
-                totalPrice: 6000
-              }
-            ],
-            totalAmount: 6000,
-            status: 'Cancelled',
-            createdAt: '2024-02-01T16:20:00Z',
-            updatedAt: '2024-02-01T16:20:00Z'
-          }
-        ]
-        localStorage.setItem(storageKey, JSON.stringify(dummyTransfers))
-        setTransfers(dummyTransfers)
-      } else {
-        setTransfers(Array.isArray(savedTransfers) ? savedTransfers : [])
-      }
+      const res = await fetch(`${apiBase}/api/transfers`)
+      const data = await res.json()
+      setTransfers(Array.isArray(data) ? data : [])
     } catch (error) {
-      console.error('Error loading data:', error)
+      console.error('Error loading transfers:', error)
+      setTransfers([])
     }
   }
 
@@ -179,19 +52,19 @@ const TransferHistory = () => {
     }
 
     if (filters.fromStore) {
-      filtered = filtered.filter(t => t.transferDetails.fromStore === filters.fromStore)
+      filtered = filtered.filter(t => fromOf(t) === filters.fromStore)
     }
 
     if (filters.toStore) {
-      filtered = filtered.filter(t => t.transferDetails.toStore === filters.toStore)
+      filtered = filtered.filter(t => toOf(t) === filters.toStore)
     }
 
     if (filters.dateFrom) {
-      filtered = filtered.filter(t => t.transferDetails.transferDate >= filters.dateFrom)
+      filtered = filtered.filter(t => dateOf(t) >= filters.dateFrom)
     }
 
     if (filters.dateTo) {
-      filtered = filtered.filter(t => t.transferDetails.transferDate <= filters.dateTo)
+      filtered = filtered.filter(t => dateOf(t) <= filters.dateTo)
     }
 
     if (filters.search) {
@@ -203,7 +76,7 @@ const TransferHistory = () => {
           p.productModel.toLowerCase().includes(searchLower) ||
           p.productSku.toLowerCase().includes(searchLower)
         ) ||
-        t.transferDetails.remarks.toLowerCase().includes(searchLower)
+        remarksOf(t).toLowerCase().includes(searchLower)
       )
     }
 
@@ -220,6 +93,14 @@ const TransferHistory = () => {
   }
 
   const getStoreName = (storeText) => storeText || 'Unknown'
+
+  // Support both shapes: old (transferDetails.*) and backend (root-level fields)
+  const fromOf = (t) => t?.transferDetails?.fromStore ?? t?.fromStore ?? ''
+  const toOf = (t) => t?.transferDetails?.toStore ?? t?.toStore ?? ''
+  const dateOf = (t) => t?.transferDetails?.transferDate ?? t?.transferDate ?? ''
+  const timeOf = (t) => t?.transferDetails?.transferTime ?? t?.transferTime ?? ''
+  const payModeOf = (t) => t?.transferDetails?.paymentMode ?? t?.paymentMode ?? ''
+  const remarksOf = (t) => t?.transferDetails?.remarks ?? t?.remarks ?? ''
 
   const exportToPDF = () => {
     const doc = new jsPDF()
@@ -246,15 +127,15 @@ const TransferHistory = () => {
       transfer.products.forEach((product, index) => {
         tableData.push([
           transfer.id,
-          getStoreName(transfer.transferDetails.fromStore),
-          getStoreName(transfer.transferDetails.toStore),
+          getStoreName(fromOf(transfer)),
+          getStoreName(toOf(transfer)),
           product.productName,
           product.productSku,
           product.quantity,
           `₹${product.unitPrice.toFixed(2)}`,
           `₹${product.totalPrice.toFixed(2)}`,
-          transfer.transferDetails.paymentMode,
-          transfer.transferDetails.transferDate,
+          payModeOf(transfer),
+          dateOf(transfer),
           transfer.status
         ])
       })
@@ -292,19 +173,19 @@ const TransferHistory = () => {
       ...filteredTransfers.map(transfer => 
         transfer.products.map(product => [
           `"${transfer.id}"`,
-          `"${getStoreName(transfer.transferDetails.fromStore)}"`,
-          `"${getStoreName(transfer.transferDetails.toStore)}"`,
+          `"${getStoreName(fromOf(transfer))}"`,
+          `"${getStoreName(toOf(transfer))}"`,
           `"${product.productName}"`,
           `"${product.productModel}"`,
           `"${product.productSku}"`,
           product.quantity,
           product.unitPrice.toFixed(2),
           product.totalPrice.toFixed(2),
-          `"${transfer.transferDetails.paymentMode}"`,
-          transfer.transferDetails.transferDate,
-          transfer.transferDetails.transferTime,
+          `"${payModeOf(transfer)}"`,
+          dateOf(transfer),
+          timeOf(transfer),
           `"${transfer.status}"`,
-          `"${transfer.transferDetails.remarks || 'N/A'}"`,
+          `"${remarksOf(transfer) || 'N/A'}"`,
           transfer.totalAmount.toFixed(2)
         ].join(','))
       ).flat()
@@ -330,20 +211,20 @@ const TransferHistory = () => {
     // Transfer ID and Date
     doc.setFontSize(12)
     doc.text(`Transfer ID: ${transfer.id}`, 14, 35)
-    doc.text(`Date: ${transfer.transferDetails.transferDate}`, 14, 42)
-    doc.text(`Time: ${transfer.transferDetails.transferTime}`, 14, 49)
+    doc.text(`Date: ${dateOf(transfer)}`, 14, 42)
+    doc.text(`Time: ${timeOf(transfer)}`, 14, 49)
     
     // Transfer Details
     doc.setFontSize(14)
     doc.text('Transfer Details:', 14, 65)
     doc.setFontSize(10)
-    doc.text(`From: ${getStoreName(transfer.transferDetails.fromStore)}`, 14, 75)
-    doc.text(`To: ${getStoreName(transfer.transferDetails.toStore)}`, 14, 82)
-    doc.text(`Payment Mode: ${transfer.transferDetails.paymentMode}`, 14, 89)
+    doc.text(`From: ${getStoreName(fromOf(transfer))}`, 14, 75)
+    doc.text(`To: ${getStoreName(toOf(transfer))}`, 14, 82)
+    doc.text(`Payment Mode: ${payModeOf(transfer)}`, 14, 89)
     doc.text(`Status: ${transfer.status}`, 14, 96)
     
-    if (transfer.transferDetails.remarks) {
-      doc.text(`Remarks: ${transfer.transferDetails.remarks}`, 14, 103)
+    if (remarksOf(transfer)) {
+      doc.text(`Remarks: ${remarksOf(transfer)}`, 14, 103)
     }
     
     // Products Table
@@ -383,14 +264,43 @@ const TransferHistory = () => {
     setShowModal(true)
   }
 
-  const updateTransferStatus = (transferId, newStatus) => {
-    const updatedTransfers = transfers.map(transfer => 
-      transfer.id === transferId 
-        ? { ...transfer, status: newStatus, updatedAt: new Date().toISOString() }
-        : transfer
-    )
-    setTransfers(updatedTransfers)
-    localStorage.setItem(storageKey, JSON.stringify(updatedTransfers))
+  const updateTransferStatus = async (transferId, newStatus) => {
+    try {
+      const res = await fetch(`${apiBase}/api/transfers/${transferId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+      if (!res.ok) throw new Error('Failed to update status')
+      await loadData()
+    } catch (err) {
+      console.error('Status update failed:', err)
+      alert('Failed to update status')
+    }
+  }
+
+  const editTransfer = async (transfer) => {
+    const current = transfer?.status || ''
+    const next = window.prompt('Update status to (Completed / Pending / Cancelled):', current)
+    if (!next) return
+    const normalized = next.trim()
+    if (!['Completed','Pending','Cancelled'].includes(normalized)) {
+      alert('Invalid status')
+      return
+    }
+    await updateTransferStatus(transfer.id, normalized)
+  }
+
+  const deleteTransfer = async (transfer) => {
+    if (!window.confirm(`Delete transfer ${transfer.id}? This cannot be undone.`)) return
+    try {
+      const res = await fetch(`${apiBase}/api/transfers/${transfer.id}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error('Failed to delete')
+      await loadData()
+    } catch (err) {
+      console.error('Delete failed:', err)
+      alert('Failed to delete transfer')
+    }
   }
 
   return (
@@ -542,8 +452,8 @@ const TransferHistory = () => {
                   transfer.products.map((product, productIndex) => (
                     <tr key={`${transfer.id}-${productIndex}`} className="border-b border-slate-100 hover:bg-slate-50">
                       <td className="py-3 px-4 font-medium">{transfer.id}</td>
-                      <td className="py-3 px-4">{getStoreName(transfer.transferDetails.fromStore)}</td>
-                      <td className="py-3 px-4">{getStoreName(transfer.transferDetails.toStore)}</td>
+                      <td className="py-3 px-4">{getStoreName(fromOf(transfer))}</td>
+                      <td className="py-3 px-4">{getStoreName(toOf(transfer))}</td>
                       <td className="py-3 px-4">{product.productName}</td>
                       <td className="py-3 px-4">{product.productSku}</td>
                       <td className="py-3 px-4">{product.quantity}</td>
@@ -551,10 +461,10 @@ const TransferHistory = () => {
                       <td className="py-3 px-4">₹{product.totalPrice.toFixed(2)}</td>
                       <td className="py-3 px-4">
                         <span className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-700">
-                          {transfer.transferDetails.paymentMode}
+                          {payModeOf(transfer)}
                         </span>
                       </td>
-                      <td className="py-3 px-4">{transfer.transferDetails.transferDate}</td>
+                      <td className="py-3 px-4">{dateOf(transfer)}</td>
                       <td className="py-3 px-4">
                         <div className="flex gap-2">
                           <button
@@ -572,14 +482,14 @@ const TransferHistory = () => {
                             <FiPrinter className="w-4 h-4" />
                           </button>
                           <button
-                            onClick={() => {/* Implement edit modal trigger */}}
+                            onClick={() => editTransfer(transfer)}
                             className="text-slate-700 hover:text-slate-900"
                             title="Edit"
                           >
                             Edit
                           </button>
                           <button
-                            onClick={() => {/* Implement delete via backend */}}
+                            onClick={() => deleteTransfer(transfer)}
                             className="text-red-600 hover:text-red-800"
                             title="Delete"
                           >
@@ -615,17 +525,17 @@ const TransferHistory = () => {
                 <h3 className="font-semibold mb-2">Transfer Information</h3>
                 <div className="space-y-2 text-sm">
                   <p><span className="font-medium">Transfer ID:</span> {selectedTransfer.id}</p>
-                  <p><span className="font-medium">From:</span> {getStoreName(selectedTransfer.transferDetails.fromStore)}</p>
-                  <p><span className="font-medium">To:</span> {getStoreName(selectedTransfer.transferDetails.toStore)}</p>
-                  <p><span className="font-medium">Date:</span> {selectedTransfer.transferDetails.transferDate}</p>
-                  <p><span className="font-medium">Time:</span> {selectedTransfer.transferDetails.transferTime}</p>
-                  <p><span className="font-medium">Payment Mode:</span> {selectedTransfer.transferDetails.paymentMode}</p>
+                  <p><span className="font-medium">From:</span> {getStoreName(fromOf(selectedTransfer))}</p>
+                  <p><span className="font-medium">To:</span> {getStoreName(toOf(selectedTransfer))}</p>
+                  <p><span className="font-medium">Date:</span> {dateOf(selectedTransfer)}</p>
+                  <p><span className="font-medium">Time:</span> {timeOf(selectedTransfer)}</p>
+                  <p><span className="font-medium">Payment Mode:</span> {payModeOf(selectedTransfer)}</p>
                   <p><span className="font-medium">Status:</span> 
                     <span className={`ml-2 px-2 py-1 text-xs rounded-full ${getStatusColor(selectedTransfer.status)}`}>
                       {selectedTransfer.status}
                     </span>
                   </p>
-                  <p><span className="font-medium">Remarks:</span> {selectedTransfer.transferDetails.remarks || 'N/A'}</p>
+                  <p><span className="font-medium">Remarks:</span> {remarksOf(selectedTransfer) || 'N/A'}</p>
                 </div>
               </div>
               

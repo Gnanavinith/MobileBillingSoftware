@@ -1,9 +1,8 @@
 import React, { useState, useEffect, useMemo } from 'react'
 import { FiSearch, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi'
 
-const inventoryStorageKey = 'mobilebill:inventory'
-const purchasesStorageKey = 'mobilebill:purchases'
-const salesStorageKey = 'mobilebill:sales'
+// Resolve API base: in Electron packaged app, backend is on localhost:5000; in dev use Vite proxy with empty base
+const apiBase = (typeof window !== 'undefined' && window?.process?.versions?.electron) ? 'http://localhost:5000' : ''
 
 const Mobiles = () => {
   const [inventory, setInventory] = useState([])
@@ -11,136 +10,62 @@ const Mobiles = () => {
   const [sales, setSales] = useState([])
   const [search, setSearch] = useState('')
   const [lowStockThreshold, setLowStockThreshold] = useState(5)
+  const [storeId, setStoreId] = useState('')
+  const [storeStock, setStoreStock] = useState([])
 
   useEffect(() => {
     loadData()
   }, [])
 
-  const loadData = () => {
+  useEffect(() => {
+    const loadStore = async () => {
+      if (!storeId) { setStoreStock([]); return }
+      try {
+        const res = await fetch(`${apiBase}/api/store-stock?storeId=${encodeURIComponent(storeId)}`)
+        const data = await res.json()
+        setStoreStock(Array.isArray(data) ? data : [])
+      } catch { setStoreStock([]) }
+    }
+    loadStore()
+  }, [storeId])
+
+  const loadData = async () => {
     try {
-      const savedInventory = JSON.parse(localStorage.getItem(inventoryStorageKey) || '[]')
-      if (savedInventory.length === 0) {
-        // Add dummy inventory data
-        const dummyInventory = [
-          {
-            id: 'PROD-001',
-            category: 'Mobile',
-            productName: 'Smartphone',
-            model: 'Samsung Galaxy A54',
-            stock: 5,
-            purchasePrice: 5000,
-            sellingPrice: 6500,
-            createdAt: '2024-02-01T11:20:00Z'
-          },
-          {
-            id: 'PROD-002',
-            category: 'Mobile',
-            productName: 'Smartphone',
-            model: 'iPhone 14',
-            stock: 3,
-            purchasePrice: 45000,
-            sellingPrice: 55000,
-            createdAt: '2024-01-28T09:15:00Z'
-          },
-          {
-            id: 'PROD-003',
-            category: 'Mobile',
-            productName: 'Smartphone',
-            model: 'OnePlus 11R',
-            stock: 8,
-            purchasePrice: 35000,
-            sellingPrice: 42000,
-            createdAt: '2024-01-25T14:30:00Z'
-          },
-          {
-            id: 'PROD-004',
-            category: 'Mobile',
-            productName: 'Smartphone',
-            model: 'Redmi Note 12 Pro',
-            stock: 12,
-            purchasePrice: 18000,
-            sellingPrice: 22000,
-            createdAt: '2024-01-20T16:45:00Z'
-          }
-        ]
-        localStorage.setItem(inventoryStorageKey, JSON.stringify(dummyInventory))
-        setInventory(dummyInventory)
-      } else {
-        setInventory(Array.isArray(savedInventory) ? savedInventory : [])
-      }
-
-      const savedPurchases = JSON.parse(localStorage.getItem(purchasesStorageKey) || '[]')
-      setPurchases(Array.isArray(savedPurchases) ? savedPurchases : [])
-
-      const savedSales = JSON.parse(localStorage.getItem(salesStorageKey) || '[]')
-      if (savedSales.length === 0) {
-        // Add dummy sales data to show stock reduction
-        const dummySales = [
-          {
-            id: 'SALE-001',
-            items: [
-              {
-                productName: 'Smartphone',
-                model: 'Samsung Galaxy A54',
-                quantity: 2
-              }
-            ],
-            createdAt: '2024-02-03T10:30:00Z'
-          },
-          {
-            id: 'SALE-002',
-            items: [
-              {
-                productName: 'Smartphone',
-                model: 'OnePlus 11R',
-                quantity: 1
-              }
-            ],
-            createdAt: '2024-02-05T14:15:00Z'
-          }
-        ]
-        localStorage.setItem(salesStorageKey, JSON.stringify(dummySales))
-        setSales(dummySales)
-      } else {
-        setSales(Array.isArray(savedSales) ? savedSales : [])
-      }
+      const res = await fetch(`${apiBase}/api/mobiles`)
+      const data = await res.json()
+      const rows = Array.isArray(data) ? data : []
+      const mapped = rows.map(r => ({
+        id: r.id,
+        category: 'Mobile',
+        productName: r.mobileName,
+        model: r.modelNumber,
+        stock: Number(r.totalQuantity) || 0,
+        purchasePrice: Number(r.pricePerProduct) || 0,
+        sellingPrice: Number(r.pricePerProduct) || 0,
+        createdAt: r.createdAt || new Date().toISOString(),
+      }))
+      setInventory(mapped)
+      setPurchases([])
+      setSales([])
     } catch (error) {
-      console.error('Error loading data:', error)
+      console.error('Error loading mobiles:', error)
+      setInventory([])
     }
   }
 
-  const calculateRemainingStock = (productName, model) => {
-    // Get total purchased quantity
-    const totalPurchased = purchases.reduce((sum, purchase) => {
-      return sum + purchase.items.reduce((itemSum, item) => {
-        if (item.productName === productName && item.model === model) {
-          return itemSum + item.quantity
-        }
-        return itemSum
-      }, 0)
-    }, 0)
-
-    // Get total sold/used quantity
-    const totalSold = sales.reduce((sum, sale) => {
-      return sum + (sale.items || []).reduce((itemSum, item) => {
-        if (item.productName === productName && item.model === model) {
-          return itemSum + item.quantity
-        }
-        return itemSum
-      }, 0)
-    }, 0)
-
-    return totalPurchased - totalSold
-  }
+  // Remaining stock directly from backend quantity for now
 
   const mobileInventory = useMemo(() => {
     const mobileItems = inventory.filter(item => item.category === 'Mobile')
-    
-    return mobileItems.map(item => ({
-      ...item,
-      remainingStock: calculateRemainingStock(item.productName, item.model)
-    }))
-  }, [inventory, purchases, sales])
+    if (!storeId) return mobileItems.map(item => ({ ...item, remainingStock: item.stock }))
+    // When a store is selected, sum quantities from StoreStock by matching productModel/name
+    return mobileItems.map(item => {
+      const qty = storeStock
+        .filter(s => (s.productModel || '') === item.model && (s.productName || '') === item.productName)
+        .reduce((sum, r) => sum + (Number(r.quantity) || 0), 0)
+      return { ...item, remainingStock: qty }
+    })
+  }, [inventory, storeId, storeStock])
 
   const filteredInventory = useMemo(() => {
     const q = search.trim().toLowerCase()
@@ -166,6 +91,15 @@ const Mobiles = () => {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-semibold">Mobile Inventory</h1>
         <div className="flex items-center space-x-4">
+          <div className="flex items-center space-x-2">
+            <label className="text-sm font-medium text-slate-700">Store:</label>
+            <input
+              value={storeId}
+              onChange={e => setStoreId(e.target.value)}
+              placeholder="e.g. STORE-001 (blank = all)"
+              className="w-40 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+            />
+          </div>
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium text-slate-700">Low Stock Threshold:</label>
             <input
