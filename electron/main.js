@@ -1,6 +1,9 @@
-const { app, BrowserWindow } = require("electron");
-const path = require("path");
-const isDev = !app.isPackaged;
+const { app, BrowserWindow } = require("electron")
+const path = require("path")
+const { spawn } = require("child_process")
+
+const isDev = !app.isPackaged
+let serverProcess
 
 function createWindow() {
   const win = new BrowserWindow({
@@ -9,19 +12,37 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      preload: path.join(__dirname, "preload.js") // optional if using IPC
     },
-  });
+  })
 
-  // In dev: load Vite React app, in prod: load built files
   if (isDev) {
-    win.loadURL("http://localhost:5173"); // Vite dev server
+    // Load Vite dev server in dev mode
+    win.loadURL("http://localhost:5173")
   } else {
-    win.loadFile(path.join(__dirname, "../client/dist/index.html"));
+    // Load built React files in production
+    win.loadFile(path.join(__dirname, "../client/dist/index.html"))
   }
 }
 
-app.whenReady().then(createWindow);
+app.whenReady().then(() => {
+  if (!isDev) {
+    // Start backend server in production
+    const serverPath = path.join(process.resourcesPath, "server", "server.js")
+    serverProcess = spawn(process.execPath, [serverPath], {
+      stdio: "inherit"
+    })
+  }
+
+  createWindow()
+})
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") app.quit();
-});
+  if (process.platform !== "darwin") {
+    app.quit()
+  }
+})
+
+app.on("will-quit", () => {
+  if (serverProcess) serverProcess.kill()
+})
