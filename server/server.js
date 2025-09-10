@@ -5,6 +5,9 @@ const dealerRoutes = require("./routes/dealerRoutes");
 const authRoutes = require("./routes/authRoutes");
 const purchaseRoutes = require("./routes/purchaseRoutes");
 const stockRoutes = require("./routes/stockRoutes");
+const brandModelRoutes = require("./routes/brandModelRoutes");
+const dashboardRoutes = require("./routes/dashboardRoutes");
+const serviceInvoiceRoutes = require("./routes/serviceInvoiceRoutes");
 const transferRoutes = require("./routes/transferRoutes");
 const app = express();
 
@@ -28,7 +31,10 @@ app.use('/api/auth', authRoutes)
 app.use('/api/dealers', dealerRoutes)
 app.use('/api/purchases', purchaseRoutes)
 app.use('/api', stockRoutes)
+app.use('/api/brand-models', brandModelRoutes)
+app.use('/api/service-invoices', serviceInvoiceRoutes)
 app.use('/api/transfers', transferRoutes)
+app.use('/api/dashboard', dashboardRoutes)
 
 // Global error handler
 app.use((err, req, res, _next) => {

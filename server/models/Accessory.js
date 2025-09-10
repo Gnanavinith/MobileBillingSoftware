@@ -8,6 +8,7 @@ const AccessorySchema = new mongoose.Schema({
   productName: { type: String, required: true },
   quantity: { type: Number, required: true, min: 0 },
   unitPrice: { type: Number, required: true, min: 0 },
+  sellingPrice: { type: Number, required: false, min: 0, default: 0 },
 }, { timestamps: true })
 
 module.exports = mongoose.model('Accessory', AccessorySchema)

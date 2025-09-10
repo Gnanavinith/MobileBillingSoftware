@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react'
-import { FiSearch, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi'
+import { FiSearch, FiAlertTriangle, FiCheckCircle, FiSmartphone, FiTag, FiPackage, FiDollarSign, FiCalendar, FiDownload, FiFilter } from 'react-icons/fi'
 
 // Resolve API base: in Electron packaged app, backend is on localhost:5000; in dev use Vite proxy with empty base
 const apiBase = (typeof window !== 'undefined' && window?.process?.versions?.electron) ? 'http://localhost:5000' : ''
@@ -10,8 +10,23 @@ const Mobiles = () => {
   const [sales, setSales] = useState([])
   const [search, setSearch] = useState('')
   const [lowStockThreshold, setLowStockThreshold] = useState(5)
+  const [searchInput, setSearchInput] = useState('')
   const [storeId, setStoreId] = useState('')
   const [storeStock, setStoreStock] = useState([])
+  const [filterBrand, setFilterBrand] = useState('')
+  const [filterMobile, setFilterMobile] = useState('')
+  const [filterModel, setFilterModel] = useState('')
+  const [filterColor, setFilterColor] = useState('')
+  const [filterRam, setFilterRam] = useState('')
+  const [filterStorage, setFilterStorage] = useState('')
+  const [filterProcessor, setFilterProcessor] = useState('')
+  const [brandOptions, setBrandOptions] = useState([])
+  const [mobileOptions, setMobileOptions] = useState([])
+  const [modelOptions, setModelOptions] = useState([])
+  const [colorOptions, setColorOptions] = useState([])
+  const [ramOptions, setRamOptions] = useState([])
+  const [storageOptions, setStorageOptions] = useState([])
+  const [processorOptions, setProcessorOptions] = useState([])
 
   useEffect(() => {
     loadData()
@@ -38,13 +53,21 @@ const Mobiles = () => {
         id: r.id,
         category: 'Mobile',
         productName: r.mobileName,
+        brand: r.brand || '',
         model: r.modelNumber,
+        color: r.color || '',
+        ram: r.ram || '',
+        storage: r.storage || '',
+        processor: r.processor || '',
         stock: Number(r.totalQuantity) || 0,
         purchasePrice: Number(r.pricePerProduct) || 0,
-        sellingPrice: Number(r.pricePerProduct) || 0,
+        sellingPrice: Number(r.sellingPrice ?? r.pricePerProduct) || 0,
         createdAt: r.createdAt || new Date().toISOString(),
       }))
       setInventory(mapped)
+      // initial options from full dataset
+      const brands = Array.from(new Set(mapped.map(x => x.brand).filter(Boolean))).sort()
+      setBrandOptions(brands)
       setPurchases([])
       setSales([])
     } catch (error) {
@@ -57,25 +80,104 @@ const Mobiles = () => {
 
   const mobileInventory = useMemo(() => {
     const mobileItems = inventory.filter(item => item.category === 'Mobile')
-    if (!storeId) return mobileItems.map(item => ({ ...item, remainingStock: item.stock }))
+      .filter(it => {
+        const q = search.trim().toLowerCase()
+        if (!q) return true
+        const brand = (it.brand || '').toLowerCase()
+        const name = (it.productName || '').toLowerCase()
+        const model = (it.model || '').toLowerCase()
+        const terms = q.split(/\s+/).filter(Boolean)
+        // Match all terms anywhere in brand OR name OR model
+        return terms.every(t => brand.includes(t) || name.includes(t) || model.includes(t))
+      })
+      .filter(it => (!filterBrand || it.brand === filterBrand))
+      .filter(it => (!filterMobile || it.productName === filterMobile))
+      .filter(it => (!filterModel || it.model === filterModel))
+      .filter(it => (!filterColor || it.color === filterColor))
+      .filter(it => (!filterRam || it.ram === filterRam))
+      .filter(it => (!filterStorage || it.storage === filterStorage))
+      .filter(it => (!filterProcessor || it.processor === filterProcessor))
+    // Group by brand+model, sum stock and compute min createdAt
+    const grouped = mobileItems.reduce((map, it) => {
+      const key = `${(it.brand||'').toLowerCase()}::${(it.model||'').toLowerCase()}`
+      if (!map[key]) map[key] = { ...it, id: key, productName: `${it.brand ? (it.brand + ' ') : ''}${it.productName}`, imei1: '', imei2: '', stock: 0, createdAt: it.createdAt }
+      map[key].stock += Number(it.stock) || 0
+      if (new Date(it.createdAt) < new Date(map[key].createdAt)) map[key].createdAt = it.createdAt
+      return map
+    }, {})
+    const arr = Object.values(grouped)
+    if (!storeId) return arr.map(item => ({ ...item, remainingStock: item.stock }))
     // When a store is selected, sum quantities from StoreStock by matching productModel/name
-    return mobileItems.map(item => {
+    return arr.map(item => {
       const qty = storeStock
         .filter(s => (s.productModel || '') === item.model && (s.productName || '') === item.productName)
         .reduce((sum, r) => sum + (Number(r.quantity) || 0), 0)
       return { ...item, remainingStock: qty }
     })
-  }, [inventory, storeId, storeStock])
+  }, [inventory, storeId, storeStock, search, filterBrand, filterMobile, filterModel, filterColor, filterRam, filterStorage, filterProcessor])
 
-  const filteredInventory = useMemo(() => {
-    const q = search.trim().toLowerCase()
-    if (!q) return mobileInventory
-    
-    return mobileInventory.filter(item =>
-      item.productName.toLowerCase().includes(q) ||
-      item.model.toLowerCase().includes(q)
-    )
-  }, [mobileInventory, search])
+  // Build dependent dropdown options based on brand/mobile/model selections
+  useEffect(() => {
+    const items = inventory.filter(x => x.category === 'Mobile')
+    const forBrand = items
+    const forMobile = items.filter(x => (!filterBrand || x.brand === filterBrand))
+    const forModel = forMobile.filter(x => (!filterMobile || x.productName === filterMobile))
+    const forDetails = forModel.filter(x => (!filterModel || x.model === filterModel))
+
+    const mobiles = Array.from(new Set(forMobile.map(x => x.productName).filter(Boolean))).sort()
+    const models = Array.from(new Set(forModel.map(x => x.model).filter(Boolean))).sort()
+    const colors = Array.from(new Set(forDetails.map(x => x.color).filter(Boolean))).sort()
+    const rams = Array.from(new Set(forDetails.map(x => x.ram).filter(Boolean))).sort()
+    const storages = Array.from(new Set(forDetails.map(x => x.storage).filter(Boolean))).sort()
+    const processors = Array.from(new Set(forDetails.map(x => x.processor).filter(Boolean))).sort()
+
+    setMobileOptions(mobiles)
+    setModelOptions(models)
+    setColorOptions(colors)
+    setRamOptions(rams)
+    setStorageOptions(storages)
+    setProcessorOptions(processors)
+  }, [inventory, filterBrand, filterMobile, filterModel])
+
+  const filteredInventory = useMemo(() => mobileInventory, [mobileInventory])
+
+  const downloadStatement = async (item) => {
+    try {
+      const res = await fetch(`${apiBase}/api/mobiles?modelNumber=${encodeURIComponent(item.model)}`)
+      const data = await res.json()
+      const rows = Array.isArray(data) ? data : []
+      const header = ['Mobile','Model','Color','RAM','Storage','IMEI1','IMEI2','Dealer','Cost','Sell']
+      const lines = [header.join(',')]
+      rows.forEach(r => {
+        const fields = [
+          (r.mobileName||'').replaceAll(',', ' '),
+          (r.modelNumber||'').replaceAll(',', ' '),
+          (r.color||'').replaceAll(',', ' '),
+          (r.ram||'').replaceAll(',', ' '),
+          (r.storage||'').replaceAll(',', ' '),
+          (r.imeiNumber1||'').replaceAll(',', ' '),
+          (r.imeiNumber2||'').replaceAll(',', ' '),
+          (r.dealerName||'').replaceAll(',', ' '),
+          String(r.pricePerProduct??'0'),
+          String(r.sellingPrice??'0'),
+        ]
+        lines.push(fields.join(','))
+      })
+      const csv = lines.join('\n')
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      const fname = `${(item.brand||'brand').replaceAll(' ','_')}-${(item.model||'model').replaceAll(' ','_')}-statement.csv`
+      a.download = fname
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+    } catch (e) {
+      alert('Failed to download statement')
+    }
+  }
 
   const lowStockItems = filteredInventory.filter(item => item.remainingStock <= lowStockThreshold)
   const outOfStockItems = filteredInventory.filter(item => item.remainingStock <= 0)
@@ -89,37 +191,89 @@ const Mobiles = () => {
   return (
     <div className="p-4">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Mobile Inventory</h1>
+        <h1 className="text-2xl font-semibold flex items-center gap-2"><FiSmartphone className="text-slate-700" /> Mobile Inventory</h1>
         <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-slate-700">Store:</label>
-            <input
-              value={storeId}
-              onChange={e => setStoreId(e.target.value)}
-              placeholder="e.g. STORE-001 (blank = all)"
-              className="w-40 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
-            />
-          </div>
-          <div className="flex items-center space-x-2">
-            <label className="text-sm font-medium text-slate-700">Low Stock Threshold:</label>
-            <input
-              type="number"
-              value={lowStockThreshold}
-              onChange={(e) => setLowStockThreshold(parseInt(e.target.value) || 0)}
-              className="w-20 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
-              min="0"
-            />
-          </div>
           <div className="relative">
             <input
               type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search mobiles..."
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              onKeyDown={(e)=>{ if(e.key==='Enter'){ setSearch(searchInput.trim()) } }}
+              placeholder="Search by brand or mobile name..."
               className="w-64 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 pl-8"
             />
             <FiSearch className="absolute left-2 top-2.5 w-4 h-4 text-slate-400" />
           </div>
+          <button
+            onClick={()=>setSearch(searchInput.trim())}
+            className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50 flex items-center gap-2"
+          >
+            <FiSearch className="w-4 h-4" />
+            <span>Find</span>
+          </button>
+          <button
+            onClick={()=>{ setSearchInput(''); setSearch(''); setFilterMobile(''); setFilterModel(''); setFilterColor(''); setFilterRam(''); setFilterStorage('') }}
+            className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50"
+          >
+            Clear Filters
+          </button>
+          <div className="flex items-center gap-2 text-slate-600"><FiFilter className="w-4 h-4" /><span className="text-sm">Filters:</span></div>
+          <select
+            value={filterBrand}
+            onChange={e=>{ setFilterBrand(e.target.value); setFilterMobile(''); setFilterModel(''); setFilterColor(''); setFilterRam(''); setFilterStorage(''); setFilterProcessor('') }}
+            className="rounded-md border border-slate-300"
+          >
+            <option value="">All Brand</option>
+            {brandOptions.map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <select
+            value={filterMobile}
+            onChange={e=>{ setFilterMobile(e.target.value); setFilterModel(''); setFilterColor(''); setFilterRam(''); setFilterStorage(''); setFilterProcessor('') }}
+            className="rounded-md border border-slate-300"
+          >
+            <option value="">All Mobile</option>
+            {mobileOptions.map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <select
+            value={filterModel}
+            onChange={e=>{ setFilterModel(e.target.value); setFilterColor(''); setFilterRam(''); setFilterStorage(''); setFilterProcessor('') }}
+            className="rounded-md border border-slate-300"
+          >
+            <option value="">All Model</option>
+            {modelOptions.map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <select
+            value={filterColor}
+            onChange={e=>setFilterColor(e.target.value)}
+            className="rounded-md border border-slate-300"
+          >
+            <option value="">All Color</option>
+            {colorOptions.map(v => <option key={v} value={v}>{v}</option>)}
+          </select>
+          <select
+            value={filterRam}
+            onChange={e=>setFilterRam(e.target.value)}
+            className="rounded-md border border-slate-300"
+          >
+            <option value="">All RAM</option>
+            {ramOptions.map(r => <option key={r} value={r}>{r}</option>)}
+          </select>
+          <select
+            value={filterStorage}
+            onChange={e=>setFilterStorage(e.target.value)}
+            className="rounded-md border border-slate-300"
+          >
+            <option value="">All Storage</option>
+            {storageOptions.map(s => <option key={s} value={s}>{s}</option>)}
+          </select>
+          <select
+            value={filterProcessor}
+            onChange={e=>setFilterProcessor(e.target.value)}
+            className="rounded-md border border-slate-300"
+          >
+            <option value="">All Processor</option>
+            {processorOptions.map(p => <option key={p} value={p}>{p}</option>)}
+          </select>
         </div>
       </div>
 
@@ -179,27 +333,28 @@ const Mobiles = () => {
       {/* Inventory Table */}
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
         <div className="p-4 border-b border-slate-200">
-          <h2 className="text-lg font-semibold">Mobile Stock Details</h2>
+          <h2 className="text-lg font-semibold flex items-center gap-2"><FiPackage className="text-slate-700" /> Mobile Stock Details</h2>
         </div>
         
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
               <tr className="text-left text-slate-500 text-xs uppercase border-b">
-                <th className="py-3 px-4">Product Name</th>
-                <th className="py-3 px-4">Model/Variant</th>
+                <th className="py-3 px-4"><div className="flex items-center gap-1"><FiTag className="w-4 h-4" /> Product Name</div></th>
+                <th className="py-3 px-4"><div className="flex items-center gap-1"><FiTag className="w-4 h-4" /> Brand</div></th>
+                <th className="py-3 px-4"><div className="flex items-center gap-1"><FiSmartphone className="w-4 h-4" /> Model/Variant</div></th>
                 <th className="py-3 px-4">Remaining Stock</th>
-                <th className="py-3 px-4">Purchase Price</th>
-                <th className="py-3 px-4">Selling Price</th>
-                <th className="py-3 px-4">Stock Value</th>
-                <th className="py-3 px-4">Status</th>
-                <th className="py-3 px-4">Last Updated</th>
+                <th className="py-3 px-4"><div className="flex items-center gap-1"><FiDollarSign className="w-4 h-4" /> Purchase Price</div></th>
+                <th className="py-3 px-4"><div className="flex items-center gap-1"><FiDollarSign className="w-4 h-4" /> Stock Value</div></th>
+                <th className="py-3 px-4"><div className="flex items-center gap-1"><FiCheckCircle className="w-4 h-4" /> Status</div></th>
+                <th className="py-3 px-4"><div className="flex items-center gap-1"><FiCalendar className="w-4 h-4" /> Last Updated</div></th>
+                <th className="py-3 px-4"><div className="flex items-center gap-1"><FiDownload className="w-4 h-4" /> Actions</div></th>
               </tr>
             </thead>
             <tbody>
               {filteredInventory.length === 0 ? (
                 <tr>
-                  <td className="py-8 px-4 text-center text-slate-500" colSpan={8}>
+                  <td className="py-8 px-4 text-center text-slate-500" colSpan={10}>
                     No mobile products found in inventory.
                   </td>
                 </tr>
@@ -212,6 +367,7 @@ const Mobiles = () => {
                   return (
                     <tr key={item.id} className="border-b border-slate-100 hover:bg-slate-50">
                       <td className="py-3 px-4 font-medium">{item.productName}</td>
+                      <td className="py-3 px-4">{item.brand || '-'}</td>
                       <td className="py-3 px-4">{item.model}</td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 text-xs rounded-full font-medium ${
@@ -225,7 +381,6 @@ const Mobiles = () => {
                         </span>
                       </td>
                       <td className="py-3 px-4">₹{item.purchasePrice.toFixed(2)}</td>
-                      <td className="py-3 px-4">₹{item.sellingPrice.toFixed(2)}</td>
                       <td className="py-3 px-4">₹{stockValue.toFixed(2)}</td>
                       <td className="py-3 px-4">
                         <span className={`inline-flex items-center space-x-1 px-2 py-1 text-xs rounded-full ${stockStatus.color}`}>
@@ -235,6 +390,9 @@ const Mobiles = () => {
                       </td>
                       <td className="py-3 px-4 text-slate-500">
                         {new Date(item.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="py-3 px-4">
+                        <button onClick={()=>downloadStatement(item)} className="px-2 py-1 text-xs rounded-md border hover:bg-slate-50 inline-flex items-center gap-1"><FiDownload className="w-3 h-3" /> Download</button>
                       </td>
                     </tr>
                   )

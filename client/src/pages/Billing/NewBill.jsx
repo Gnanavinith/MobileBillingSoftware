@@ -4,7 +4,29 @@ import html2canvas from 'html2canvas'
 
 const apiBase = (typeof window !== 'undefined' && window?.process?.versions?.electron) ? 'http://localhost:5000' : ''
 
-const emptyItem = () => ({ name: '', imei: '', quantity: 1, price: 0, gstPercent: 18, discountType: 'percent', discountValue: 0 })
+const emptyItem = () => ({ 
+  type: 'Mobile', // 'Mobile' | 'Accessory'
+  name: '', 
+  imei: '', 
+  productId: '',
+  quantity: 1, 
+  price: 0, 
+  gstPercent: 18, 
+  discountType: 'percent', 
+  discountValue: 0,
+  // Mobile features
+  model: '',
+  color: '',
+  ram: '',
+  storage: '',
+  simSlot: '',
+  processor: '',
+  displaySize: '',
+  camera: '',
+  battery: '',
+  operatingSystem: '',
+  networkType: ''
+})
 
 const NewBill = () => {
   const [customerName, setCustomerName] = useState('')
@@ -16,17 +38,139 @@ const NewBill = () => {
   const [paymentMethod, setPaymentMethod] = useState('Cash')
   const [billNumber] = useState(() => `INV-${Date.now().toString().slice(-6)}`)
   const invoiceRef = useRef(null)
+  const [lookupLoading, setLookupLoading] = useState(false)
 
   const removeItem = (index) => setItems(prev => prev.filter((_, i) => i !== index))
-  const addDraftItem = () => {
+
+  // Fetch available stock for a given item (mobile by IMEI/model or accessory by productId/name)
+  const getAvailableStock = async (it) => {
+    try {
+      // Try mobiles first
+      const mobRes = await fetch(`${apiBase}/api/mobiles`)
+      const mobiles = await mobRes.json()
+      const imei = String(it.imei || '').trim()
+      if (imei) {
+        const mobByImei = Array.isArray(mobiles) ? mobiles.find(m => m.imeiNumber1 === imei || m.imeiNumber2 === imei) : null
+        if (mobByImei) return Number(mobByImei.totalQuantity) || 0
+      }
+      if (it.model) {
+        const mobByModel = Array.isArray(mobiles) ? mobiles.find(m => m.modelNumber === it.model) : null
+        if (mobByModel) return Number(mobByModel.totalQuantity) || 0
+      }
+      // Accessories by productId or name
+      let accessories = []
+      try {
+        const accRes = await fetch(`${apiBase}/api/accessories`)
+        accessories = await accRes.json()
+      } catch {}
+      if (it.productId) {
+        const accById = Array.isArray(accessories) ? accessories.find(a => a.productId === it.productId) : null
+        if (accById) return Number(accById.quantity) || 0
+      }
+      if (it.name) {
+        const accByName = Array.isArray(accessories) ? accessories.find(a => a.productName === it.name) : null
+        if (accByName) return Number(accByName.quantity) || 0
+      }
+    } catch {}
+    return 0
+  }
+
+  // Calculate already planned quantity for same item in current bill
+  const getPlannedQuantityInBill = (it) => {
+    const imei = String(it.imei || '').trim()
+    if (imei) {
+      return items.reduce((s, x) => s + ((String(x.imei || '').trim() === imei) ? (Number(x.quantity) || 0) : 0), 0)
+    }
+    if (it.productId) {
+      return items.reduce((s, x) => s + ((x.productId === it.productId) ? (Number(x.quantity) || 0) : 0), 0)
+    }
+    if (it.model) {
+      return items.reduce((s, x) => s + ((x.model === it.model) ? (Number(x.quantity) || 0) : 0), 0)
+    }
+    if (it.name) {
+      return items.reduce((s, x) => s + ((x.name === it.name) ? (Number(x.quantity) || 0) : 0), 0)
+    }
+    return 0
+  }
+
+  const addDraftItem = async () => {
     const qty = Number(draftItem.quantity) || 0
     const price = Number(draftItem.price) || 0
     if (!draftItem.name || qty <= 0 || price < 0) return
+    // Validate against available stock
+    const available = await getAvailableStock(draftItem)
+    const alreadyPlanned = getPlannedQuantityInBill(draftItem)
+    if (available > 0 && qty + alreadyPlanned > available) {
+      alert(`Insufficient stock. Available: ${available}. Already in bill: ${alreadyPlanned}. Requested add: ${qty}.`)
+      return
+    }
     setItems(prev => [...prev, { ...draftItem }])
     setDraftItem(emptyItem())
   }
   const clearDraftItem = () => setDraftItem(emptyItem())
   const removeLastItem = () => setItems(prev => prev.slice(0, -1))
+
+  const lookupByImeiOrProduct = async () => {
+    // Branch on type
+    if (draftItem.type === 'Accessory') {
+      const pid = String(draftItem.productId || '').trim()
+      if (!pid) return
+      setLookupLoading(true)
+      try {
+        const accRes = await fetch(`${apiBase}/api/accessories?productId=${encodeURIComponent(pid)}`)
+        const accessories = await accRes.json()
+        const accessory = Array.isArray(accessories) ? accessories.find(a => a.productId === pid) : null
+        if (accessory) {
+          setDraftItem(prev => ({
+            ...prev,
+            name: accessory.productName || prev.name,
+            price: Number(accessory.sellingPrice ?? accessory.unitPrice) || prev.price,
+          }))
+          return
+        }
+        alert('No accessory found with this Product ID')
+      } catch (e) {
+        alert('Failed to lookup accessory')
+      } finally { setLookupLoading(false) }
+      return
+    }
+
+    const imei = String(draftItem.imei || '').trim()
+    if (!imei) return
+    setLookupLoading(true)
+    try {
+      // Try mobile by IMEI first
+      const mobRes = await fetch(`${apiBase}/api/mobiles`)
+      const mobiles = await mobRes.json()
+      const mobile = Array.isArray(mobiles) ? mobiles.find(m => m.imeiNumber1 === imei || m.imeiNumber2 === imei) : null
+      if (mobile) {
+        setDraftItem(prev => ({
+          ...prev,
+          name: mobile.mobileName || prev.name,
+          price: Number((mobile.sellingPrice ?? mobile.pricePerProduct)) || prev.price,
+          imei: imei,
+          model: mobile.modelNumber || prev.model,
+          color: mobile.color || prev.color,
+          ram: mobile.ram || prev.ram,
+          storage: mobile.storage || prev.storage,
+          simSlot: mobile.simSlot || prev.simSlot,
+          processor: mobile.processor || prev.processor,
+          displaySize: mobile.displaySize || prev.displaySize,
+          camera: mobile.camera || prev.camera,
+          battery: mobile.battery || prev.battery,
+          operatingSystem: mobile.operatingSystem || prev.operatingSystem,
+          networkType: mobile.networkType || prev.networkType
+        }))
+        return
+      }
+      alert('No mobile found with this IMEI')
+    } catch (error) {
+      console.error('Lookup failed:', error)
+      alert('Failed to lookup product details')
+    } finally {
+      setLookupLoading(false)
+    }
+  }
 
   const draftItemActive = useMemo(() => {
     const qty = Number(draftItem.quantity) || 0
@@ -80,7 +224,44 @@ const NewBill = () => {
   }, [items, billDiscountType, billDiscountValue, draftItemActive, draftItem])
 
   const printInvoice = () => {
-    window.print()
+    const printContent = invoiceRef.current
+    if (!printContent) return
+    
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Invoice ${billNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+            .text-center { text-align: center; }
+            .text-right { text-align: right; }
+            .font-semibold { font-weight: bold; }
+            .text-xl { font-size: 1.25rem; }
+            .text-sm { font-size: 0.875rem; }
+            .text-base { font-size: 1rem; }
+            .border-t { border-top: 1px solid #ddd; }
+            .border-b { border-bottom: 1px solid #ddd; }
+            .border-slate-300 { border-color: #cbd5e1; }
+            .py-1 { padding-top: 0.25rem; padding-bottom: 0.25rem; }
+            .pr-2 { padding-right: 0.5rem; }
+            .mt-2 { margin-top: 0.5rem; }
+            .mt-4 { margin-top: 1rem; }
+            .p-6 { padding: 1.5rem; }
+            .w-full { width: 100%; }
+          </style>
+        </head>
+        <body>
+          ${printContent.innerHTML}
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
+    printWindow.focus()
+    printWindow.print()
+    printWindow.close()
   }
 
   const exportPdf = async () => {
@@ -156,20 +337,66 @@ const NewBill = () => {
             <h2 className="text-base font-semibold mb-3">Add Product</h2>
             <div className="space-y-3">
               <div>
+                <label className="text-sm text-slate-600">Item Type</label>
+                <select value={draftItem.type} onChange={e=>setDraftItem({ ...draftItem, type: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400">
+                  <option value="Mobile">Mobile</option>
+                  <option value="Accessory">Accessory</option>
+                </select>
+              </div>
+              <div>
                 <label className="text-sm text-slate-600">Product Name</label>
                 <input value={draftItem.name} onChange={e => setDraftItem({ ...draftItem, name: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" placeholder="Search / type" />
               </div>
-              <div>
-                <label className="text-sm text-slate-600">IMEI Number</label>
-                <input value={draftItem.imei} onChange={e => setDraftItem({ ...draftItem, imei: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" placeholder="Optional" />
-              </div>
+              {draftItem.type === 'Mobile' ? (
+                <div>
+                  <label className="text-sm text-slate-600">IMEI Number</label>
+                  <div className="mt-1 flex gap-2">
+                    <input 
+                      value={draftItem.imei} 
+                      onChange={e => setDraftItem({ ...draftItem, imei: e.target.value })} 
+                      onBlur={lookupByImeiOrProduct}
+                      className="flex-1 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" 
+                      placeholder="Enter IMEI to auto-fill details" 
+                    />
+                    <button 
+                      type="button"
+                      onClick={lookupByImeiOrProduct}
+                      disabled={lookupLoading || !draftItem.imei}
+                      className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {lookupLoading ? 'Finding...' : 'Find'}
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <div>
+                  <label className="text-sm text-slate-600">Product ID</label>
+                  <div className="mt-1 flex gap-2">
+                    <input 
+                      value={draftItem.productId} 
+                      onChange={e => setDraftItem({ ...draftItem, productId: e.target.value })} 
+                      onBlur={lookupByImeiOrProduct}
+                      className="flex-1 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" 
+                      placeholder="Enter Product ID to auto-fill details" 
+                    />
+                    <button 
+                      type="button"
+                      onClick={lookupByImeiOrProduct}
+                      disabled={lookupLoading || !draftItem.productId}
+                      className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {lookupLoading ? 'Finding...' : 'Find'}
+                    </button>
+                  </div>
+                </div>
+              )}
               <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                 <div>
                   <label className="text-sm text-slate-600">Quantity</label>
                   <input type="number" value={draftItem.quantity} onChange={e => setDraftItem({ ...draftItem, quantity: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" />
                 </div>
                 <div>
-                  <label className="text-sm text-slate-600">Price per Unit</label>
+                  <label className="text-sm text-slate-600">Selling Price</label>
                   <input type="number" value={draftItem.price} onChange={e => setDraftItem({ ...draftItem, price: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" />
                 </div>
                 <div>
@@ -278,10 +505,77 @@ const NewBill = () => {
             <button onClick={exportPdf} className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50">Export PDF</button>
             <button onClick={async ()=>{
               try {
-                const payload = { items: items.map(it=>({ name: it.name, model: it.model, imei: it.imei, productId: it.productId, quantity: Number(it.quantity)||0 })) }
+                // Mandatory Customer & Bill Details validation
+                const nameOk = String(customerName || '').trim().length > 0
+                const phoneOk = String(mobileNumber || '').trim().length > 0
+                const payOk = String(paymentMethod || '').trim().length > 0
+                if (!nameOk || !phoneOk || !payOk) {
+                  alert('Please fill Customer Name, Mobile Number and Payment Method before checkout.')
+                  return
+                }
+                // Validate each item against available stock before checkout
+                for (const it of items) {
+                  const available = await getAvailableStock(it)
+                  const requested = Number(it.quantity) || 0
+                  if (available > 0 && requested > available) {
+                    alert(`Cannot checkout. Item: ${it.name || it.productId || it.model}. Requested: ${requested}. Available: ${available}.`)
+                    return
+                  }
+                }
+                const payload = { 
+                  billNumber,
+                  customerName,
+                  mobileNumber,
+                  paymentMethod,
+                  billLevelDiscount: calc.billLevelDiscount,
+                  items: items.map(it=>({ 
+                    name: it.name, 
+                    model: it.model, 
+                    imei: it.imei, 
+                    productId: it.productId, 
+                    quantity: Number(it.quantity)||0,
+                    price: Number(it.price)||0,
+                    gstPercent: Number(it.gstPercent)||18,
+                    discountType: it.discountType||'percent',
+                    discountValue: Number(it.discountValue)||0,
+                    // Mobile features
+                    color: it.color||'',
+                    ram: it.ram||'',
+                    storage: it.storage||'',
+                    simSlot: it.simSlot||'',
+                    processor: it.processor||'',
+                    displaySize: it.displaySize||'',
+                    camera: it.camera||'',
+                    battery: it.battery||'',
+                    operatingSystem: it.operatingSystem||'',
+                    networkType: it.networkType||''
+                  })) 
+                }
                 const res = await fetch(`${apiBase}/api/sale`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
                 if(!res.ok){ const m = await res.json().catch(()=>({})); throw new Error(m.error||'Failed to save') }
-                alert('Sale recorded and stock updated')
+                // After successful sale, fetch low stock and show a concise popup related to sold items only
+                try {
+                  const lowRes = await fetch(`${apiBase}/api/low-stock?threshold=20`)
+                  const low = await lowRes.json()
+                  const lowList = Array.isArray(low) ? low : []
+                  const soldModels = new Set(items.map(it => String(it.model || '').trim()).filter(Boolean))
+                  const soldProducts = new Set(items.map(it => String(it.productId || '').trim()).filter(Boolean))
+                  const soldNames = new Set(items.map(it => String(it.name || '').trim()).filter(Boolean))
+                  const related = lowList.filter(it => soldModels.has(String(it.model||'')) || soldProducts.has(String(it.model||'')) || soldNames.has(String(it.name||'')))
+                  if (related.length > 0) {
+                    const uniq = new Map()
+                    related.forEach(it => {
+                      const key = `${it.type||'item'}:${it.name}:${it.model}`
+                      if (!uniq.has(key)) uniq.set(key, it)
+                    })
+                    const msg = Array.from(uniq.values()).map(it => `${it.name}${it.model?` (${it.model})`:''} -> ${it.quantity}`).join('\n')
+                    alert(`Sale recorded and stock updated.\n\nLow stock for sold items (<=20):\n${msg}`)
+                  } else {
+                    alert('Sale recorded and stock updated')
+                  }
+                } catch {
+                  alert('Sale recorded and stock updated')
+                }
               } catch(ex){ alert(ex.message) }
             }} className="px-3 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-500">Checkout & Save</button>
           </div>
@@ -312,11 +606,33 @@ const NewBill = () => {
               const net = Math.max(gross - discount, 0)
               const gst = net * ((Number(it.gstPercent) || 0) / 100)
               const total = net + gst
+              // Check if this is a mobile with features
+              const hasMobileFeatures = it.color || it.ram || it.storage || it.processor || it.displaySize || it.camera || it.battery || it.operatingSystem || it.networkType
+              
               return (
                 <tr key={idx} className="border-t border-slate-200">
-                  <td className="py-1 pr-2">{it.name && String(it.name).trim() ? it.name : 'Item'}</td>
-                  <td className="py-1 pr-2">{qty} (quantity)</td>
-                  <td className="py-1 pr-2">{total.toFixed(2)}</td>
+                  <td className="py-1 pr-2">
+                    <div>
+                      <div className="font-medium">{it.name && String(it.name).trim() ? it.name : 'Item'}</div>
+                      {it.model && <div className="text-xs text-slate-600">Model: {it.model}</div>}
+                      {it.imei && <div className="text-xs text-slate-600">IMEI: {it.imei}</div>}
+                      {hasMobileFeatures && (
+                        <div className="text-xs text-slate-600 mt-1">
+                          {it.color && <span>Color: {it.color} • </span>}
+                          {it.ram && <span>RAM: {it.ram} • </span>}
+                          {it.storage && <span>Storage: {it.storage} • </span>}
+                          {it.processor && <span>Processor: {it.processor} • </span>}
+                          {it.displaySize && <span>Display: {it.displaySize} • </span>}
+                          {it.camera && <span>Camera: {it.camera} • </span>}
+                          {it.battery && <span>Battery: {it.battery} • </span>}
+                          {it.operatingSystem && <span>OS: {it.operatingSystem} • </span>}
+                          {it.networkType && <span>Network: {it.networkType}</span>}
+                        </div>
+                      )}
+                    </div>
+                  </td>
+                  <td className="py-1 pr-2">{qty}</td>
+                  <td className="py-1 pr-2">₹{total.toFixed(2)}</td>
                 </tr>
               )
             })}

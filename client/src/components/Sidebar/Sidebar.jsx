@@ -14,7 +14,7 @@ const Sidebar = () => {
   const showReports = !isStaff
 
   return (
-    <aside className="h-screen w-64 bg-white border-r border-slate-200 text-slate-800 p-3 sticky top-0 transition-colors duration-200 print:hidden">
+    <aside className="h-screen w-72 flex-shrink-0 bg-white border-r border-slate-200 text-slate-800 p-3 sticky top-0 transition-colors duration-200 overflow-y-auto print:hidden">
       <div className="px-2 py-3 mb-2">
         <div className="text-lg font-semibold tracking-wide">MobileBill</div>
         <div className="text-xs text-slate-400">POS & Service Manager</div>
@@ -66,7 +66,6 @@ const Sidebar = () => {
           <SidebarItem label="Reports" icon={MdAssessment} childrenItems={[
             { label: 'Sales Report', to: '/reports/sales' },
             { label: 'Service Report', to: '/reports/service' },
-            { label: 'Profit Report', to: '/reports/profit' },
           ]} />
         ) : null}
 
