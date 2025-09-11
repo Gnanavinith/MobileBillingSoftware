@@ -4,6 +4,8 @@ import 'jspdf-autotable'
 import { FiDownload, FiPrinter, FiFilter, FiSettings, FiUser, FiClock, FiCheckCircle, FiXCircle } from 'react-icons/fi'
 import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts'
 
+const apiBase = (typeof window !== 'undefined' && window?.process?.versions?.electron) ? 'http://localhost:5000' : ''
+
 const ServiceReport = () => {
   const [serviceData, setServiceData] = useState([])
   const [filteredData, setFilteredData] = useState([])
@@ -139,8 +141,40 @@ const ServiceReport = () => {
   ]
 
   useEffect(() => {
-    setServiceData(sampleServiceData)
-    setFilteredData(sampleServiceData)
+    const load = async () => {
+      try {
+        const res = await fetch(`${apiBase}/api/service-invoices`)
+        const data = await res.json()
+        const rows = (Array.isArray(data) ? data : []).map(d => ({
+          serviceId: d.serviceBillNumber || d.id,
+          dateOfRequest: (d.createdAt ? new Date(d.createdAt).toISOString().split('T')[0] : ''),
+          customerName: d.customerName || '',
+          customerPhone: d.phoneNumber || '',
+          deviceName: d.modelName || '',
+          deviceModel: '',
+          imei: d.imei || '',
+          problemDescription: d.problem || '',
+          partsUsed: Array.isArray(d.parts) ? d.parts.map(p => ({ partName: p.name, quantity: Number(p.quantity)||0, cost: Number(p.price)||0 })) : [],
+          serviceCharges: Number(d.laborCost)||0,
+          totalAmount: Number(d.grandTotal)||0,
+          advancePaid: 0,
+          pendingBalance: 0,
+          serviceStatus: 'Completed',
+          technicianName: '',
+          serviceStartDate: '',
+          estimatedDeliveryDate: '',
+          actualDeliveryDate: '',
+          notes: ''
+        }))
+        setServiceData(rows)
+        setFilteredData(rows)
+      } catch (e) {
+        // fallback to sample if fetch fails
+        setServiceData([])
+        setFilteredData([])
+      }
+    }
+    load()
   }, [])
 
   useEffect(() => {

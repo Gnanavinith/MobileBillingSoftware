@@ -2,7 +2,7 @@ import React, { useMemo, useRef, useState } from 'react'
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 
-const emptyPart = () => ({ name: '', quantity: 1, price: 0, gstPercent: 18, discountType: 'percent', discountValue: 0 })
+const emptyPart = () => ({ name: '', productId: '', quantity: 1, price: 0, gstPercent: 18, discountType: 'percent', discountValue: 0 })
 
 const ServiceBill = () => {
   const [customerName, setCustomerName] = useState('')
@@ -29,6 +29,26 @@ const ServiceBill = () => {
   }
   const clearDraftPart = () => setDraftPart(emptyPart())
   const removeLastPart = () => setParts(prev => prev.slice(0, -1))
+
+  const apiBase = (typeof window !== 'undefined' && window?.process?.versions?.electron) ? 'http://localhost:5000' : ''
+
+  const lookupPartByProductId = async () => {
+    const id = String(draftPart.productId || '').trim()
+    if (!id) return
+    try {
+      const res = await fetch(`${apiBase}/api/accessories?productId=${encodeURIComponent(id)}`)
+      const data = await res.json()
+      const row = Array.isArray(data) && data.length > 0 ? data[0] : null
+      if (!row) { alert('No accessory found for this Product ID'); return }
+      setDraftPart(prev => ({
+        ...prev,
+        name: row.productName || prev.name,
+        price: Number(row.sellingPrice ?? row.unitPrice) || prev.price,
+      }))
+    } catch (e) {
+      alert('Failed to fetch accessory')
+    }
+  }
 
   const draftPartActive = useMemo(() => {
     const qty = Number(draftPart.quantity) || 0
@@ -146,6 +166,13 @@ const ServiceBill = () => {
             <h2 className="text-base font-semibold mb-3">Add Service Part</h2>
             <div className="space-y-3">
               <div>
+                <label className="text-sm text-slate-600">Product ID</label>
+                <div className="mt-1 flex gap-2">
+                  <input value={draftPart.productId} onChange={e => setDraftPart({ ...draftPart, productId: e.target.value })} className="flex-1 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" placeholder="Enter Product ID to auto-fill" />
+                  <button type="button" onClick={lookupPartByProductId} disabled={!draftPart.productId} className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed">Find</button>
+                </div>
+              </div>
+              <div>
                 <label className="text-sm text-slate-600">Part Name</label>
                 <input value={draftPart.name} onChange={e => setDraftPart({ ...draftPart, name: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" placeholder="Search / type" />
               </div>
@@ -222,6 +249,7 @@ const ServiceBill = () => {
                     <div key={idx} className="rounded-lg border border-slate-200 p-3 flex items-start justify-between">
                       <div>
                         <div className="font-medium">{p.name || 'Unnamed Part'}</div>
+                        <div className="text-xs text-slate-500">Product ID: {p.productId || '-'}</div>
                         <div className="mt-1 text-sm text-slate-700">Qty: {qty} • Price: {price} • GST: {p.gstPercent}% • Disc: {p.discountType === 'percent' ? `${p.discountValue}%` : `₹${p.discountValue || 0}`}</div>
                       </div>
                       <div className="text-right">
@@ -262,7 +290,38 @@ const ServiceBill = () => {
           <div className="mt-4 flex gap-2">
             <button onClick={printInvoice} className="px-3 py-2 rounded-md bg-slate-900 text-white hover:bg-slate-800">Print</button>
             <button onClick={exportPdf} className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50">Export PDF</button>
-            <button className="px-3 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-500">Save Service Bill</button>
+            <button onClick={async ()=>{
+              try{
+                // Mandatory fields validation
+                const nameOk = String(customerName||'').trim().length>0
+                const phoneOk = String(phoneNumber||'').trim().length>0
+                const addrOk = String(address||'').trim().length>0
+                const modelOk = String(modelName||'').trim().length>0
+                const imeiOk = String(imei||'').trim().length>0
+                const probOk = String(problem||'').trim().length>0
+                if(!(nameOk && phoneOk && addrOk && modelOk && imeiOk && probOk)){
+                  alert('Please fill all required fields: Customer Name, Phone Number, Address, Mobile Model Name, IMEI Number, and Problem Description.')
+                  return
+                }
+                const payload = {
+                  serviceBillNumber,
+                  customerName, phoneNumber, address,
+                  modelName, imei, idProofUrl, problem,
+                  paymentMethod,
+                  parts,
+                  laborCost: Number(laborCost)||0,
+                  partsSubtotal: Number(calc.partsSubtotal)||0,
+                  partsDiscounts: Number(calc.partsDiscounts)||0,
+                  partsGst: Number(calc.partsGst)||0,
+                  cgst: Number(calc.cgst)||0,
+                  sgst: Number(calc.sgst)||0,
+                  grandTotal: Number(calc.grandTotal)||0,
+                }
+                const res = await fetch(`${apiBase}/api/service-invoices`, { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(payload) })
+                if(!res.ok){ const m = await res.json().catch(()=>({})); throw new Error(m.error||'Failed to save') }
+                alert('Service invoice saved')
+              }catch(ex){ alert(ex.message) }
+            }} className="px-3 py-2 rounded-md bg-emerald-600 text-white hover:bg-emerald-500">Save Service Bill</button>
           </div>
         </div>
       </div>

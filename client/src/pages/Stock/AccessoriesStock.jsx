@@ -12,6 +12,7 @@ const AccessoriesStock = () => {
     productName: '',
     quantity: 1,
     unitPrice: 0,
+    sellingPrice: 0,
   })
   const [editingId, setEditingId] = useState('')
   const [saving, setSaving] = useState(false)
@@ -41,7 +42,7 @@ const AccessoriesStock = () => {
         const msg = await res.json().catch(()=>({}))
         throw new Error(msg.error || 'Failed')
       }
-      setForm({ dealerId: '', productId: '', productName: '', quantity: 1, unitPrice: 0 })
+      setForm({ dealerId: '', productId: '', productName: '', quantity: 1, unitPrice: 0, sellingPrice: 0 })
       setEditingId('')
       await load()
       alert('Saved')
@@ -50,7 +51,7 @@ const AccessoriesStock = () => {
 
   const onEdit = (row) => {
     setEditingId(row.id)
-    setForm({ dealerId: row.dealerId, productId: row.productId, productName: row.productName, quantity: row.quantity, unitPrice: row.unitPrice })
+    setForm({ dealerId: row.dealerId, productId: row.productId, productName: row.productName, quantity: row.quantity, unitPrice: row.unitPrice, sellingPrice: row.sellingPrice || 0 })
   }
 
   const onDelete = async (row) => {
@@ -95,10 +96,14 @@ const AccessoriesStock = () => {
               <label className="block text-sm font-medium text-slate-700 mb-1">Unit Price</label>
               <input type="number" className="w-full rounded-md border border-slate-300" value={form.unitPrice} onChange={e=>setForm({...form, unitPrice: parseFloat(e.target.value)||0})} />
             </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Selling Price</label>
+              <input type="number" className="w-full rounded-md border border-slate-300" value={form.sellingPrice} onChange={e=>setForm({...form, sellingPrice: parseFloat(e.target.value)||0})} />
+            </div>
             <div className="flex gap-2">
               <button disabled={saving} className="px-3 py-2 rounded-md bg-slate-900 text-white disabled:opacity-50">{saving ? 'Saving...' : (editingId ? 'Update' : 'Save')}</button>
               {editingId ? (
-                <button type="button" onClick={()=>{ setEditingId(''); setForm({ dealerId: '', productId: '', productName: '', quantity: 1, unitPrice: 0 }) }} className="px-3 py-2 rounded-md border">Cancel</button>
+                <button type="button" onClick={()=>{ setEditingId(''); setForm({ dealerId: '', productId: '', productName: '', quantity: 1, unitPrice: 0, sellingPrice: 0 }) }} className="px-3 py-2 rounded-md border">Cancel</button>
               ) : null}
             </div>
           </form>
@@ -121,6 +126,7 @@ const AccessoriesStock = () => {
                   <th className="py-2 pr-4">Product Name</th>
                   <th className="py-2 pr-4">Qty</th>
                   <th className="py-2 pr-4">Unit Price</th>
+                  <th className="py-2 pr-4">Selling Price</th>
                   <th className="py-2 pr-2">Actions</th>
                 </tr>
               </thead>
@@ -132,6 +138,7 @@ const AccessoriesStock = () => {
                     <td className="py-2 pr-4">{r.productName}</td>
                     <td className="py-2 pr-4">{r.quantity}</td>
                     <td className="py-2 pr-4">{r.unitPrice}</td>
+                    <td className="py-2 pr-4">{r.sellingPrice || '-'}</td>
                     <td className="py-2 pr-2">
                       <div className="flex gap-2">
                         <button onClick={()=>onEdit(r)} className="text-blue-600 hover:underline">Edit</button>

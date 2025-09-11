@@ -1,119 +1,74 @@
 import React, { useState, useEffect, useMemo } from 'react'
+import { FiChevronDown, FiChevronUp, FiInfo } from 'react-icons/fi'
 import { jsPDF } from 'jspdf'
 import 'jspdf-autotable'
 import { FiDownload, FiPrinter, FiFilter, FiShoppingBag } from 'react-icons/fi'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, PieChart, Pie, Cell } from 'recharts'
 
+const apiBase = (typeof window !== 'undefined' && window?.process?.versions?.electron) ? 'http://localhost:5000' : ''
+
 const SalesReport = () => {
   const [salesData, setSalesData] = useState([])
   const [filteredData, setFilteredData] = useState([])
+  const [expandedRow, setExpandedRow] = useState(null)
   const [filters, setFilters] = useState({
     dateRange: 'thisMonth',
     startDate: '',
     endDate: '',
+    invoiceNumber: '',
     productName: '',
     paymentMode: '',
     salesperson: '',
     customerName: ''
   })
 
-  // Sample data - in real app, this would come from API/database
-  const sampleSalesData = [
-    {
-      invoiceNumber: 'INV-001234',
-      date: '2025-01-15',
-      time: '14:30:00',
-      customerName: 'Ravi Kumar',
-      customerPhone: '9876543210',
-      productName: 'iPhone 14 Pro',
-      productId: 'IPH14P-128',
-      imei: '123456789012345',
-      quantity: 1,
-      sellingPrice: 85000,
-      totalAmount: 85000,
-      discount: 2000,
-      gstAmount: 15300,
-      netTotal: 98300,
-      paymentMode: 'UPI',
-      salesperson: 'Amit Sharma'
-    },
-    {
-      invoiceNumber: 'INV-001235',
-      date: '2025-01-15',
-      time: '15:45:00',
-      customerName: 'Priya Singh',
-      customerPhone: '9876543211',
-      productName: 'Samsung Galaxy A54',
-      productId: 'SGA54-256',
-      imei: '123456789012346',
-      quantity: 1,
-      sellingPrice: 32000,
-      totalAmount: 32000,
-      discount: 0,
-      gstAmount: 5760,
-      netTotal: 37760,
-      paymentMode: 'Card',
-      salesperson: 'Sneha Patel'
-    },
-    {
-      invoiceNumber: 'INV-001236',
-      date: '2025-01-14',
-      time: '11:20:00',
-      customerName: 'Arjun Mehta',
-      customerPhone: '9876543212',
-      productName: 'OnePlus 11',
-      productId: 'OP11-256',
-      imei: '123456789012347',
-      quantity: 1,
-      sellingPrice: 45000,
-      totalAmount: 45000,
-      discount: 1500,
-      gstAmount: 7830,
-      netTotal: 51330,
-      paymentMode: 'Cash',
-      salesperson: 'Amit Sharma'
-    },
-    {
-      invoiceNumber: 'INV-001237',
-      date: '2025-01-14',
-      time: '16:10:00',
-      customerName: 'Kavya Reddy',
-      customerPhone: '9876543213',
-      productName: 'AirPods Pro',
-      productId: 'APP-2',
-      imei: '',
-      quantity: 2,
-      sellingPrice: 18000,
-      totalAmount: 36000,
-      discount: 1000,
-      gstAmount: 6300,
-      netTotal: 41300,
-      paymentMode: 'UPI',
-      salesperson: 'Sneha Patel'
-    },
-    {
-      invoiceNumber: 'INV-001238',
-      date: '2025-01-13',
-      time: '09:30:00',
-      customerName: 'Vikram Joshi',
-      customerPhone: '9876543214',
-      productName: 'Vivo V30',
-      productId: 'VV30-128',
-      imei: '123456789012348',
-      quantity: 1,
-      sellingPrice: 28000,
-      totalAmount: 28000,
-      discount: 0,
-      gstAmount: 5040,
-      netTotal: 33040,
-      paymentMode: 'EMI',
-      salesperson: 'Amit Sharma'
-    }
-  ]
-
+  // Load real data
   useEffect(() => {
-    setSalesData(sampleSalesData)
-    setFilteredData(sampleSalesData)
+    const load = async () => {
+      try {
+        const [saleRes, mobRes] = await Promise.all([
+          fetch(`${apiBase}/api/sale`),
+          fetch(`${apiBase}/api/mobiles`)
+        ])
+        const saleData = await saleRes.json()
+        const mobileData = await mobRes.json()
+        const rows = Array.isArray(saleData) ? saleData : []
+        const mobiles = Array.isArray(mobileData) ? mobileData : []
+        const byModel = new Map()
+        const byImei = new Map()
+        mobiles.forEach(m => {
+          byModel.set(String(m.modelNumber||'').toLowerCase(), m)
+          if (m.imeiNumber1) byImei.set(String(m.imeiNumber1), m)
+          if (m.imeiNumber2) byImei.set(String(m.imeiNumber2), m)
+        })
+        const enriched = rows.map(r => {
+          let { color, ram, storage, processor, displaySize, camera, battery, operatingSystem, networkType } = r
+          if (!color && !ram && !storage) {
+            let src = null
+            if (r.imei && byImei.has(String(r.imei))) src = byImei.get(String(r.imei))
+            else if (r.model) src = byModel.get(String(r.model||'').toLowerCase())
+            if (src) {
+              color = src.color || color
+              ram = src.ram || ram
+              storage = src.storage || storage
+              processor = src.processor || processor
+              displaySize = src.displaySize || displaySize
+              camera = src.camera || camera
+              battery = src.battery || battery
+              operatingSystem = src.operatingSystem || operatingSystem
+              networkType = src.networkType || networkType
+            }
+          }
+          return { ...r, color, ram, storage, processor, displaySize, camera, battery, operatingSystem, networkType }
+        })
+        setSalesData(enriched)
+        setFilteredData(enriched)
+      } catch (e) {
+        setSalesData([])
+        setFilteredData([])
+      }
+    }
+    load()
   }, [])
 
   useEffect(() => {
@@ -153,6 +108,10 @@ const SalesReport = () => {
     }
 
     // Other filters
+    if (filters.invoiceNumber) {
+      const q = filters.invoiceNumber.trim().toLowerCase()
+      filtered = filtered.filter(item => String(item.invoiceNumber||'').toLowerCase().includes(q))
+    }
     if (filters.productName) {
       filtered = filtered.filter(item => 
         item.productName.toLowerCase().includes(filters.productName.toLowerCase())
@@ -224,7 +183,9 @@ const SalesReport = () => {
       item.invoiceNumber,
       item.date,
       item.customerName,
-      item.productName,
+      `${item.productName}${item.model?` (${item.model})`:''}`,
+      `${[item.color,item.ram,item.storage].filter(Boolean).join(' • ')}`,
+      item.imei || '-',
       item.quantity,
       formatCurrency(item.sellingPrice),
       formatCurrency(item.totalAmount),
@@ -236,7 +197,7 @@ const SalesReport = () => {
     ])
 
     doc.autoTable({
-      head: [['Invoice', 'Date', 'Customer', 'Product', 'Qty', 'Price', 'Total', 'Discount', 'GST', 'Net Total', 'Payment', 'Salesperson']],
+      head: [['Invoice', 'Date', 'Customer', 'Product (Model)', 'Specs', 'IMEI', 'Qty', 'Price', 'Total', 'Discount', 'GST', 'Net Total', 'Payment', 'Salesperson']],
       body: tableData,
       startY: 90,
       styles: { fontSize: 8 },
@@ -428,6 +389,16 @@ const SalesReport = () => {
             </>
           )}
           <div>
+            <label className="block text-sm font-medium text-slate-700 mb-1">Invoice #</label>
+            <input
+              type="text"
+              value={filters.invoiceNumber}
+              onChange={(e) => setFilters({ ...filters, invoiceNumber: e.target.value })}
+              placeholder="Search invoice id..."
+              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+            />
+          </div>
+          <div>
             <label className="block text-sm font-medium text-slate-700 mb-1">Product Name</label>
             <input
               type="text"
@@ -526,10 +497,12 @@ const SalesReport = () => {
           <table className="min-w-full divide-y divide-slate-200">
             <thead className="bg-slate-50">
               <tr>
+                <th className="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"></th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Invoice #</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date & Time</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Customer</th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Product</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Product (Model)</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Specs</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">IMEI</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Qty</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Price</th>
@@ -543,7 +516,13 @@ const SalesReport = () => {
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
               {filteredData.map((item, index) => (
-                <tr key={index} className="hover:bg-slate-50">
+                <React.Fragment key={index}>
+                <tr className="hover:bg-slate-50">
+                  <td className="px-3 py-4 text-sm">
+                    <button onClick={()=> setExpandedRow(expandedRow === index ? null : index)} className="inline-flex items-center gap-1 text-slate-600 hover:text-slate-900">
+                      {expandedRow === index ? <FiChevronUp /> : <FiChevronDown />}
+                    </button>
+                  </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{item.invoiceNumber}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.date} {item.time}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
@@ -551,9 +530,10 @@ const SalesReport = () => {
                     <div className="text-slate-500">{item.customerPhone}</div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
-                    <div>{item.productName}</div>
+                    <div>{item.productName}{item.model ? ` (${item.model})` : ''}</div>
                     <div className="text-slate-500">{item.productId}</div>
                   </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{[item.color,item.ram,item.storage].filter(Boolean).join(' • ') || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{item.imei || '-'}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{item.quantity}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{formatCurrency(item.sellingPrice)}</td>
@@ -564,6 +544,25 @@ const SalesReport = () => {
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{item.paymentMode}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{item.salesperson}</td>
                 </tr>
+                {expandedRow === index ? (
+                  <tr className="bg-slate-50">
+                    <td></td>
+                    <td colSpan={14} className="px-6 py-4 text-sm text-slate-700">
+                      <div className="flex items-start gap-3">
+                        <FiInfo className="mt-1 text-slate-500" />
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-1 w-full">
+                          <div><span className="text-slate-500">Processor:</span> {item.processor || '-'}</div>
+                          <div><span className="text-slate-500">Display:</span> {item.displaySize || '-'}</div>
+                          <div><span className="text-slate-500">Camera:</span> {item.camera || '-'}</div>
+                          <div><span className="text-slate-500">Battery:</span> {item.battery || '-'}</div>
+                          <div><span className="text-slate-500">OS:</span> {item.operatingSystem || '-'}</div>
+                          <div><span className="text-slate-500">Network:</span> {item.networkType || '-'}</div>
+                        </div>
+                      </div>
+                    </td>
+                  </tr>
+                ) : null}
+                </React.Fragment>
               ))}
             </tbody>
           </table>

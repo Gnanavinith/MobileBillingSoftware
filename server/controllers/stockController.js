@@ -1,6 +1,7 @@
 const Mobile = require('../models/Mobile')
 const Accessory = require('../models/Accessory')
 const Dealer = require('../models/Dealer')
+const BrandModel = require('../models/BrandModel')
 
 function genId(prefix) {
   const now = new Date()
@@ -15,28 +16,55 @@ function genId(prefix) {
 exports.createMobile = async (req, res) => {
   try {
     const b = req.body || {}
-    if (!b.mobileName || !b.modelNumber || !b.imeiNumber1 || !b.dealerId || !b.pricePerProduct || !b.totalQuantity) {
+    if (!b.mobileName || !b.modelNumber || !b.dealerId) {
       return res.status(400).json({ error: 'Missing required fields' })
     }
-    if (Number(b.pricePerProduct) <= 0 || Number(b.totalQuantity) <= 0) {
-      return res.status(400).json({ error: 'Price and quantity must be > 0' })
+    if (b.pricePerProduct != null && Number(b.pricePerProduct) < 0) {
+      return res.status(400).json({ error: 'Invalid price' })
     }
     const dealer = await Dealer.findOne({ id: b.dealerId })
     if (!dealer) return res.status(400).json({ error: 'Dealer not found' })
     const id = genId('MOB')
+    // infer brand from BrandModel if present
+    let brand = String(b.brand || '').trim()
+    if (!brand) {
+      try {
+        const bm = await BrandModel.findOne({ $or: [{ model: b.modelNumber }, { aliases: b.modelNumber }] })
+        if (bm) brand = bm.brand
+      } catch {}
+    }
+    // normalize IMEIs: undefined when empty to respect sparse unique index
+    const norm = (s) => (s && String(s).trim() ? String(s).trim() : undefined)
     const doc = await Mobile.create({
       id,
       mobileName: b.mobileName,
+      brand,
       modelNumber: b.modelNumber,
-      imeiNumber1: b.imeiNumber1,
-      imeiNumber2: b.imeiNumber2 || '',
+      imeiNumber1: norm(b.imeiNumber1),
+      imeiNumber2: norm(b.imeiNumber2),
       dealerId: dealer.id,
       dealerName: dealer.name,
-      pricePerProduct: Number(b.pricePerProduct),
-      totalQuantity: Number(b.totalQuantity),
+      pricePerProduct: Number(b.pricePerProduct)||0,
+      sellingPrice: Number(b.sellingPrice)||Number(b.pricePerProduct)||0,
+      totalQuantity: 1,
+      // New mobile features
+      color: b.color || '',
+      ram: b.ram || '',
+      storage: b.storage || '',
+      simSlot: b.simSlot || '',
+      processor: b.processor || '',
+      displaySize: b.displaySize || '',
+      camera: b.camera || '',
+      battery: b.battery || '',
+      operatingSystem: b.operatingSystem || '',
+      networkType: b.networkType || '',
     })
     res.status(201).json(doc)
   } catch (err) {
+    if (err && err.code === 11000) {
+      const field = err?.keyPattern ? Object.keys(err.keyPattern)[0] : undefined
+      return res.status(409).json({ error: 'Duplicate key', field, value: err?.keyValue?.[field] || err?.keyValue })
+    }
     res.status(500).json({ error: 'Internal Server Error', details: String(err?.message || err) })
   }
 }
@@ -60,7 +88,7 @@ exports.updateMobile = async (req, res) => {
     const b = req.body || {}
     const doc = await Mobile.findOne({ id })
     if (!doc) return res.status(404).json({ error: 'Not found' })
-    if (b.pricePerProduct != null && Number(b.pricePerProduct) <= 0) return res.status(400).json({ error: 'Invalid price' })
+    if (b.pricePerProduct != null && Number(b.pricePerProduct) < 0) return res.status(400).json({ error: 'Invalid price' })
     if (b.totalQuantity != null && Number(b.totalQuantity) < 0) return res.status(400).json({ error: 'Invalid quantity' })
     if (b.dealerId) {
       const dealer = await Dealer.findOne({ id: b.dealerId })
@@ -68,11 +96,36 @@ exports.updateMobile = async (req, res) => {
       doc.dealerId = dealer.id
       doc.dealerName = dealer.name
     }
-    ;['mobileName','modelNumber','imeiNumber1','imeiNumber2','pricePerProduct','totalQuantity'].forEach(k => {
-      if (b[k] != null) doc[k] = b[k]
-    })
+    const norm = (s) => (s && String(s).trim() ? String(s).trim() : undefined)
+    const fields = ['mobileName','brand','modelNumber','pricePerProduct','sellingPrice','totalQuantity','color','ram','storage','simSlot','processor','displaySize','camera','battery','operatingSystem','networkType']
+    fields.forEach(k => { if (b[k] != null) doc[k] = b[k] })
+    if ('imeiNumber1' in b) doc.imeiNumber1 = norm(b.imeiNumber1)
+    if ('imeiNumber2' in b) doc.imeiNumber2 = norm(b.imeiNumber2)
     await doc.save()
     res.json(doc)
+  } catch (err) {
+    if (err && err.code === 11000) {
+      const field = err?.keyPattern ? Object.keys(err.keyPattern)[0] : undefined
+      return res.status(409).json({ error: 'Duplicate key', field, value: err?.keyValue?.[field] || err?.keyValue })
+    }
+    res.status(500).json({ error: 'Internal Server Error', details: String(err?.message || err) })
+  }
+}
+
+// Maintenance: Normalize IMEI fields and rebuild indexes (call once)
+exports.normalizeMobileImeis = async (_req, res) => {
+  try {
+    // Unset empty strings so sparse unique index doesn't collide on ''
+    await Mobile.updateMany({ imeiNumber1: '' }, { $unset: { imeiNumber1: 1 } })
+    await Mobile.updateMany({ imeiNumber2: '' }, { $unset: { imeiNumber2: 1 } })
+
+    // Rebuild indexes (ignore if they don't exist)
+    try { await Mobile.collection.dropIndex('imeiNumber1_1') } catch {}
+    try { await Mobile.collection.dropIndex('imeiNumber2_1') } catch {}
+    await Mobile.collection.createIndex({ imeiNumber1: 1 }, { unique: true, sparse: true })
+    await Mobile.collection.createIndex({ imeiNumber2: 1 }, { unique: true, sparse: true })
+
+    res.json({ ok: true })
   } catch (err) {
     res.status(500).json({ error: 'Internal Server Error', details: String(err?.message || err) })
   }
@@ -110,6 +163,7 @@ exports.createAccessory = async (req, res) => {
       productName: b.productName,
       quantity: Number(b.quantity),
       unitPrice: Number(b.unitPrice),
+      sellingPrice: Number(b.sellingPrice)||Number(b.unitPrice),
     })
     res.status(201).json(doc)
   } catch (err) {
@@ -144,7 +198,7 @@ exports.updateAccessory = async (req, res) => {
       doc.dealerId = dealer.id
       doc.dealerName = dealer.name
     }
-    ;['productId','productName','quantity','unitPrice'].forEach(k => {
+    ;['productId','productName','quantity','unitPrice','sellingPrice'].forEach(k => {
       if (b[k] != null) doc[k] = b[k]
     })
     await doc.save()
@@ -160,6 +214,37 @@ exports.deleteAccessory = async (req, res) => {
     const r = await Accessory.deleteOne({ id })
     if (r.deletedCount === 0) return res.status(404).json({ error: 'Not found' })
     res.json({ ok: true })
+  } catch (err) {
+    res.status(500).json({ error: 'Internal Server Error', details: String(err?.message || err) })
+  }
+}
+
+
+// Low stock combined (mobiles + accessories)
+exports.listLowStock = async (req, res) => {
+  try {
+    const threshold = Number(req.query.threshold) || 20
+    const [mobiles, accessories] = await Promise.all([
+      Mobile.find({ totalQuantity: { $lte: threshold } }).lean(),
+      Accessory.find({ quantity: { $lte: threshold } }).lean(),
+    ])
+    const list = [
+      ...mobiles.map(m => ({
+        type: 'mobile',
+        id: m.id,
+        name: m.mobileName,
+        model: m.modelNumber,
+        quantity: Number(m.totalQuantity) || 0,
+      })),
+      ...accessories.map(a => ({
+        type: 'accessory',
+        id: a.id,
+        name: a.productName,
+        model: a.productId,
+        quantity: Number(a.quantity) || 0,
+      })),
+    ].sort((a, b) => a.quantity - b.quantity)
+    res.json(list)
   } catch (err) {
     res.status(500).json({ error: 'Internal Server Error', details: String(err?.message || err) })
   }

@@ -16,6 +16,12 @@ router.get('/accessories', ctrl.listAccessories)
 router.put('/accessories/:id', ctrl.updateAccessory)
 router.delete('/accessories/:id', ctrl.deleteAccessory)
 
+// Low stock combined
+router.get('/low-stock', ctrl.listLowStock)
+
+// Maintenance
+router.post('/mobiles/normalize-imeis', ctrl.normalizeMobileImeis)
+
 module.exports = router
 
 // Extra endpoint: per-store stock query
@@ -34,5 +40,7 @@ router.get('/store-stock', async (req, res) => {
 
 // Record a sale and reduce stock by IMEI or product
 router.post('/sale', saleCtrl.createSale)
+// List sales for reports
+router.get('/sale', saleCtrl.listSales)
 
 

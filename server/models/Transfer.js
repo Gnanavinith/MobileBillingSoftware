@@ -8,6 +8,17 @@ const TransferProductSchema = new mongoose.Schema({
   quantity: { type: Number, required: true, min: 1 },
   unitPrice: { type: Number, required: true, min: 0 },
   totalPrice: { type: Number, required: true, min: 0 },
+  // Mobile features
+  color: { type: String, default: '' },
+  ram: { type: String, default: '' },
+  storage: { type: String, default: '' },
+  simSlot: { type: String, default: '' },
+  processor: { type: String, default: '' },
+  displaySize: { type: String, default: '' },
+  camera: { type: String, default: '' },
+  battery: { type: String, default: '' },
+  operatingSystem: { type: String, default: '' },
+  networkType: { type: String, default: '' },
 }, { _id: false })
 
 const TransferSchema = new mongoose.Schema({

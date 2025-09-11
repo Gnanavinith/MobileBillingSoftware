@@ -73,7 +73,24 @@ const NewTransfer = () => {
           unitPrice: m.pricePerProduct || 0,
           totalPrice: 0,
         })
-        setInventory([{ id, productName: m.mobileName, model: m.modelNumber, sku: id, stock: m.totalQuantity }])
+        setInventory([{ 
+          id, 
+          productName: m.mobileName, 
+          model: m.modelNumber, 
+          sku: id, 
+          stock: m.totalQuantity,
+          // Mobile features
+          color: m.color || '',
+          ram: m.ram || '',
+          storage: m.storage || '',
+          simSlot: m.simSlot || '',
+          processor: m.processor || '',
+          displaySize: m.displaySize || '',
+          camera: m.camera || '',
+          battery: m.battery || '',
+          operatingSystem: m.operatingSystem || '',
+          networkType: m.networkType || ''
+        }])
         return
       }
       setLookupError('No product found for given ID')
@@ -126,7 +143,18 @@ const NewTransfer = () => {
         productName: fallbackProduct.productName,
         productModel: fallbackProduct.model,
         productSku: fallbackProduct.sku,
-        totalPrice: calculateProductTotal(newProduct.quantity, newProduct.unitPrice)
+        totalPrice: calculateProductTotal(newProduct.quantity, newProduct.unitPrice),
+        // Mobile features
+        color: fallbackProduct.color || '',
+        ram: fallbackProduct.ram || '',
+        storage: fallbackProduct.storage || '',
+        simSlot: fallbackProduct.simSlot || '',
+        processor: fallbackProduct.processor || '',
+        displaySize: fallbackProduct.displaySize || '',
+        camera: fallbackProduct.camera || '',
+        battery: fallbackProduct.battery || '',
+        operatingSystem: fallbackProduct.operatingSystem || '',
+        networkType: fallbackProduct.networkType || ''
       }
 
       const updatedProducts = [...form.products, product]
@@ -433,6 +461,7 @@ const NewTransfer = () => {
                       <tr className="text-left text-slate-500 text-xs uppercase border-b">
                         <th className="py-2 pr-4">Product Name</th>
                         <th className="py-2 pr-4">Model</th>
+                        <th className="py-2 pr-4">Features</th>
                         <th className="py-2 pr-4">SKU</th>
                         <th className="py-2 pr-4">Quantity</th>
                         <th className="py-2 pr-4">Unit Price</th>
@@ -445,6 +474,21 @@ const NewTransfer = () => {
                         <tr key={index} className="border-b border-slate-100">
                           <td className="py-2 pr-4">{product.productName}</td>
                           <td className="py-2 pr-4">{product.productModel}</td>
+                          <td className="py-2 pr-4">
+                            {(product.color || product.ram || product.storage) && (
+                              <div className="text-xs text-slate-600">
+                                {product.color && <div>Color: {product.color}</div>}
+                                {product.ram && <div>RAM: {product.ram}</div>}
+                                {product.storage && <div>Storage: {product.storage}</div>}
+                                {product.processor && <div>Processor: {product.processor}</div>}
+                                {product.displaySize && <div>Display: {product.displaySize}</div>}
+                                {product.camera && <div>Camera: {product.camera}</div>}
+                                {product.battery && <div>Battery: {product.battery}</div>}
+                                {product.operatingSystem && <div>OS: {product.operatingSystem}</div>}
+                                {product.networkType && <div>Network: {product.networkType}</div>}
+                              </div>
+                            )}
+                          </td>
                           <td className="py-2 pr-4">{product.productSku}</td>
                           <td className="py-2 pr-4">
                             <input
