@@ -6,6 +6,9 @@
   "scripts": {
     "dev": "set ELECTRON_START_URL=http://localhost:5173 && set PORT=5000 && npx electron . | cat",
     "start": "npx electron . | cat",
+    "build:client": "powershell -NoProfile -Command \"Push-Location ..\\client; npm install; npm run build; Pop-Location\"",
+    "install:server": "powershell -NoProfile -Command \"Push-Location ..\\server; npm install --omit=dev; Pop-Location\"",
+    "dist": "npm run build:client && npm run install:server && npx electron-builder --win nsis",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [],
@@ -13,6 +16,37 @@
   "license": "ISC",
   "type": "commonjs",
   "devDependencies": {
-    "electron": "^38.0.0"
+    "electron": "^38.0.0",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "com.thannambikai.mobilebilling",
+    "productName": "Mobile Billing",
+    "directories": {
+      "buildResources": "build"
+    },
+    "files": [
+      "main.js",
+      "preload.js",
+      "package.json"
+    ],
+    "extraResources": [
+      { "from": "../client/dist", "to": "client/dist" },
+      { "from": "../server", "to": "server" }
+    ],
+    "win": {
+      "target": [ { "target": "nsis", "arch": ["x64"] } ],
+      "icon": "build/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "perMachine": false,
+      "createDesktopShortcut": true,
+      "createStartMenuShortcut": true,
+      "shortcutName": "Mobile Billing",
+      "runAfterFinish": true,
+      "license": "build/license.txt"
+    }
   }
 }

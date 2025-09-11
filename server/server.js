@@ -1,3 +1,5 @@
+const path = require('path')
+require('dotenv').config({ path: path.join(__dirname, '.env') })
 const express = require("express");
 const cors = require("cors");
 const mongoose = require("mongoose");
@@ -26,6 +28,13 @@ mongoose.connect(MONGO_URL).then(() => {
 app.get("/api/hello", (req, res) => {
   res.json({ message: "Hello from backend!" });
 });
+
+// Simple health check with DB status
+app.get('/api/health', (_req, res) => {
+  const state = mongoose.connection?.readyState
+  // 1 = connected, 2 = connecting
+  res.json({ up: true, dbState: state })
+})
 
 app.use('/api/auth', authRoutes)
 // Routes

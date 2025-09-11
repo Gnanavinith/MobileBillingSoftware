@@ -10,7 +10,8 @@ const Navbar = () => {
   const [lowStock, setLowStock] = useState([])
   const [open, setOpen] = useState(false)
 
-  const apiBase = (typeof window !== 'undefined' && window?.process?.versions?.electron) ? 'http://localhost:5000' : ''
+  const isElectron = (typeof navigator !== 'undefined' && /Electron/i.test(navigator.userAgent))
+  const apiBase = isElectron ? 'http://127.0.0.1:5000' : (import.meta?.env?.VITE_API_BASE || '')
 
   useEffect(() => {
     let mounted = true

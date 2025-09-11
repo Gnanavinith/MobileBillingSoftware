@@ -3,7 +3,8 @@ import { Link } from 'react-router-dom'
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, BarChart, Bar, AreaChart, Area } from 'recharts'
 import { MdTrendingUp, MdShoppingBag, MdBuild, MdShowChart, MdWarningAmber, MdAddShoppingCart, MdPlayForWork, MdHomeRepairService, MdCompareArrows } from 'react-icons/md'
 
-const apiBase = (typeof window !== 'undefined' && window?.process?.versions?.electron) ? 'http://localhost:5000' : ''
+const isElectron = (typeof navigator !== 'undefined' && /Electron/i.test(navigator.userAgent))
+const apiBase = isElectron ? 'http://127.0.0.1:5000' : (import.meta?.env?.VITE_API_BASE || '')
 
 const monthlyRevenueDataDefault = []
 
