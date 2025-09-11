@@ -189,9 +189,9 @@ const Mobiles = () => {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold flex items-center gap-2"><FiSmartphone className="text-slate-700" /> Mobile Inventory</h1>
+        <h1 className="text-3xl font-extrabold flex items-center gap-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent"><FiSmartphone className="text-slate-700" /> Mobile Inventory</h1>
         <div className="flex items-center space-x-4">
           <div className="relative">
             <input
@@ -200,20 +200,20 @@ const Mobiles = () => {
               onChange={(e) => setSearchInput(e.target.value)}
               onKeyDown={(e)=>{ if(e.key==='Enter'){ setSearch(searchInput.trim()) } }}
               placeholder="Search by brand or mobile name..."
-              className="w-64 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 pl-8"
+              className="w-72 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all px-4 py-2.5 pl-10"
             />
             <FiSearch className="absolute left-2 top-2.5 w-4 h-4 text-slate-400" />
           </div>
           <button
             onClick={()=>setSearch(searchInput.trim())}
-            className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50 flex items-center gap-2"
+            className="px-5 py-2.5 rounded-xl border-2 border-slate-300 hover:bg-slate-50 hover:border-slate-400 flex items-center gap-2 transition-all"
           >
             <FiSearch className="w-4 h-4" />
             <span>Find</span>
           </button>
           <button
             onClick={()=>{ setSearchInput(''); setSearch(''); setFilterMobile(''); setFilterModel(''); setFilterColor(''); setFilterRam(''); setFilterStorage('') }}
-            className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50"
+            className="px-5 py-2.5 rounded-xl border-2 border-slate-300 hover:bg-slate-50 hover:border-slate-400 transition-all"
           >
             Clear Filters
           </button>
@@ -221,7 +221,7 @@ const Mobiles = () => {
           <select
             value={filterBrand}
             onChange={e=>{ setFilterBrand(e.target.value); setFilterMobile(''); setFilterModel(''); setFilterColor(''); setFilterRam(''); setFilterStorage(''); setFilterProcessor('') }}
-            className="rounded-md border border-slate-300"
+            className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
           >
             <option value="">All Brand</option>
             {brandOptions.map(v => <option key={v} value={v}>{v}</option>)}
@@ -229,7 +229,7 @@ const Mobiles = () => {
           <select
             value={filterMobile}
             onChange={e=>{ setFilterMobile(e.target.value); setFilterModel(''); setFilterColor(''); setFilterRam(''); setFilterStorage(''); setFilterProcessor('') }}
-            className="rounded-md border border-slate-300"
+            className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
           >
             <option value="">All Mobile</option>
             {mobileOptions.map(v => <option key={v} value={v}>{v}</option>)}
@@ -237,7 +237,7 @@ const Mobiles = () => {
           <select
             value={filterModel}
             onChange={e=>{ setFilterModel(e.target.value); setFilterColor(''); setFilterRam(''); setFilterStorage(''); setFilterProcessor('') }}
-            className="rounded-md border border-slate-300"
+            className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all"
           >
             <option value="">All Model</option>
             {modelOptions.map(v => <option key={v} value={v}>{v}</option>)}
@@ -245,7 +245,7 @@ const Mobiles = () => {
           <select
             value={filterColor}
             onChange={e=>setFilterColor(e.target.value)}
-            className="rounded-md border border-slate-300"
+            className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-pink-400 focus:ring-4 focus:ring-pink-100 transition-all"
           >
             <option value="">All Color</option>
             {colorOptions.map(v => <option key={v} value={v}>{v}</option>)}
@@ -253,7 +253,7 @@ const Mobiles = () => {
           <select
             value={filterRam}
             onChange={e=>setFilterRam(e.target.value)}
-            className="rounded-md border border-slate-300"
+            className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all"
           >
             <option value="">All RAM</option>
             {ramOptions.map(r => <option key={r} value={r}>{r}</option>)}
@@ -261,7 +261,7 @@ const Mobiles = () => {
           <select
             value={filterStorage}
             onChange={e=>setFilterStorage(e.target.value)}
-            className="rounded-md border border-slate-300"
+            className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all"
           >
             <option value="">All Storage</option>
             {storageOptions.map(s => <option key={s} value={s}>{s}</option>)}
@@ -269,7 +269,7 @@ const Mobiles = () => {
           <select
             value={filterProcessor}
             onChange={e=>setFilterProcessor(e.target.value)}
-            className="rounded-md border border-slate-300"
+            className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
           >
             <option value="">All Processor</option>
             {processorOptions.map(p => <option key={p} value={p}>{p}</option>)}
@@ -279,7 +279,7 @@ const Mobiles = () => {
 
       {/* Stock Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Total Products</p>
@@ -291,7 +291,7 @@ const Mobiles = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">In Stock</p>
@@ -305,7 +305,7 @@ const Mobiles = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Low Stock</p>
@@ -317,7 +317,7 @@ const Mobiles = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Out of Stock</p>
@@ -331,15 +331,15 @@ const Mobiles = () => {
       </div>
 
       {/* Inventory Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="p-4 border-b border-slate-200">
-          <h2 className="text-lg font-semibold flex items-center gap-2"><FiPackage className="text-slate-700" /> Mobile Stock Details</h2>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg hover:shadow-xl transition-all">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-xl font-bold flex items-center gap-2 bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent"><FiPackage className="text-slate-700" /> Mobile Stock Details</h2>
         </div>
         
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 text-xs uppercase border-b">
+              <tr className="text-left text-slate-600 text-xs uppercase border-b bg-gradient-to-r from-indigo-50 to-blue-50">
                 <th className="py-3 px-4"><div className="flex items-center gap-1"><FiTag className="w-4 h-4" /> Product Name</div></th>
                 <th className="py-3 px-4"><div className="flex items-center gap-1"><FiTag className="w-4 h-4" /> Brand</div></th>
                 <th className="py-3 px-4"><div className="flex items-center gap-1"><FiSmartphone className="w-4 h-4" /> Model/Variant</div></th>

@@ -245,20 +245,20 @@ const PurchaseHistory = () => {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Purchase History</h1>
-        <div className="flex gap-2">
+        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Purchase History</h1>
+        <div className="flex gap-3">
           <button
             onClick={exportToPDF}
-            className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            className="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-xl hover:from-rose-600 hover:to-rose-700 shadow-md hover:shadow-lg transition-all"
           >
             <FiDownload className="w-4 h-4" />
             <span>Export PDF</span>
           </button>
           <button
             onClick={exportToExcel}
-            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            className="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 shadow-md hover:shadow-lg transition-all"
           >
             <FiDownload className="w-4 h-4" />
             <span>Export Excel</span>
@@ -267,7 +267,7 @@ const PurchaseHistory = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm mb-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all mb-6">
         <div className="flex items-center space-x-2 mb-4">
           <FiFilter className="w-4 h-4" />
           <h2 className="text-lg font-semibold">Filters</h2>
@@ -279,7 +279,7 @@ const PurchaseHistory = () => {
             <select
               value={filters.dealerId}
               onChange={(e) => setFilters({ ...filters, dealerId: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5"
             >
               <option value="">All Dealers</option>
               {dealers.map(dealer => (
@@ -296,7 +296,7 @@ const PurchaseHistory = () => {
               type="date"
               value={filters.dateFrom}
               onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all px-4 py-2.5"
             />
           </div>
 
@@ -306,7 +306,7 @@ const PurchaseHistory = () => {
               type="date"
               value={filters.dateTo}
               onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all px-4 py-2.5"
             />
           </div>
 
@@ -315,7 +315,7 @@ const PurchaseHistory = () => {
             <select
               value={filters.category}
               onChange={(e) => setFilters({ ...filters, category: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
             >
               <option value="">All Categories</option>
               <option value="Mobile">Mobile</option>
@@ -333,7 +333,7 @@ const PurchaseHistory = () => {
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                 placeholder="Product, model, invoice..."
-                className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 pl-8"
+                className="w-full rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all px-4 py-2.5 pl-10"
               />
               <FiSearch className="absolute left-2 top-2.5 w-4 h-4 text-slate-400" />
             </div>
@@ -342,9 +342,9 @@ const PurchaseHistory = () => {
       </div>
 
       {/* Purchase History Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="p-4 border-b border-slate-200">
-          <h2 className="text-lg font-semibold">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg hover:shadow-xl transition-all">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">
             Purchase Records ({filteredPurchases.length})
           </h2>
         </div>
@@ -352,7 +352,7 @@ const PurchaseHistory = () => {
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 text-xs uppercase border-b">
+              <tr className="text-left text-slate-600 text-xs uppercase border-b bg-gradient-to-r from-indigo-50 to-blue-50">
                 <th className="py-3 px-4">Dealer</th>
                 <th className="py-3 px-4">Product</th>
                 <th className="py-3 px-4">Model</th>
@@ -378,7 +378,7 @@ const PurchaseHistory = () => {
               ) : (
                 filteredPurchases.map(purchase => 
                   purchase.items.map((item, itemIndex) => (
-                    <tr key={`${purchase.id}-${itemIndex}`} className="border-b border-slate-100 hover:bg-slate-50">
+                    <tr key={`${purchase.id}-${itemIndex}`} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                       <td className="py-3 px-4">{getDealerName(purchase.dealerId)}</td>
                       <td className="py-3 px-4">{item.productName}</td>
                       <td className="py-3 px-4">{item.model}</td>
@@ -411,14 +411,14 @@ const PurchaseHistory = () => {
                         <div className="flex items-center gap-2">
                           <button
                             onClick={() => viewPurchaseDetails(purchase)}
-                            className="text-blue-600 hover:text-blue-800"
+                            className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors"
                             title="View"
                           >
                             <FiEye className="w-4 h-4" />
                           </button>
                           <button
                             onClick={() => downloadItemDetails(purchase, item)}
-                            className="text-green-600 hover:text-green-800"
+                            className="px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 hover:bg-emerald-200 transition-colors"
                             title="Download Item PDF"
                           >
                             <FiDownload className="w-4 h-4" />

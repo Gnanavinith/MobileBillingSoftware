@@ -269,27 +269,27 @@ const SalesReport = () => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
 
   return (
-    <div className="p-4">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Sales Report</h1>
+        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Sales Report</h1>
         <div className="flex gap-2">
           <button
             onClick={exportToPDF}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            className="flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 shadow-md hover:shadow-lg transition-all"
           >
             <FiDownload className="w-4 h-4" />
             Export PDF
           </button>
           <button
             onClick={exportToExcel}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 shadow-md hover:shadow-lg transition-all"
           >
             <FiDownload className="w-4 h-4" />
             Export Excel
           </button>
           <button
             onClick={printReport}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md hover:shadow-lg transition-all"
           >
             <FiPrinter className="w-4 h-4" />
             Print
@@ -299,7 +299,7 @@ const SalesReport = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Total Sales</p>
@@ -308,7 +308,7 @@ const SalesReport = () => {
             <FiShoppingBag className="w-8 h-8 text-blue-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Total Quantity</p>
@@ -317,7 +317,7 @@ const SalesReport = () => {
             <FiShoppingBag className="w-8 h-8 text-green-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Total Discount</p>
@@ -326,7 +326,7 @@ const SalesReport = () => {
             <FiShoppingBag className="w-8 h-8 text-orange-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Total GST</p>
@@ -335,7 +335,7 @@ const SalesReport = () => {
             <FiShoppingBag className="w-8 h-8 text-purple-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Net Total</p>
@@ -347,10 +347,10 @@ const SalesReport = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm mb-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all mb-6">
         <div className="flex items-center gap-2 mb-4">
           <FiFilter className="w-5 h-5 text-slate-600" />
-          <h2 className="text-lg font-semibold">Filters</h2>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Filters</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
@@ -358,7 +358,7 @@ const SalesReport = () => {
             <select
               value={filters.dateRange}
               onChange={(e) => setFilters({ ...filters, dateRange: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
             >
               <option value="today">Today</option>
               <option value="thisWeek">This Week</option>
@@ -374,7 +374,7 @@ const SalesReport = () => {
                   type="date"
                   value={filters.startDate}
                   onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
                 />
               </div>
               <div>
@@ -383,7 +383,7 @@ const SalesReport = () => {
                   type="date"
                   value={filters.endDate}
                   onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
                 />
               </div>
             </>
@@ -395,7 +395,7 @@ const SalesReport = () => {
               value={filters.invoiceNumber}
               onChange={(e) => setFilters({ ...filters, invoiceNumber: e.target.value })}
               placeholder="Search invoice id..."
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all"
             />
           </div>
           <div>
@@ -405,7 +405,7 @@ const SalesReport = () => {
               value={filters.productName}
               onChange={(e) => setFilters({ ...filters, productName: e.target.value })}
               placeholder="Search product..."
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
             />
           </div>
           <div>
@@ -413,7 +413,7 @@ const SalesReport = () => {
             <select
               value={filters.paymentMode}
               onChange={(e) => setFilters({ ...filters, paymentMode: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all"
             >
               <option value="">All</option>
               <option value="Cash">Cash</option>
@@ -429,7 +429,7 @@ const SalesReport = () => {
               value={filters.salesperson}
               onChange={(e) => setFilters({ ...filters, salesperson: e.target.value })}
               placeholder="Search salesperson..."
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all"
             />
           </div>
           <div>
@@ -439,7 +439,7 @@ const SalesReport = () => {
               value={filters.customerName}
               onChange={(e) => setFilters({ ...filters, customerName: e.target.value })}
               placeholder="Search customer..."
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-pink-400 focus:ring-4 focus:ring-pink-100 transition-all"
             />
           </div>
         </div>
@@ -447,7 +447,7 @@ const SalesReport = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
           <h3 className="text-lg font-semibold mb-4">Daily Sales Trend</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -462,7 +462,7 @@ const SalesReport = () => {
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
           <h3 className="text-lg font-semibold mb-4">Payment Mode Distribution</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -489,13 +489,13 @@ const SalesReport = () => {
       </div>
 
       {/* Sales Table */}
-      <div className="bg-white rounded-lg border border-slate-200 shadow-sm">
-        <div className="p-4 border-b border-slate-200">
-          <h3 className="text-lg font-semibold">Sales Details ({filteredData.length} records)</h3>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg hover:shadow-xl transition-all">
+        <div className="p-6 border-b border-slate-200">
+          <h3 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Sales Details ({filteredData.length} records)</h3>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+            <thead className="bg-gradient-to-r from-indigo-50 to-blue-50">
               <tr>
                 <th className="px-3 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider"></th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Invoice #</th>

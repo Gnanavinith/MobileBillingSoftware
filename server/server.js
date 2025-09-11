@@ -9,6 +9,7 @@ const brandModelRoutes = require("./routes/brandModelRoutes");
 const dashboardRoutes = require("./routes/dashboardRoutes");
 const serviceInvoiceRoutes = require("./routes/serviceInvoiceRoutes");
 const transferRoutes = require("./routes/transferRoutes");
+const secondHandMobileRoutes = require("./routes/secondHandMobileRoutes");
 const app = express();
 
 app.use(cors());
@@ -34,6 +35,7 @@ app.use('/api', stockRoutes)
 app.use('/api/brand-models', brandModelRoutes)
 app.use('/api/service-invoices', serviceInvoiceRoutes)
 app.use('/api/transfers', transferRoutes)
+app.use('/api/secondhand-mobiles', secondHandMobileRoutes)
 app.use('/api/dashboard', dashboardRoutes)
 
 // Global error handler

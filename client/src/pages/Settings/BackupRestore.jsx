@@ -208,13 +208,13 @@ const BackupRestore = () => {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Backup / Restore</h1>
+        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Backup / Restore</h1>
         <button
           onClick={createBackup}
           disabled={isBackingUp}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isBackingUp ? (
             <FiRefreshCw className="w-4 h-4 animate-spin" />
@@ -228,7 +228,7 @@ const BackupRestore = () => {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Backup Settings */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-lg border border-slate-200 p-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <FiSettings className="w-5 h-5" />
               Backup Settings
@@ -257,7 +257,7 @@ const BackupRestore = () => {
                     <select
                       value={backupSettings.backupFrequency}
                       onChange={(e) => handleBackupSettingsChange('backupFrequency', e.target.value)}
-                      className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                      className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
                     >
                       <option value="daily">Daily</option>
                       <option value="weekly">Weekly</option>
@@ -270,7 +270,7 @@ const BackupRestore = () => {
                     <select
                       value={backupSettings.backupLocation}
                       onChange={(e) => handleBackupSettingsChange('backupLocation', e.target.value)}
-                      className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                      className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
                     >
                       <option value="local">Local System</option>
                       <option value="cloud">Cloud Storage</option>
@@ -283,7 +283,7 @@ const BackupRestore = () => {
                       <select
                         value={backupSettings.cloudProvider}
                         onChange={(e) => handleBackupSettingsChange('cloudProvider', e.target.value)}
-                        className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                        className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
                       >
                         <option value="google">Google Drive</option>
                         <option value="dropbox">Dropbox</option>
@@ -297,7 +297,7 @@ const BackupRestore = () => {
                     <select
                       value={backupSettings.backupType}
                       onChange={(e) => handleBackupSettingsChange('backupType', e.target.value)}
-                      className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                      className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all"
                     >
                       <option value="full">Full Backup</option>
                       <option value="database">Database Only</option>
@@ -311,7 +311,7 @@ const BackupRestore = () => {
                       type="number"
                       value={backupSettings.retentionDays}
                       onChange={(e) => handleBackupSettingsChange('retentionDays', parseInt(e.target.value))}
-                      className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                      className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all"
                       min="1"
                       max="365"
                     />
@@ -321,7 +321,7 @@ const BackupRestore = () => {
 
               <button
                 onClick={saveBackupSettings}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+                className="w-full px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 shadow-md hover:shadow-lg"
               >
                 Save Settings
               </button>
@@ -331,13 +331,13 @@ const BackupRestore = () => {
 
         {/* Restore Options */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-lg border border-slate-200 p-6 mb-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6 shadow-lg hover:shadow-xl transition-all">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <FiUpload className="w-5 h-5" />
               Restore Options
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+              <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center">
                 <FiUpload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                 <h4 className="font-medium text-slate-700 mb-2">Upload Backup File</h4>
                 <p className="text-sm text-slate-500 mb-4">Upload a backup file to restore data</p>
@@ -350,20 +350,20 @@ const BackupRestore = () => {
                 />
                 <label
                   htmlFor="restore-file-upload"
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-md cursor-pointer hover:bg-blue-700"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl cursor-pointer hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg"
                 >
                   <FiUpload className="w-4 h-4" />
                   Choose File
                 </label>
               </div>
 
-              <div className="border-2 border-dashed border-slate-300 rounded-lg p-6 text-center">
+              <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center">
                 <FiHardDrive className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                 <h4 className="font-medium text-slate-700 mb-2">Restore from History</h4>
                 <p className="text-sm text-slate-500 mb-4">Select from previous backups</p>
                 <button
                   onClick={() => setShowRestoreModal(true)}
-                  className="inline-flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-md cursor-pointer hover:bg-green-700"
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl cursor-pointer hover:from-emerald-600 hover:to-emerald-700 shadow-md hover:shadow-lg"
                 >
                   <FiClock className="w-4 h-4" />
                   View History
@@ -373,14 +373,14 @@ const BackupRestore = () => {
           </div>
 
           {/* Backup History */}
-          <div className="bg-white rounded-lg border border-slate-200 p-6">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <FiClock className="w-5 h-5" />
               Backup History
             </h3>
             <div className="overflow-x-auto">
               <table className="min-w-full divide-y divide-slate-200">
-                <thead className="bg-slate-50">
+                <thead className="bg-gradient-to-r from-indigo-50 to-blue-50">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
@@ -392,7 +392,7 @@ const BackupRestore = () => {
                 </thead>
                 <tbody className="bg-white divide-y divide-slate-200">
                   {backupHistory.map((backup) => (
-                    <tr key={backup.id} className="hover:bg-slate-50">
+                    <tr key={backup.id} className="hover:bg-slate-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{backup.date}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{backup.type}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{backup.size}</td>
@@ -445,7 +445,7 @@ const BackupRestore = () => {
       {/* Restore Confirmation Modal */}
       {showRestoreModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl">
             <div className="flex items-center gap-3 mb-4">
               <FiAlertTriangle className="w-6 h-6 text-yellow-600" />
               <h3 className="text-lg font-semibold">Confirm Restore</h3>
@@ -482,7 +482,7 @@ const BackupRestore = () => {
                   setRestoreFile(null)
                   setSelectedBackup(null)
                 }}
-                className="px-4 py-2 text-slate-600 hover:text-slate-800"
+                className="px-4 py-2 rounded-xl border-2 border-slate-300 hover:bg-slate-50"
                 disabled={isRestoring}
               >
                 Cancel
@@ -490,7 +490,7 @@ const BackupRestore = () => {
               <button
                 onClick={restoreFile ? restoreFromFile : confirmRestore}
                 disabled={isRestoring || (!restoreFile && !selectedBackup)}
-                className="px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2.5 bg-gradient-to-r from-rose-500 to-rose-600 text-white rounded-xl hover:from-rose-600 hover:to-rose-700 shadow-md hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
               >
                 {isRestoring ? (
                   <FiRefreshCw className="w-4 h-4 animate-spin" />

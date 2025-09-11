@@ -67,60 +67,60 @@ const AccessoriesStock = () => {
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-semibold mb-4">Update Stock - Accessories</h1>
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <h1 className="text-3xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Update Stock - Accessories</h1>
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-          <h2 className="text-base font-semibold mb-3">Add Accessory</h2>
+        <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
+          <h2 className="text-lg font-bold mb-4 bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Add Accessory</h2>
           <form onSubmit={submit} className="space-y-3">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Dealer</label>
-              <select className="w-full rounded-md border border-slate-300" value={form.dealerId} onChange={e=>setForm({...form, dealerId:e.target.value})}>
+              <select className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all" value={form.dealerId} onChange={e=>setForm({...form, dealerId:e.target.value})}>
                 <option value="">Select Dealer</option>
                 {dealers.map(d=> <option key={d.id} value={d.id}>{d.name}</option>)}
               </select>
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Product ID (unique)</label>
-              <input className="w-full rounded-md border border-slate-300" value={form.productId} onChange={e=>setForm({...form, productId:e.target.value})} />
+              <input className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all" value={form.productId} onChange={e=>setForm({...form, productId:e.target.value})} />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Product Name</label>
-              <input className="w-full rounded-md border border-slate-300" value={form.productName} onChange={e=>setForm({...form, productName:e.target.value})} />
+              <input className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all" value={form.productName} onChange={e=>setForm({...form, productName:e.target.value})} />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Quantity</label>
-              <input type="number" className="w-full rounded-md border border-slate-300" value={form.quantity} onChange={e=>setForm({...form, quantity: parseInt(e.target.value)||0})} />
+              <input type="number" className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all" value={form.quantity} onChange={e=>setForm({...form, quantity: parseInt(e.target.value)||0})} />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Unit Price</label>
-              <input type="number" className="w-full rounded-md border border-slate-300" value={form.unitPrice} onChange={e=>setForm({...form, unitPrice: parseFloat(e.target.value)||0})} />
+              <input type="number" className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all" value={form.unitPrice} onChange={e=>setForm({...form, unitPrice: parseFloat(e.target.value)||0})} />
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Selling Price</label>
-              <input type="number" className="w-full rounded-md border border-slate-300" value={form.sellingPrice} onChange={e=>setForm({...form, sellingPrice: parseFloat(e.target.value)||0})} />
+              <input type="number" className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all" value={form.sellingPrice} onChange={e=>setForm({...form, sellingPrice: parseFloat(e.target.value)||0})} />
             </div>
             <div className="flex gap-2">
-              <button disabled={saving} className="px-3 py-2 rounded-md bg-slate-900 text-white disabled:opacity-50">{saving ? 'Saving...' : (editingId ? 'Update' : 'Save')}</button>
+              <button disabled={saving} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white disabled:opacity-50 shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all">{saving ? 'Saving...' : (editingId ? 'Update' : 'Save')}</button>
               {editingId ? (
-                <button type="button" onClick={()=>{ setEditingId(''); setForm({ dealerId: '', productId: '', productName: '', quantity: 1, unitPrice: 0, sellingPrice: 0 }) }} className="px-3 py-2 rounded-md border">Cancel</button>
+                <button type="button" onClick={()=>{ setEditingId(''); setForm({ dealerId: '', productId: '', productName: '', quantity: 1, unitPrice: 0, sellingPrice: 0 }) }} className="px-4 py-2.5 rounded-xl border-2 border-slate-300 hover:bg-slate-50 transition-all">Cancel</button>
               ) : null}
             </div>
           </form>
         </div>
-        <div className="lg:col-span-2 rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center gap-2 mb-3">
-            <select className="rounded-md border border-slate-300" value={q.dealerId} onChange={e=>setQ({...q, dealerId:e.target.value})}>
+        <div className="lg:col-span-2 rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
+          <div className="flex items-center gap-2 mb-4">
+            <select className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all" value={q.dealerId} onChange={e=>setQ({...q, dealerId:e.target.value})}>
               <option value="">All Dealers</option>
               {dealers.map(d=> <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
-            <input placeholder="Product ID" className="rounded-md border border-slate-300" value={q.productId} onChange={e=>setQ({...q, productId:e.target.value})} />
-            <button onClick={load} className="px-3 py-2 rounded-md border">Filter</button>
+            <input placeholder="Product ID" className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all" value={q.productId} onChange={e=>setQ({...q, productId:e.target.value})} />
+            <button onClick={load} className="px-4 py-2.5 rounded-xl border-2 border-slate-300 hover:bg-slate-50 transition-all">Filter</button>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-slate-500 text-xs uppercase">
+                <tr className="text-left text-slate-600 text-xs uppercase bg-gradient-to-r from-indigo-50 to-blue-50">
                   <th className="py-2 pr-4">Dealer</th>
                   <th className="py-2 pr-4">Product ID</th>
                   <th className="py-2 pr-4">Product Name</th>
@@ -132,7 +132,7 @@ const AccessoriesStock = () => {
               </thead>
               <tbody>
                 {filtered.map((r)=> (
-                  <tr key={r.id} className="border-t border-slate-100">
+                  <tr key={r.id} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
                     <td className="py-2 pr-4">{r.dealerName}</td>
                     <td className="py-2 pr-4">{r.productId}</td>
                     <td className="py-2 pr-4">{r.productName}</td>
@@ -141,8 +141,8 @@ const AccessoriesStock = () => {
                     <td className="py-2 pr-4">{r.sellingPrice || '-'}</td>
                     <td className="py-2 pr-2">
                       <div className="flex gap-2">
-                        <button onClick={()=>onEdit(r)} className="text-blue-600 hover:underline">Edit</button>
-                        <button onClick={()=>onDelete(r)} className="text-red-600 hover:underline">Delete</button>
+                        <button onClick={()=>onEdit(r)} className="text-blue-600 hover:text-blue-800">Edit</button>
+                        <button onClick={()=>onDelete(r)} className="text-red-600 hover:text-red-800">Delete</button>
                       </div>
                     </td>
                   </tr>

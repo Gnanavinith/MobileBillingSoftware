@@ -232,16 +232,16 @@ const ServiceRequests = () => {
   const serviceParts = inventory.filter(item => item.category === 'Service Item')
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-semibold mb-4">New Service Request</h1>
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <h1 className="text-3xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">New Service Request</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Customer Details */}
         <div className="lg:col-span-1">
-          <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
+          <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
             <div className="flex items-center space-x-2 mb-4">
               <FiUser className="w-5 h-5 text-blue-600" />
-              <h2 className="text-lg font-semibold">Customer Details</h2>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Customer Details</h2>
             </div>
             
             <div className="space-y-4">
@@ -322,10 +322,10 @@ const ServiceRequests = () => {
 
         {/* Device Details */}
         <div className="lg:col-span-1">
-          <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
+          <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
             <div className="flex items-center space-x-2 mb-4">
               <FiSmartphone className="w-5 h-5 text-green-600" />
-              <h2 className="text-lg font-semibold">Device Details</h2>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Device Details</h2>
             </div>
             
             <div className="space-y-4">
@@ -407,10 +407,10 @@ const ServiceRequests = () => {
 
         {/* Service Details */}
         <div className="lg:col-span-1">
-          <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
+          <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
             <div className="flex items-center space-x-2 mb-4">
               <FiSettings className="w-5 h-5 text-purple-600" />
-              <h2 className="text-lg font-semibold">Service Details</h2>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Service Details</h2>
             </div>
             
             <div className="space-y-4">
@@ -602,11 +602,11 @@ const ServiceRequests = () => {
 
       {/* Service Parts Section */}
       <div className="mt-6">
-        <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">Service Parts Used</h2>
+        <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
+          <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Service Parts Used</h2>
           
           {/* Add Service Part Form */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-slate-50 rounded-lg">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl">
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Service Part *</label>
               <select
@@ -619,7 +619,7 @@ const ServiceRequests = () => {
                     unitPrice: selectedPart ? selectedPart.sellingPrice : 0
                   })
                 }}
-                className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
               >
                 <option value="">Select Service Part</option>
                 {serviceParts.map(part => (
@@ -636,7 +636,7 @@ const ServiceRequests = () => {
                 type="number"
                 value={newPart.quantity}
                 onChange={(e) => setNewPart({ ...newPart, quantity: parseInt(e.target.value) || 0 })}
-                className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all"
                 min="1"
               />
             </div>
@@ -647,7 +647,7 @@ const ServiceRequests = () => {
                 type="number"
                 value={newPart.unitPrice}
                 onChange={(e) => setNewPart({ ...newPart, unitPrice: parseFloat(e.target.value) || 0 })}
-                className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
                 min="0"
                 step="0.01"
               />
@@ -657,7 +657,7 @@ const ServiceRequests = () => {
               <button
                 type="button"
                 onClick={addServicePart}
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                className="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg transition-all"
               >
                 <FiPlus className="w-4 h-4" />
                 <span>Add Part</span>
@@ -672,7 +672,7 @@ const ServiceRequests = () => {
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
-                    <tr className="text-left text-slate-500 text-xs uppercase border-b">
+                    <tr className="text-left text-slate-600 text-xs uppercase border-b bg-gradient-to-r from-indigo-50 to-blue-50">
                       <th className="py-2 pr-4">Part Name</th>
                       <th className="py-2 pr-4">Model</th>
                       <th className="py-2 pr-4">Quantity</th>
@@ -683,7 +683,7 @@ const ServiceRequests = () => {
                   </thead>
                   <tbody>
                     {form.serviceDetails.serviceParts.map((part, index) => (
-                      <tr key={index} className="border-b border-slate-100">
+                      <tr key={index} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                         <td className="py-2 pr-4">{part.partName}</td>
                         <td className="py-2 pr-4">{part.partModel}</td>
                         <td className="py-2 pr-4">{part.quantity}</td>
@@ -709,8 +709,8 @@ const ServiceRequests = () => {
 
       {/* Amount Summary */}
       <div className="mt-6">
-        <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-          <h2 className="text-lg font-semibold mb-4">Amount Summary</h2>
+        <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
+          <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Amount Summary</h2>
           
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-3">
@@ -764,7 +764,7 @@ const ServiceRequests = () => {
       <div className="mt-6 flex justify-end">
         <button
           onClick={saveServiceRequest}
-          className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500"
+          className="flex items-center space-x-2 px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-emerald-100 transition-all"
         >
           <FiSave className="w-4 h-4" />
           <span>Save Service Request</span>

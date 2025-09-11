@@ -115,22 +115,22 @@ const DealerHistory = () => {
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-semibold mb-4">Dealer History</h1>
-      <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-3 mb-3">
-          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search dealer name / ID" className="rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" />
-          <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" />
-          <input type="date" value={to} onChange={e => setTo(e.target.value)} className="rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" />
-          <div className="flex items-center gap-2">
-            <button className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50" onClick={() => { setQ(''); setFrom(''); setTo('') }}>Reset</button>
-            <button className="px-3 py-2 rounded-md bg-slate-900 text-white hover:bg-slate-800" onClick={() => window.print()}>Print</button>
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <h1 className="text-3xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Dealer History</h1>
+      <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4">
+          <input value={q} onChange={e => setQ(e.target.value)} placeholder="Search dealer name / ID" className="rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5" />
+          <input type="date" value={from} onChange={e => setFrom(e.target.value)} className="rounded-xl border-2 border-slate-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all px-4 py-2.5" />
+          <input type="date" value={to} onChange={e => setTo(e.target.value)} className="rounded-xl border-2 border-slate-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all px-4 py-2.5" />
+          <div className="flex items-center gap-3">
+            <button className="px-5 py-2.5 rounded-xl border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-all font-semibold" onClick={() => { setQ(''); setFrom(''); setTo('') }}>Reset</button>
+            <button className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg transition-all font-semibold" onClick={() => window.print()}>Print</button>
           </div>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 text-xs uppercase">
+              <tr className="text-left text-slate-600 text-xs uppercase bg-gradient-to-r from-indigo-50 to-blue-50">
                 <th className="py-2 pr-4">Dealer</th>
                 <th className="py-2 pr-4">Product</th>
                 <th className="py-2 pr-4">Qty</th>
@@ -145,27 +145,27 @@ const DealerHistory = () => {
             </thead>
             <tbody>
               {filtered.length === 0 ? (
-                <tr><td className="py-3 pr-4" colSpan={9}>No records found.</td></tr>
+                <tr><td className="py-6 pr-4 text-center text-slate-500" colSpan={9}>No records found.</td></tr>
               ) : (
                 filtered.map((p, i) => {
                   const net = Math.max(p.unitPrice * p.quantity - (p.discount || 0), 0)
                   const rowGst = net * ((p.gstPercent || 0) / 100)
                   const total = net + rowGst
                   return (
-                    <tr key={i} className="border-t border-slate-100">
-                      <td className="py-2 pr-4">{p.dealerName} ({p.dealerId})</td>
-                      <td className="py-2 pr-4">{p.product}</td>
-                      <td className="py-2 pr-4">{p.quantity}</td>
-                      <td className="py-2 pr-4">{p.unitPrice}</td>
-                      <td className="py-2 pr-4">{p.gstPercent}</td>
-                      <td className="py-2 pr-4">{total.toFixed(2)}</td>
-                      <td className="py-2 pr-4">{p.mode}</td>
-                      <td className="py-2 pr-4">{new Date(p.date).toLocaleDateString()}</td>
-                      <td className="py-2 pr-2">{p.invoice}</td>
+                    <tr key={i} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                      <td className="py-2 pr-4 text-slate-900">{p.dealerName} ({p.dealerId})</td>
+                      <td className="py-2 pr-4 text-slate-900">{p.product}</td>
+                      <td className="py-2 pr-4 text-slate-900">{p.quantity}</td>
+                      <td className="py-2 pr-4 text-slate-900">{p.unitPrice}</td>
+                      <td className="py-2 pr-4 text-slate-900">{p.gstPercent}</td>
+                      <td className="py-2 pr-4 text-slate-900">{total.toFixed(2)}</td>
+                      <td className="py-2 pr-4 text-slate-900">{p.mode}</td>
+                      <td className="py-2 pr-4 text-slate-900">{new Date(p.date).toLocaleDateString()}</td>
+                      <td className="py-2 pr-2 text-slate-900">{p.invoice}</td>
                       <td className="py-2 pr-2">
                         <div className="flex gap-2">
-                          <button onClick={() => printInvoice(p)} className="text-slate-700 hover:underline">Print</button>
-                          <button onClick={() => downloadInvoice(p)} className="text-blue-600 hover:underline">Download</button>
+                          <button onClick={() => printInvoice(p)} className="px-3 py-1 rounded-full bg-indigo-100 text-indigo-700 hover:bg-indigo-200 transition-colors">Print</button>
+                          <button onClick={() => downloadInvoice(p)} className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors">Download</button>
                         </div>
                       </td>
                     </tr>
@@ -176,18 +176,18 @@ const DealerHistory = () => {
           </table>
         </div>
 
-        <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3">
-          <div className="rounded-lg border border-slate-200 p-3">
-            <div className="text-sm text-slate-600">Subtotal</div>
-            <div className="text-lg font-semibold">{totals.subtotal.toFixed(2)}</div>
+        <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="rounded-2xl border-2 border-slate-200 p-4 bg-gradient-to-br from-slate-50 to-white shadow-sm">
+            <div className="text-sm font-semibold text-slate-700">Subtotal</div>
+            <div className="text-2xl font-bold text-slate-900">{totals.subtotal.toFixed(2)}</div>
           </div>
-          <div className="rounded-lg border border-slate-200 p-3">
-            <div className="text-sm text-slate-600">GST</div>
-            <div className="text-lg font-semibold">{totals.gst.toFixed(2)}</div>
+          <div className="rounded-2xl border-2 border-blue-200 p-4 bg-gradient-to-br from-blue-50 to-white shadow-sm">
+            <div className="text-sm font-semibold text-blue-700">GST</div>
+            <div className="text-2xl font-bold text-blue-900">{totals.gst.toFixed(2)}</div>
           </div>
-          <div className="rounded-lg border border-slate-200 p-3">
-            <div className="text-sm text-slate-600">Total</div>
-            <div className="text-lg font-semibold">{totals.total.toFixed(2)}</div>
+          <div className="rounded-2xl border-2 border-indigo-200 p-4 bg-gradient-to-br from-indigo-50 to-white shadow-sm">
+            <div className="text-sm font-semibold text-indigo-700">Total</div>
+            <div className="text-2xl font-extrabold text-indigo-900">{totals.total.toFixed(2)}</div>
           </div>
         </div>
       </div>

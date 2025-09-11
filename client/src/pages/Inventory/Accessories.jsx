@@ -111,9 +111,9 @@ const Accessories = () => {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Accessories & Service Items</h1>
+        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Accessories & Service Items</h1>
         <div className="flex items-center space-x-4">
           <div className="flex items-center space-x-2">
             <label className="text-sm font-medium text-slate-700">Low Stock Threshold:</label>
@@ -121,7 +121,7 @@ const Accessories = () => {
               type="number"
               value={lowStockThreshold}
               onChange={(e) => setLowStockThreshold(parseInt(e.target.value) || 0)}
-              className="w-20 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-24 rounded-xl border-2 border-slate-200 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all px-3 py-2"
               min="0"
             />
           </div>
@@ -131,7 +131,7 @@ const Accessories = () => {
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Search accessories..."
-              className="w-64 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 pl-8"
+              className="w-72 rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all px-4 py-2.5 pl-10"
             />
             <FiSearch className="absolute left-2 top-2.5 w-4 h-4 text-slate-400" />
           </div>
@@ -145,7 +145,7 @@ const Accessories = () => {
           <select
             value={selectedCategory}
             onChange={(e) => setSelectedCategory(e.target.value)}
-            className="rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+            className="rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5"
           >
             <option value="">All Categories</option>
             {categories.map(category => (
@@ -159,7 +159,7 @@ const Accessories = () => {
 
       {/* Stock Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Total Products</p>
@@ -171,7 +171,7 @@ const Accessories = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">In Stock</p>
@@ -185,7 +185,7 @@ const Accessories = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Low Stock</p>
@@ -197,7 +197,7 @@ const Accessories = () => {
           </div>
         </div>
 
-        <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-medium text-slate-600">Out of Stock</p>
@@ -211,15 +211,15 @@ const Accessories = () => {
       </div>
 
       {/* Inventory Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="p-4 border-b border-slate-200">
-          <h2 className="text-lg font-semibold">Accessory Stock Details</h2>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg hover:shadow-xl transition-all">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Accessory Stock Details</h2>
         </div>
         
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 text-xs uppercase border-b">
+              <tr className="text-left text-slate-600 text-xs uppercase border-b bg-gradient-to-r from-indigo-50 to-blue-50">
                 <th className="py-3 px-4">Category</th>
                 <th className="py-3 px-4">Product Name</th>
                 <th className="py-3 px-4">Model/Variant</th>

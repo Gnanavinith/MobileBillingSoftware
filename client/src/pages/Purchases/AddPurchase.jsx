@@ -152,14 +152,14 @@ const AddPurchase = () => {
   const selectedDealer = dealers.find(d => d.id === form.dealerId)
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-semibold mb-4">Add Purchase</h1>
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <h1 className="text-3xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Add Purchase</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Purchase Details */}
         <div className="lg:col-span-1">
-          <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Purchase Details</h2>
+          <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
+            <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Purchase Details</h2>
             
             <div className="space-y-4">
               <div>
@@ -167,7 +167,7 @@ const AddPurchase = () => {
                 <select
                   value={form.dealerId}
                   onChange={(e) => setForm({ ...form, dealerId: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5"
                   required
                 >
                   <option value="">Select Dealer</option>
@@ -178,7 +178,7 @@ const AddPurchase = () => {
                   ))}
                 </select>
                 {selectedDealer && (
-                  <div className="mt-2 text-sm text-slate-600">
+                  <div className="mt-2 text-sm text-slate-700">
                     <p>Phone: {selectedDealer.phone}</p>
                     <p>GST: {selectedDealer.gst || 'N/A'}</p>
                   </div>
@@ -191,7 +191,7 @@ const AddPurchase = () => {
                   type="date"
                   value={form.purchaseDate}
                   onChange={(e) => setForm({ ...form, purchaseDate: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5"
                   required
                 />
               </div>
@@ -202,7 +202,7 @@ const AddPurchase = () => {
                   type="text"
                   value={form.invoiceNumber}
                   onChange={(e) => setForm({ ...form, invoiceNumber: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5"
                 />
               </div>
 
@@ -211,7 +211,7 @@ const AddPurchase = () => {
                 <select
                   value={form.paymentMode}
                   onChange={(e) => setForm({ ...form, paymentMode: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5"
                 >
                   <option value="Cash">Cash</option>
                   <option value="UPI">UPI</option>
@@ -236,7 +236,7 @@ const AddPurchase = () => {
                       type="number"
                       value={form.gstPercentage}
                       onChange={(e) => setForm({ ...form, gstPercentage: parseFloat(e.target.value) || 0 })}
-                      className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5"
                       min="0"
                       max="100"
                       step="0.01"
@@ -250,17 +250,17 @@ const AddPurchase = () => {
 
         {/* Product Entry */}
         <div className="lg:col-span-2">
-          <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-            <h2 className="text-lg font-semibold mb-4">Product Entry</h2>
+          <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
+            <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Product Entry</h2>
             
             {/* Add Product Form */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 p-4 bg-slate-50 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4 p-4 bg-gradient-to-br from-slate-50 to-white rounded-xl border border-slate-200">
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Category *</label>
                 <select
                   value={newItem.category}
                   onChange={(e) => setNewItem({ ...newItem, category: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                 >
                   <option value="Mobile">Mobile</option>
                   <option value="Accessories">Accessories</option>
@@ -275,7 +275,7 @@ const AddPurchase = () => {
                   type="text"
                   value={newItem.productName}
                   onChange={(e) => setNewItem({ ...newItem, productName: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                   placeholder="e.g., Ear Buds"
                 />
               </div>
@@ -286,7 +286,7 @@ const AddPurchase = () => {
                   type="text"
                   value={newItem.model}
                   onChange={(e) => setNewItem({ ...newItem, model: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                   placeholder="e.g., OnePlus Buds"
                 />
               </div>
@@ -304,7 +304,7 @@ const AddPurchase = () => {
                     const next = cleaned ? parseInt(cleaned, 10) : 0
                     setNewItem({ ...newItem, quantity: next })
                   }}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-amber-200 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all px-4 py-2.5"
                   min="1"
                   placeholder="e.g., 1"
                 />
@@ -320,7 +320,7 @@ const AddPurchase = () => {
                     const cleaned = String(e.target.value || '').replace(/^0+(?=\d)/, '')
                     setNewItem({ ...newItem, purchasePrice: parseFloat(cleaned) || 0 })
                   }}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-emerald-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                   min="0.01"
                   step="0.01"
                   placeholder="e.g., 1500"
@@ -337,7 +337,7 @@ const AddPurchase = () => {
                     const cleaned = String(e.target.value || '').replace(/^0+(?=\d)/, '')
                     setNewItem({ ...newItem, sellingPrice: parseFloat(cleaned) || 0 })
                   }}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-emerald-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                   min="0.01"
                   step="0.01"
                   placeholder="e.g., 1999.99"
@@ -348,7 +348,7 @@ const AddPurchase = () => {
                 <button
                   type="button"
                   onClick={addItem}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="flex items-center space-x-2 px-5 py-2.5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg transition-all"
                 >
                   <FiPlus className="w-4 h-4" />
                   <span>Add Product</span>
@@ -363,7 +363,7 @@ const AddPurchase = () => {
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
-                      <tr className="text-left text-slate-500 text-xs uppercase border-b">
+                      <tr className="text-left text-slate-600 text-xs uppercase border-b bg-gradient-to-r from-indigo-50 to-blue-50">
                         <th className="py-2 pr-4">Category</th>
                         <th className="py-2 pr-4">Product</th>
                         <th className="py-2 pr-4">Model</th>
@@ -402,20 +402,20 @@ const AddPurchase = () => {
 
             {/* Total Summary */}
             {form.items.length > 0 && (
-              <div className="bg-slate-50 p-4 rounded-lg">
+              <div className="bg-gradient-to-br from-slate-50 to-white p-4 rounded-xl border border-slate-200">
                 <div className="flex justify-between items-center mb-2">
-                  <span className="font-medium">Subtotal:</span>
-                  <span>₹{form.totalAmount.toFixed(2)}</span>
+                  <span className="font-semibold text-slate-700">Subtotal:</span>
+                  <span className="font-bold text-slate-900">₹{form.totalAmount.toFixed(2)}</span>
                 </div>
                 {form.gstEnabled && (
                   <div className="flex justify-between items-center mb-2">
-                    <span className="font-medium">GST ({form.gstPercentage}%):</span>
-                    <span>₹{form.gstAmount.toFixed(2)}</span>
+                    <span className="font-semibold text-blue-600">GST ({form.gstPercentage}%):</span>
+                    <span className="font-bold text-blue-700">₹{form.gstAmount.toFixed(2)}</span>
                   </div>
                 )}
                 <div className="flex justify-between items-center text-lg font-semibold border-t pt-2">
-                  <span>Grand Total:</span>
-                  <span>₹{form.grandTotal.toFixed(2)}</span>
+                  <span className="text-indigo-800 font-bold">Grand Total:</span>
+                  <span className="text-2xl font-extrabold text-indigo-900">₹{form.grandTotal.toFixed(2)}</span>
                 </div>
               </div>
             )}
@@ -425,7 +425,7 @@ const AddPurchase = () => {
               <button
                 onClick={savePurchase}
                 disabled={form.items.length === 0 || !form.dealerId}
-                className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-slate-400 disabled:cursor-not-allowed"
+                className="flex items-center space-x-2 px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 shadow-md hover:shadow-lg transition-all disabled:bg-slate-400 disabled:cursor-not-allowed"
               >
                 <FiSave className="w-4 h-4" />
                 <span>Save Purchase</span>

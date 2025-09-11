@@ -304,20 +304,20 @@ const TransferHistory = () => {
   }
 
   return (
-    <div className="p-4">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Transfer History</h1>
+        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Transfer History</h1>
         <div className="flex gap-2">
           <button
             onClick={exportToPDF}
-            className="flex items-center space-x-2 px-4 py-2 bg-red-600 text-white rounded-md hover:bg-red-700"
+            className="flex items-center space-x-2 px-5 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 shadow-md hover:shadow-lg transition-all"
           >
             <FiDownload className="w-4 h-4" />
             <span>Export PDF</span>
           </button>
           <button
             onClick={exportToExcel}
-            className="flex items-center space-x-2 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700"
+            className="flex items-center space-x-2 px-5 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 shadow-md hover:shadow-lg transition-all"
           >
             <FiDownload className="w-4 h-4" />
             <span>Export Excel</span>
@@ -326,10 +326,10 @@ const TransferHistory = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-xl border border-slate-200 p-4 shadow-sm mb-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all mb-6">
         <div className="flex items-center space-x-2 mb-4">
           <FiFilter className="w-4 h-4" />
-          <h2 className="text-lg font-semibold">Filters</h2>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Filters</h2>
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
@@ -338,7 +338,7 @@ const TransferHistory = () => {
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
             >
               <option value="">All Status</option>
               <option value="Completed">Completed</option>
@@ -352,7 +352,7 @@ const TransferHistory = () => {
             <select
               value={filters.fromStore}
               onChange={(e) => setFilters({ ...filters, fromStore: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
             >
               <option value="">All Stores</option>
               {stores.map(store => (
@@ -368,7 +368,7 @@ const TransferHistory = () => {
             <select
               value={filters.toStore}
               onChange={(e) => setFilters({ ...filters, toStore: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
             >
               <option value="">All Stores</option>
               {stores.map(store => (
@@ -385,7 +385,7 @@ const TransferHistory = () => {
               type="date"
               value={filters.dateFrom}
               onChange={(e) => setFilters({ ...filters, dateFrom: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
             />
           </div>
 
@@ -395,7 +395,7 @@ const TransferHistory = () => {
               type="date"
               value={filters.dateTo}
               onChange={(e) => setFilters({ ...filters, dateTo: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
             />
           </div>
 
@@ -407,7 +407,7 @@ const TransferHistory = () => {
                 value={filters.search}
                 onChange={(e) => setFilters({ ...filters, search: e.target.value })}
                 placeholder="Transfer ID, product, remarks..."
-                className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 pl-8"
+                className="w-full rounded-xl border-2 border-slate-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all pl-8 px-3 py-2"
               />
               <FiSearch className="absolute left-2 top-2.5 w-4 h-4 text-slate-400" />
             </div>
@@ -416,9 +416,9 @@ const TransferHistory = () => {
       </div>
 
       {/* Transfer History Table */}
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="p-4 border-b border-slate-200">
-          <h2 className="text-lg font-semibold">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-lg hover:shadow-xl transition-all">
+        <div className="p-6 border-b border-slate-200">
+          <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">
             Transfer Records ({filteredTransfers.length})
           </h2>
         </div>
@@ -426,7 +426,7 @@ const TransferHistory = () => {
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
             <thead>
-              <tr className="text-left text-slate-500 text-xs uppercase border-b">
+              <tr className="text-left text-slate-600 text-xs uppercase border-b bg-gradient-to-r from-indigo-50 to-blue-50">
                 <th className="py-3 px-4">Transfer ID</th>
                 <th className="py-3 px-4">From Store</th>
                 <th className="py-3 px-4">To Store</th>
@@ -450,7 +450,7 @@ const TransferHistory = () => {
               ) : (
                 filteredTransfers.map(transfer => 
                   transfer.products.map((product, productIndex) => (
-                    <tr key={`${transfer.id}-${productIndex}`} className="border-b border-slate-100 hover:bg-slate-50">
+                    <tr key={`${transfer.id}-${productIndex}`} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                       <td className="py-3 px-4 font-medium">{transfer.id}</td>
                       <td className="py-3 px-4">{getStoreName(fromOf(transfer))}</td>
                       <td className="py-3 px-4">{getStoreName(toOf(transfer))}</td>
@@ -509,9 +509,9 @@ const TransferHistory = () => {
       {/* Transfer Details Modal */}
       {showModal && selectedTransfer && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto">
+          <div className="bg-white rounded-2xl p-6 max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto shadow-2xl">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-semibold">Transfer Details - {selectedTransfer.id}</h2>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Transfer Details - {selectedTransfer.id}</h2>
               <button
                 onClick={() => setShowModal(false)}
                 className="text-slate-500 hover:text-slate-700"
@@ -554,7 +554,7 @@ const TransferHistory = () => {
               <div className="overflow-x-auto">
                 <table className="min-w-full text-sm">
                   <thead>
-                    <tr className="text-left text-slate-500 text-xs uppercase border-b">
+                    <tr className="text-left text-slate-600 text-xs uppercase border-b bg-gradient-to-r from-indigo-50 to-blue-50">
                       <th className="py-2 pr-4">Product Name</th>
                       <th className="py-2 pr-4">Model</th>
                       <th className="py-2 pr-4">SKU</th>
@@ -565,7 +565,7 @@ const TransferHistory = () => {
                   </thead>
                   <tbody>
                     {selectedTransfer.products.map((product, index) => (
-                      <tr key={index} className="border-b border-slate-100">
+                      <tr key={index} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                         <td className="py-2 pr-4">{product.productName}</td>
                         <td className="py-2 pr-4">{product.productModel}</td>
                         <td className="py-2 pr-4">{product.productSku}</td>

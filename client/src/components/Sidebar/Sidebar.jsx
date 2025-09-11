@@ -1,6 +1,6 @@
 import React, { useMemo } from 'react'
 import SidebarItem from './SidebarItem'
-import { MdSpaceDashboard, MdReceiptLong, MdPeople, MdShoppingCart, MdInventory2, MdBuild, MdCompareArrows, MdAssessment, MdSettings, MdSmartphone, MdHeadphones } from 'react-icons/md'
+import { MdSpaceDashboard, MdReceiptLong, MdPeople, MdShoppingCart, MdInventory2, MdBuild, MdCompareArrows, MdAssessment, MdSettings, MdSmartphone, MdHeadphones, MdPhoneAndroid } from 'react-icons/md'
 import { useAuth } from '../../context/AuthContext'
 
 const Sidebar = () => {
@@ -14,9 +14,9 @@ const Sidebar = () => {
   const showReports = !isStaff
 
   return (
-    <aside className="h-screen w-72 flex-shrink-0 bg-white border-r border-slate-200 text-slate-800 p-3 sticky top-0 transition-colors duration-200 overflow-y-auto print:hidden">
-      <div className="px-2 py-3 mb-2">
-        <div className="text-lg font-semibold tracking-wide">MobileBill</div>
+    <aside className="h-screen w-72 flex-shrink-0 bg-gradient-to-b from-white to-indigo-50 border-r border-slate-200 text-slate-800 p-3 sticky top-0 transition-colors duration-200 overflow-y-auto print:hidden">
+      <div className="px-2 py-3 mb-3">
+        <div className="text-xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">MobileBill</div>
         <div className="text-xs text-slate-400">POS & Service Manager</div>
       </div>
 
@@ -26,6 +26,7 @@ const Sidebar = () => {
         <SidebarItem label="Billing" icon={MdReceiptLong} childrenItems={[
           { label: 'New Bill / POS', to: '/billing/new' },
           { label: 'Service Billing', to: '/billing/service' },
+          { label: 'Second Hand Mobiles', to: '/billing/secondhand' },
         ]} />
 
         {showDealers ? (
@@ -45,6 +46,11 @@ const Sidebar = () => {
         <SidebarItem label="Inventory" icon={MdInventory2} childrenItems={[
           { label: 'Mobiles', to: '/inventory/mobiles', icon: MdSmartphone },
           { label: 'Accessories', to: '/inventory/accessories', icon: MdHeadphones },
+        ]} />
+
+        <SidebarItem label="Second Hand Mobiles" icon={MdPhoneAndroid} childrenItems={[
+          { label: 'Manage Mobiles', to: '/secondhand/manage' },
+          { label: 'Transaction History', to: '/secondhand/history' },
         ]} />
 
         <SidebarItem label="Update Stock" icon={MdInventory2} childrenItems={[

@@ -129,57 +129,57 @@ const ManageDealers = () => {
   }
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-semibold mb-4">Manage Dealers</h1>
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <h1 className="text-3xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Manage Dealers</h1>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <div className="lg:col-span-1 rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-          <h2 className="text-base font-semibold mb-3">{editingId ? 'Edit Dealer' : 'Add Dealer'}</h2>
-          <form onSubmit={onSubmit} className="space-y-3">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="lg:col-span-1 rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
+          <h2 className="text-xl font-bold mb-4 bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">{editingId ? 'Edit Dealer' : 'Add Dealer'}</h2>
+          <form onSubmit={onSubmit} className="space-y-4">
             <div>
-              <label className="text-sm text-slate-600">Dealer ID</label>
-              <input value={editingId || 'Auto-generated'} readOnly className="mt-1 w-full rounded-md border border-slate-300 bg-slate-50" />
+              <label className="text-sm font-semibold text-slate-700">Dealer ID</label>
+              <input value={editingId || 'Auto-generated'} readOnly className="mt-1 w-full rounded-xl border-2 border-slate-200 bg-slate-50 px-4 py-2.5" />
             </div>
             <div>
-              <label className="text-sm text-slate-600">Dealer Name</label>
-              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" required />
+              <label className="text-sm font-semibold text-slate-700">Dealer Name</label>
+              <input value={form.name} onChange={e => setForm({ ...form, name: e.target.value })} className="mt-1 w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5" required />
             </div>
             <div>
-              <label className="text-sm text-slate-600">Phone Number</label>
-              <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" required />
+              <label className="text-sm font-semibold text-slate-700">Phone Number</label>
+              <input value={form.phone} onChange={e => setForm({ ...form, phone: e.target.value })} className="mt-1 w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5" required />
             </div>
             <div>
-              <label className="text-sm text-slate-600">Address</label>
-              <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" />
+              <label className="text-sm font-semibold text-slate-700">Address</label>
+              <input value={form.address} onChange={e => setForm({ ...form, address: e.target.value })} className="mt-1 w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5" />
             </div>
             <div>
-              <label className="text-sm text-slate-600">Email (optional)</label>
-              <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" />
+              <label className="text-sm font-semibold text-slate-700">Email (optional)</label>
+              <input type="email" value={form.email} onChange={e => setForm({ ...form, email: e.target.value })} className="mt-1 w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5" />
             </div>
             <div>
-              <label className="text-sm text-slate-600">GST Number</label>
-              <input value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" />
+              <label className="text-sm font-semibold text-slate-700">GST Number</label>
+              <input value={form.gst} onChange={e => setForm({ ...form, gst: e.target.value })} className="mt-1 w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5" />
             </div>
             <div>
-              <label className="text-sm text-slate-600">Notes / Remarks</label>
-              <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="mt-1 w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" rows={3} />
+              <label className="text-sm font-semibold text-slate-700">Notes / Remarks</label>
+              <textarea value={form.notes} onChange={e => setForm({ ...form, notes: e.target.value })} className="mt-1 w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5" rows={3} />
             </div>
-            <div className="flex gap-2">
-              <button disabled={saving} type="submit" className="px-3 py-2 rounded-md bg-slate-900 text-white hover:bg-slate-800 disabled:opacity-50 disabled:cursor-not-allowed">{saving ? 'Saving...' : editingId ? 'Update' : 'Add Dealer'}</button>
-              <button type="button" onClick={resetForm} className="px-3 py-2 rounded-md border border-slate-300 hover:bg-slate-50">Clear</button>
+            <div className="flex gap-3">
+              <button disabled={saving} type="submit" className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg transition-all disabled:opacity-50 disabled:cursor-not-allowed font-semibold">{saving ? 'Saving...' : editingId ? 'Update' : 'Add Dealer'}</button>
+              <button type="button" onClick={resetForm} className="px-6 py-2.5 rounded-xl border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 transition-all font-semibold">Clear</button>
             </div>
           </form>
         </div>
 
-        <div className="lg:col-span-2 rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-base font-semibold">Dealers</h2>
-            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name / phone / GST" className="rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400" />
+        <div className="lg:col-span-2 rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Dealers</h2>
+            <input value={search} onChange={e => setSearch(e.target.value)} placeholder="Search name / phone / GST" className="rounded-xl border-2 border-slate-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all px-4 py-2.5" />
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
               <thead>
-                <tr className="text-left text-slate-500 text-xs uppercase">
+                <tr className="text-left text-slate-600 text-xs uppercase bg-gradient-to-r from-indigo-50 to-blue-50">
                   <th className="py-2 pr-4">Dealer ID</th>
                   <th className="py-2 pr-4">Name</th>
                   <th className="py-2 pr-4">Phone</th>
@@ -191,24 +191,24 @@ const ManageDealers = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td className="py-3 pr-4" colSpan={6}>Loading...</td>
+                    <td className="py-3 pr-4 text-slate-500" colSpan={6}>Loading...</td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td className="py-3 pr-4" colSpan={6}>No dealers found.</td>
+                    <td className="py-6 pr-4 text-center text-slate-500" colSpan={6}>No dealers found.</td>
                   </tr>
                 ) : (
                   filtered.map(d => (
-                    <tr key={d.id} className="border-t border-slate-100">
-                      <td className="py-2 pr-4">{d.id}</td>
-                      <td className="py-2 pr-4">{d.name}</td>
-                      <td className="py-2 pr-4">{d.phone}</td>
-                      <td className="py-2 pr-4">{d.address}</td>
-                      <td className="py-2 pr-4">{d.gst}</td>
+                    <tr key={d.id} className="border-t border-slate-100 hover:bg-slate-50 transition-colors">
+                      <td className="py-2 pr-4 text-slate-900">{d.id}</td>
+                      <td className="py-2 pr-4 text-slate-900">{d.name}</td>
+                      <td className="py-2 pr-4 text-slate-900">{d.phone}</td>
+                      <td className="py-2 pr-4 text-slate-900">{d.address}</td>
+                      <td className="py-2 pr-4 text-slate-900">{d.gst}</td>
                       <td className="py-2 pr-2">
                         <div className="flex gap-2">
-                          <button onClick={() => onEdit(d)} className="text-blue-600 hover:underline">Edit</button>
-                          <button onClick={() => onDelete(d)} className="text-red-600 hover:underline">Delete</button>
+                          <button onClick={() => onEdit(d)} className="px-3 py-1 rounded-full bg-blue-100 text-blue-700 hover:bg-blue-200 transition-colors">Edit</button>
+                          <button onClick={() => onDelete(d)} className="px-3 py-1 rounded-full bg-red-100 text-red-700 hover:bg-red-200 transition-colors">Delete</button>
                         </div>
                       </td>
                     </tr>

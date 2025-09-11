@@ -145,7 +145,7 @@ const Profile = () => {
 
   const renderBasicInfo = () => (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <FiUser className="w-5 h-5" />
           Basic Information
@@ -173,7 +173,7 @@ const Profile = () => {
               />
               <label
                 htmlFor="profile-upload"
-                className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 text-slate-700 rounded-md cursor-pointer hover:bg-slate-200 text-sm"
+                className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 text-slate-700 rounded-xl cursor-pointer hover:bg-slate-200 text-sm"
               >
                 <FiUpload className="w-4 h-4" />
                 Upload Photo
@@ -187,7 +187,7 @@ const Profile = () => {
                 type="text"
                 value={profile.basicInfo.fullName}
                 onChange={(e) => handleBasicInfoChange('fullName', e.target.value)}
-                className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
               />
             </div>
             <div>
@@ -196,7 +196,7 @@ const Profile = () => {
                 type="email"
                 value={profile.basicInfo.email}
                 onChange={(e) => handleBasicInfoChange('email', e.target.value)}
-                className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
               />
             </div>
             <div>
@@ -205,7 +205,7 @@ const Profile = () => {
                 type="tel"
                 value={profile.basicInfo.phone}
                 onChange={(e) => handleBasicInfoChange('phone', e.target.value)}
-                className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all"
               />
             </div>
             <div>
@@ -214,7 +214,7 @@ const Profile = () => {
                 type="text"
                 value={profile.basicInfo.role}
                 disabled
-                className="w-full rounded-md border border-slate-300 bg-slate-50 text-slate-500"
+                className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-500"
               />
             </div>
           </div>
@@ -225,7 +225,7 @@ const Profile = () => {
 
   const renderLoginInfo = () => (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <FiShield className="w-5 h-5" />
           Login Information
@@ -237,10 +237,9 @@ const Profile = () => {
               type="text"
               value={profile.loginInfo.username}
               disabled
-              className="w-full rounded-md border border-slate-300 bg-slate-50 text-slate-500"
+              className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-500"
             />
           </div>
-          
           <div className="border-t pt-4">
             <h4 className="font-medium text-slate-700 mb-4">Change Password</h4>
             <div className="space-y-4">
@@ -251,7 +250,7 @@ const Profile = () => {
                     type={showPassword ? 'text' : 'password'}
                     value={profile.loginInfo.currentPassword}
                     onChange={(e) => handleLoginInfoChange('currentPassword', e.target.value)}
-                    className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 pr-10"
+                    className="w-full rounded-xl border-2 border-slate-200 pr-10 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
                   />
                   <button
                     type="button"
@@ -269,7 +268,7 @@ const Profile = () => {
                     type={showNewPassword ? 'text' : 'password'}
                     value={profile.loginInfo.newPassword}
                     onChange={(e) => handleLoginInfoChange('newPassword', e.target.value)}
-                    className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 pr-10"
+                    className="w-full rounded-xl border-2 border-slate-200 pr-10 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
                   />
                   <button
                     type="button"
@@ -287,7 +286,7 @@ const Profile = () => {
                     type={showConfirmPassword ? 'text' : 'password'}
                     value={profile.loginInfo.confirmPassword}
                     onChange={(e) => handleLoginInfoChange('confirmPassword', e.target.value)}
-                    className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400 pr-10"
+                    className="w-full rounded-xl border-2 border-slate-200 pr-10 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all"
                   />
                   <button
                     type="button"
@@ -300,13 +299,12 @@ const Profile = () => {
               </div>
               <button
                 onClick={changePassword}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg"
               >
                 Change Password
               </button>
             </div>
           </div>
-
           <div className="border-t pt-4">
             <h4 className="font-medium text-slate-700 mb-4">Security Settings</h4>
             <div className="flex items-center justify-between">
@@ -335,14 +333,14 @@ const Profile = () => {
 
   const renderActivityLogs = () => (
     <div className="space-y-6">
-      <div className="bg-white rounded-lg border border-slate-200 p-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <FiClock className="w-5 h-5" />
           Activity Logs
         </h3>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+            <thead className="bg-gradient-to-r from-indigo-50 to-blue-50">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Action</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Timestamp</th>
@@ -352,7 +350,7 @@ const Profile = () => {
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
               {activityLogs.map((log) => (
-                <tr key={log.id} className="hover:bg-slate-50">
+                <tr key={log.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{log.action}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{log.timestamp}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{log.ipAddress}</td>
@@ -367,12 +365,12 @@ const Profile = () => {
   )
 
   return (
-    <div className="p-4">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Profile</h1>
+        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Profile</h1>
         <button
           onClick={saveProfile}
-          className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+          className="flex items-center gap-2 px-5 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 shadow-md hover:shadow-lg"
         >
           <FiSave className="w-4 h-4" />
           Save Changes
@@ -382,11 +380,11 @@ const Profile = () => {
       <div className="flex flex-col lg:flex-row gap-6">
         {/* Sidebar */}
         <div className="lg:w-64">
-          <div className="bg-white rounded-lg border border-slate-200 p-4">
+          <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg">
             <nav className="space-y-2">
               <button
                 onClick={() => setActiveTab('basic')}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl transition-colors ${
                   activeTab === 'basic'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -397,7 +395,7 @@ const Profile = () => {
               </button>
               <button
                 onClick={() => setActiveTab('login')}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl transition-colors ${
                   activeTab === 'login'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'
@@ -408,7 +406,7 @@ const Profile = () => {
               </button>
               <button
                 onClick={() => setActiveTab('activity')}
-                className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-md transition-colors ${
+                className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl transition-colors ${
                   activeTab === 'activity'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'

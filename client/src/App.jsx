@@ -8,6 +8,7 @@ import Login from './pages/Login'
 import Dashboard from './pages/Dashboard'
 import NewBill from './pages/Billing/NewBill'
 import ServiceBill from './pages/Billing/ServiceBill'
+import SecondHandMobilesBilling from './pages/Billing/SecondHandMobilesBilling'
 import ManageDealers from './pages/Dealers/ManageDealers'
 import DealerHistory from './pages/Dealers/DealerHistory'
 import AddPurchase from './pages/Purchases/AddPurchase'
@@ -26,6 +27,8 @@ import Profile from './pages/Settings/Profile'
 import BackupRestore from './pages/Settings/BackupRestore'
 import MobilesStock from './pages/Stock/MobilesStock'
 import AccessoriesStock from './pages/Stock/AccessoriesStock'
+import SecondHandMobiles from './SecondHandMobile/SecondHandMobiles'
+import SecondHandMobilesHistory from './SecondHandMobile/SecondHandMobilesHistory'
 
 const RequireAuth = ({ children }) => {
   const { auth } = useAuth()
@@ -54,6 +57,7 @@ const AppShell = () => {
 
                 <Route path="/billing/new" element={<RequireAuth><NewBill /></RequireAuth>} />
                 <Route path="/billing/service" element={<RequireAuth><ServiceBill /></RequireAuth>} />
+                <Route path="/billing/secondhand" element={<RequireAuth><SecondHandMobilesBilling /></RequireAuth>} />
 
                 <Route path="/dealers/manage" element={<RequireAuth><ManageDealers /></RequireAuth>} />
                 <Route path="/dealers/history" element={<RequireAuth><DealerHistory /></RequireAuth>} />
@@ -80,6 +84,9 @@ const AppShell = () => {
 
                 <Route path="/stock/mobiles" element={<RequireAuth><MobilesStock /></RequireAuth>} />
                 <Route path="/stock/accessories" element={<RequireAuth><AccessoriesStock /></RequireAuth>} />
+
+                <Route path="/secondhand/manage" element={<RequireAuth><SecondHandMobiles /></RequireAuth>} />
+                <Route path="/secondhand/history" element={<RequireAuth><SecondHandMobilesHistory /></RequireAuth>} />
 
                 <Route path="*" element={<div className="p-4">Not Found</div>} />
               </Routes>

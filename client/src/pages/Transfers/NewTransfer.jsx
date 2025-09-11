@@ -283,16 +283,16 @@ const NewTransfer = () => {
   const getStoreName = (storeText) => storeText || 'Unknown'
 
   return (
-    <div className="p-4">
-      <h1 className="text-2xl font-semibold mb-4">New Transfer</h1>
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <h1 className="text-3xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">New Transfer</h1>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Transfer Details */}
         <div className="lg:col-span-1">
-          <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
+          <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
             <div className="flex items-center space-x-2 mb-4">
               <FiTruck className="w-5 h-5 text-blue-600" />
-              <h2 className="text-lg font-semibold">Transfer Details</h2>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Transfer Details</h2>
             </div>
             
             <div className="space-y-4">
@@ -391,59 +391,59 @@ const NewTransfer = () => {
 
         {/* Product Selection */}
         <div className="lg:col-span-2">
-          <div className="rounded-xl bg-white border border-slate-200 p-4 shadow-sm">
+          <div className="rounded-2xl bg-white border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
             <div className="flex items-center space-x-2 mb-4">
               <FiPackage className="w-5 h-5 text-green-600" />
-              <h2 className="text-lg font-semibold">Product Details</h2>
+              <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Product Details</h2>
             </div>
             
             {/* Add Product Form */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-4 p-4 bg-slate-50 rounded-lg">
-              <div>
+            <div className="grid grid-cols-1 md:grid-cols-12 gap-4 mb-4 p-4 bg-gradient-to-br from-indigo-50 to-blue-50 rounded-xl">
+              <div className="md:col-span-6">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Product ID / IMEI *</label>
                 <div className="flex gap-2">
                   <input
                     type="text"
                     value={newProduct.productId}
                     onChange={(e) => setNewProduct({ ...newProduct, productId: e.target.value })}
-                    className="flex-1 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                    className="flex-1 h-11 rounded-xl border-2 border-slate-200 px-3 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
                     placeholder="Enter Product ID or IMEI"
                   />
-                  <button type="button" onClick={lookupProduct} disabled={lookupLoading} className="px-3 py-2 rounded-md border">
+                  <button type="button" onClick={lookupProduct} disabled={lookupLoading} className="px-4 h-11 rounded-xl border-2 border-slate-300 hover:bg-slate-50 transition-all">
                     {lookupLoading ? 'Finding...' : 'Find'}
                   </button>
                 </div>
                 {lookupError ? <div className="mt-1 text-xs text-red-600">{lookupError}</div> : null}
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Quantity *</label>
                 <input
                   type="number"
                   value={newProduct.quantity}
                   onChange={(e) => setNewProduct({ ...newProduct, quantity: parseInt(e.target.value) || 0 })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full h-11 rounded-xl border-2 border-slate-200 px-3 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all"
                   min="1"
                 />
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-slate-700 mb-1">Unit Price *</label>
                 <input
                   type="number"
                   value={newProduct.unitPrice}
                   onChange={(e) => setNewProduct({ ...newProduct, unitPrice: parseFloat(e.target.value) || 0 })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full h-11 rounded-xl border-2 border-slate-200 px-3 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
                   min="0"
                   step="0.01"
                 />
               </div>
 
-              <div className="flex items-end">
+              <div className="md:col-span-2 flex items-end">
                 <button
                   type="button"
                   onClick={addProduct}
-                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full h-11 flex items-center justify-center space-x-2 px-5 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg transition-all"
                 >
                   <FiPlus className="w-4 h-4" />
                   <span>Add Product</span>
@@ -458,7 +458,7 @@ const NewTransfer = () => {
                 <div className="overflow-x-auto">
                   <table className="min-w-full text-sm">
                     <thead>
-                      <tr className="text-left text-slate-500 text-xs uppercase border-b">
+                      <tr className="text-left text-slate-600 text-xs uppercase border-b bg-gradient-to-r from-indigo-50 to-blue-50">
                         <th className="py-2 pr-4">Product Name</th>
                         <th className="py-2 pr-4">Model</th>
                         <th className="py-2 pr-4">Features</th>
@@ -471,12 +471,12 @@ const NewTransfer = () => {
                     </thead>
                     <tbody>
                       {form.products.map((product, index) => (
-                        <tr key={index} className="border-b border-slate-100">
+                        <tr key={index} className="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                           <td className="py-2 pr-4">{product.productName}</td>
                           <td className="py-2 pr-4">{product.productModel}</td>
                           <td className="py-2 pr-4">
                             {(product.color || product.ram || product.storage) && (
-                              <div className="text-xs text-slate-600">
+                              <div className="text-xs text-slate-700">
                                 {product.color && <div>Color: {product.color}</div>}
                                 {product.ram && <div>RAM: {product.ram}</div>}
                                 {product.storage && <div>Storage: {product.storage}</div>}
@@ -495,7 +495,7 @@ const NewTransfer = () => {
                               type="number"
                               value={product.quantity}
                               onChange={(e) => updateProductQuantity(index, parseInt(e.target.value) || 0)}
-                              className="w-16 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                              className="w-20 h-10 rounded-xl border-2 border-slate-200 px-2 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all"
                               min="1"
                             />
                           </td>
@@ -504,7 +504,7 @@ const NewTransfer = () => {
                               type="number"
                               value={product.unitPrice}
                               onChange={(e) => updateProductPrice(index, parseFloat(e.target.value) || 0)}
-                              className="w-20 rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                              className="w-28 h-10 rounded-xl border-2 border-slate-200 px-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
                               min="0"
                               step="0.01"
                             />
@@ -528,7 +528,7 @@ const NewTransfer = () => {
 
             {/* Transfer Summary */}
             {form.products.length > 0 && (
-              <div className="bg-slate-50 p-4 rounded-lg">
+              <div className="bg-gradient-to-br from-indigo-50 to-blue-50 p-4 rounded-xl">
                 <div className="flex justify-between items-center mb-2">
                   <span className="font-medium">Transfer Summary:</span>
                 </div>
@@ -566,7 +566,7 @@ const NewTransfer = () => {
                   !String(form.transferDetails.fromStore || '').trim() ||
                   !String(form.transferDetails.toStore || '').trim()
                 }
-                className="flex items-center space-x-2 px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 disabled:bg-slate-400 disabled:cursor-not-allowed"
+                className="flex items-center space-x-2 px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 shadow-md hover:shadow-lg focus:outline-none focus:ring-4 focus:ring-emerald-100 disabled:bg-slate-400 disabled:cursor-not-allowed transition-all"
               >
                 <FiSave className="w-4 h-4" />
                 <span>Save Transfer</span>

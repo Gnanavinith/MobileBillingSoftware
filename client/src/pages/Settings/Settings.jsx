@@ -105,8 +105,8 @@ export default function Settings() {
   };
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-slate-800">⚙️ Settings</h1>
+    <div className="p-6 max-w-6xl mx-auto space-y-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Settings</h1>
 
       {/* Tabs */}
       <div className="flex gap-4 border-b border-slate-200">
@@ -134,7 +134,7 @@ export default function Settings() {
 
       {/* Business Info */}
       {activeTab === "business" && (
-        <div className="bg-white rounded-lg shadow p-6 space-y-4">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all border border-slate-200 p-6 space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-700">
               Business Name *
@@ -145,7 +145,7 @@ export default function Settings() {
               onChange={(e) =>
                 setSettings({ ...settings, businessName: e.target.value })
               }
-              className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2"
+              className="mt-1 block w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
               placeholder="My Company Pvt Ltd"
             />
           </div>
@@ -163,7 +163,7 @@ export default function Settings() {
                   onChange={(e) =>
                     setSettings({ ...settings, email: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border border-slate-300 pl-10 px-3 py-2"
+                  className="mt-1 block w-full rounded-xl border-2 border-slate-200 pl-10 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
                   placeholder="you@example.com"
                 />
               </div>
@@ -180,7 +180,7 @@ export default function Settings() {
                   onChange={(e) =>
                     setSettings({ ...settings, phone: e.target.value })
                   }
-                  className="mt-1 block w-full rounded-md border border-slate-300 pl-10 px-3 py-2"
+                  className="mt-1 block w-full rounded-xl border-2 border-slate-200 pl-10 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
                   placeholder="+91 9876543210"
                 />
               </div>
@@ -198,7 +198,7 @@ export default function Settings() {
                 onChange={(e) =>
                   setSettings({ ...settings, address: e.target.value })
                 }
-                className="mt-1 block w-full rounded-md border border-slate-300 pl-10 px-3 py-2"
+                className="mt-1 block w-full rounded-xl border-2 border-slate-200 pl-10 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all"
                 placeholder="123, Main Street, City"
               />
             </div>
@@ -214,7 +214,7 @@ export default function Settings() {
               onChange={(e) =>
                 setSettings({ ...settings, gstin: e.target.value })
               }
-              className="mt-1 block w-full rounded-md border border-slate-300 px-3 py-2"
+              className="mt-1 block w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all"
               placeholder="22AAAAA0000A1Z5"
             />
           </div>
@@ -223,12 +223,12 @@ export default function Settings() {
 
       {/* Users */}
       {activeTab === "users" && (
-        <div className="bg-white rounded-lg shadow p-6">
+        <div className="bg-white rounded-2xl shadow-lg hover:shadow-xl transition-all border border-slate-200 p-6">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-semibold">User Management</h2>
             <button
               onClick={() => setShowUserModal(true)}
-              className="flex items-center gap-2 px-3 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+              className="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg"
             >
               <FiPlus /> Add User
             </button>
@@ -238,14 +238,13 @@ export default function Settings() {
             {users.map((user) => (
               <div
                 key={user.id}
-                className="flex items-center justify-between border p-3 rounded-md"
+                className="flex items-center justify-between border p-3 rounded-xl hover:bg-slate-50"
               >
                 <div>
                   <p className="font-medium">{user.name}</p>
                   <p className="text-sm text-slate-500">{user.email}</p>
                   <p className="text-xs text-slate-400">
-                    Role: {user.role} | Permissions:{" "}
-                    {user.permissions.join(", ")}
+                    Role: {user.role} | Permissions: {user.permissions.join(", ")}
                   </p>
                 </div>
                 {user.role !== "Super Admin" && (
@@ -277,7 +276,7 @@ export default function Settings() {
       {/* Add User Modal */}
       {showUserModal && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg shadow-lg w-full max-w-lg p-6">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6">
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-xl font-semibold">Add New User</h2>
               <button
@@ -299,7 +298,7 @@ export default function Settings() {
                   onChange={(e) =>
                     setNewUser({ ...newUser, name: e.target.value })
                   }
-                  className="w-full rounded-md border border-slate-300 px-3 py-2"
+                  className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
                   placeholder="Enter name"
                 />
               </div>
@@ -314,7 +313,7 @@ export default function Settings() {
                   onChange={(e) =>
                     setNewUser({ ...newUser, email: e.target.value })
                   }
-                  className="w-full rounded-md border border-slate-300 px-3 py-2"
+                  className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
                   placeholder="Enter email"
                 />
               </div>
@@ -328,7 +327,7 @@ export default function Settings() {
                   onChange={(e) =>
                     setNewUser({ ...newUser, role: e.target.value })
                   }
-                  className="w-full rounded-md border border-slate-300 px-3 py-2"
+                  className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
                 >
                   <option value="Super Admin">Super Admin</option>
                   <option value="Admin">Admin</option>
@@ -356,14 +355,14 @@ export default function Settings() {
                               setNewUser({
                                 ...newUser,
                                 permissions: [...newUser.permissions, perm.id],
-                              });
+                              })
                             } else {
                               setNewUser({
                                 ...newUser,
                                 permissions: newUser.permissions.filter(
                                   (p) => p !== perm.id
                                 ),
-                              });
+                              })
                             }
                           }}
                         />
@@ -378,13 +377,13 @@ export default function Settings() {
             <div className="mt-6 flex justify-end gap-3">
               <button
                 onClick={() => setShowUserModal(false)}
-                className="px-4 py-2 rounded-md border border-slate-300 hover:bg-slate-100"
+                className="px-4 py-2 rounded-xl border-2 border-slate-300 hover:bg-slate-50"
               >
                 Cancel
               </button>
               <button
                 onClick={addUser}
-                className="px-4 py-2 rounded-md bg-blue-600 text-white hover:bg-blue-700"
+                className="px-4 py-2 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg"
               >
                 Add User
               </button>

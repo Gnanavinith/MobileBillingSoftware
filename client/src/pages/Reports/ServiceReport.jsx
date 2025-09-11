@@ -394,27 +394,27 @@ const ServiceReport = () => {
   const COLORS = ['#0088FE', '#00C49F', '#FFBB28', '#FF8042', '#8884D8']
 
   return (
-    <div className="p-4">
+    <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-semibold">Service Report</h1>
+        <h1 className="text-3xl font-extrabold bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Service Report</h1>
         <div className="flex gap-2">
           <button
             onClick={exportToPDF}
-            className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700"
+            className="flex items-center gap-2 px-5 py-2.5 bg-red-600 text-white rounded-xl hover:bg-red-700 shadow-md hover:shadow-lg transition-all"
           >
             <FiDownload className="w-4 h-4" />
             Export PDF
           </button>
           <button
             onClick={exportToExcel}
-            className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
+            className="flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-xl hover:bg-green-700 shadow-md hover:shadow-lg transition-all"
           >
             <FiDownload className="w-4 h-4" />
             Export Excel
           </button>
           <button
             onClick={printReport}
-            className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
+            className="flex items-center gap-2 px-5 py-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 shadow-md hover:shadow-lg transition-all"
           >
             <FiPrinter className="w-4 h-4" />
             Print
@@ -424,7 +424,7 @@ const ServiceReport = () => {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Total Services</p>
@@ -433,7 +433,7 @@ const ServiceReport = () => {
             <FiSettings className="w-8 h-8 text-blue-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Completed</p>
@@ -442,7 +442,7 @@ const ServiceReport = () => {
             <FiCheckCircle className="w-8 h-8 text-green-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Pending</p>
@@ -451,7 +451,7 @@ const ServiceReport = () => {
             <FiClock className="w-8 h-8 text-yellow-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Total Revenue</p>
@@ -464,7 +464,7 @@ const ServiceReport = () => {
 
       {/* Additional Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Advance Paid</p>
@@ -473,7 +473,7 @@ const ServiceReport = () => {
             <FiUser className="w-8 h-8 text-indigo-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Pending Balance</p>
@@ -482,7 +482,7 @@ const ServiceReport = () => {
             <FiXCircle className="w-8 h-8 text-red-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Parts Cost</p>
@@ -491,7 +491,7 @@ const ServiceReport = () => {
             <FiSettings className="w-8 h-8 text-orange-600" />
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-4 shadow-lg hover:shadow-xl transition-all">
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm text-slate-600">Service Charges</p>
@@ -503,10 +503,10 @@ const ServiceReport = () => {
       </div>
 
       {/* Filters */}
-      <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm mb-6">
+      <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all mb-6">
         <div className="flex items-center gap-2 mb-4">
           <FiFilter className="w-5 h-5 text-slate-600" />
-          <h2 className="text-lg font-semibold">Filters</h2>
+          <h2 className="text-xl font-bold bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">Filters</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <div>
@@ -514,7 +514,7 @@ const ServiceReport = () => {
             <select
               value={filters.dateRange}
               onChange={(e) => setFilters({ ...filters, dateRange: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
             >
               <option value="today">Today</option>
               <option value="thisWeek">This Week</option>
@@ -530,7 +530,7 @@ const ServiceReport = () => {
                   type="date"
                   value={filters.startDate}
                   onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
                 />
               </div>
               <div>
@@ -539,7 +539,7 @@ const ServiceReport = () => {
                   type="date"
                   value={filters.endDate}
                   onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
-                  className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+                  className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
                 />
               </div>
             </>
@@ -549,7 +549,7 @@ const ServiceReport = () => {
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
             >
               <option value="">All</option>
               <option value="Pending">Pending</option>
@@ -565,7 +565,7 @@ const ServiceReport = () => {
               value={filters.technician}
               onChange={(e) => setFilters({ ...filters, technician: e.target.value })}
               placeholder="Search technician..."
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all"
             />
           </div>
           <div>
@@ -575,7 +575,7 @@ const ServiceReport = () => {
               value={filters.customerName}
               onChange={(e) => setFilters({ ...filters, customerName: e.target.value })}
               placeholder="Search customer..."
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all"
             />
           </div>
           <div>
@@ -585,7 +585,7 @@ const ServiceReport = () => {
               value={filters.serviceType}
               onChange={(e) => setFilters({ ...filters, serviceType: e.target.value })}
               placeholder="Search problem type..."
-              className="w-full rounded-md border border-slate-300 focus:outline-none focus:ring-2 focus:ring-slate-400 focus:border-slate-400"
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-pink-400 focus:ring-4 focus:ring-pink-100 transition-all"
             />
           </div>
         </div>
@@ -593,7 +593,7 @@ const ServiceReport = () => {
 
       {/* Charts */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
           <h3 className="text-lg font-semibold mb-4">Service Status Distribution</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
@@ -617,7 +617,7 @@ const ServiceReport = () => {
             </ResponsiveContainer>
           </div>
         </div>
-        <div className="bg-white rounded-lg border border-slate-200 p-4 shadow-sm">
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
           <h3 className="text-lg font-semibold mb-4">Technician Performance</h3>
           <div className="h-64">
             <ResponsiveContainer width="100%" height="100%">
