@@ -43,12 +43,15 @@ function createWindow() {
   }
 }
 
-function waitForServerReady(url, { retries = 50, intervalMs = 200 } = {}) {
+function waitForServerReady(url, { retries = 100, intervalMs = 500 } = {}) {
   return new Promise((resolve, reject) => {
     let attempts = 0
+    console.log(`Checking server at ${url}...`)
     const check = () => {
       attempts++
+      console.log(`Attempt ${attempts}/${retries}`)
       const req = http.get(url, (res) => {
+        console.log(`Server responded with status: ${res.statusCode}`)
         if (res.statusCode && res.statusCode >= 200 && res.statusCode < 500) {
           res.resume()
           return resolve(true)
@@ -57,7 +60,13 @@ function waitForServerReady(url, { retries = 50, intervalMs = 200 } = {}) {
         if (attempts >= retries) return reject(new Error('Server not ready'))
         setTimeout(check, intervalMs)
       })
-      req.on('error', () => {
+      req.on('error', (err) => {
+        console.log(`Connection error: ${err.message}`)
+        if (attempts >= retries) return reject(new Error('Server not ready'))
+        setTimeout(check, intervalMs)
+      })
+      req.setTimeout(2000, () => {
+        req.destroy()
         if (attempts >= retries) return reject(new Error('Server not ready'))
         setTimeout(check, intervalMs)
       })
@@ -82,17 +91,46 @@ app.whenReady().then(async () => {
     try { fs.mkdirSync(logDir, { recursive: true }) } catch {}
     const logFile = path.join(logDir, 'server.log')
     const out = fs.createWriteStream(logFile, { flags: 'a' })
+    
+    console.log('Starting server from:', serverPath)
+    console.log('Log file:', logFile)
+    console.log('Port:', port)
+    
     serverProcess = spawn(process.execPath, [serverPath], {
       env: { ...process.env, PORT: port },
-      stdio: ["ignore", "pipe", "pipe"]
+      stdio: ["ignore", "pipe", "pipe"],
+      cwd: path.join(process.resourcesPath, "server")
     })
-    serverProcess.stdout.pipe(out)
-    serverProcess.stderr.pipe(out)
+    
+    serverProcess.stdout.on('data', (data) => {
+      console.log('Server stdout:', data.toString())
+      out.write(data)
+    })
+    
+    serverProcess.stderr.on('data', (data) => {
+      console.error('Server stderr:', data.toString())
+      out.write(data)
+    })
+    
+    serverProcess.on('error', (err) => {
+      console.error('Failed to start server:', err)
+    })
+    
+    serverProcess.on('exit', (code) => {
+      console.log('Server exited with code:', code)
+    })
   }
 
   try {
-    await waitForServerReady(`http://localhost:${port}/api/health`)
-  } catch {}
+    console.log('Waiting for server to be ready...')
+    await waitForServerReady(`http://127.0.0.1:${port}/api/health`)
+    console.log('Server is ready!')
+  } catch (err) {
+    console.error('Server not ready after timeout:', err.message)
+    // Show error to user
+    const { dialog } = require('electron')
+    dialog.showErrorBox('Server Error', 'Backend server failed to start. Please check MongoDB is running and try again.')
+  }
   createWindow()
 })
 
