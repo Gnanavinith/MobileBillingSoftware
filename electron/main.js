@@ -8,6 +8,37 @@ const isDev = !app.isPackaged
 let serverProcess
 let mainWindow
 
+// Simple logger that avoids writing to stdout in production (prevents EPIPE)
+let logStream
+function ensureLogStream() {
+  if (isDev) return null
+  try {
+    if (!logStream) {
+      const logDir = app.getPath('userData')
+      try { fs.mkdirSync(logDir, { recursive: true }) } catch {}
+      const logFile = path.join(logDir, 'app.log')
+      logStream = fs.createWriteStream(logFile, { flags: 'a' })
+    }
+  } catch {}
+  return logStream
+}
+
+function safeLog(...args) {
+  if (isDev) {
+    return console.log(...args)
+  }
+  const stream = ensureLogStream()
+  try { stream && stream.write(args.join(' ') + "\n") } catch {}
+}
+
+function safeError(...args) {
+  if (isDev) {
+    return console.error(...args)
+  }
+  const stream = ensureLogStream()
+  try { stream && stream.write("ERROR: " + args.join(' ') + "\n") } catch {}
+}
+
 // Ensure single instance
 const gotTheLock = app.requestSingleInstanceLock()
 if (!gotTheLock) {
@@ -46,12 +77,12 @@ function createWindow() {
 function waitForServerReady(url, { retries = 100, intervalMs = 500 } = {}) {
   return new Promise((resolve, reject) => {
     let attempts = 0
-    console.log(`Checking server at ${url}...`)
+    safeLog(`Checking server at ${url}...`)
     const check = () => {
       attempts++
-      console.log(`Attempt ${attempts}/${retries}`)
+      safeLog(`Attempt ${attempts}/${retries}`)
       const req = http.get(url, (res) => {
-        console.log(`Server responded with status: ${res.statusCode}`)
+        safeLog(`Server responded with status: ${res.statusCode}`)
         if (res.statusCode && res.statusCode >= 200 && res.statusCode < 500) {
           res.resume()
           return resolve(true)
@@ -61,7 +92,7 @@ function waitForServerReady(url, { retries = 100, intervalMs = 500 } = {}) {
         setTimeout(check, intervalMs)
       })
       req.on('error', (err) => {
-        console.log(`Connection error: ${err.message}`)
+        safeLog(`Connection error: ${err.message}`)
         if (attempts >= retries) return reject(new Error('Server not ready'))
         setTimeout(check, intervalMs)
       })
@@ -92,9 +123,9 @@ app.whenReady().then(async () => {
     const logFile = path.join(logDir, 'server.log')
     const out = fs.createWriteStream(logFile, { flags: 'a' })
     
-    console.log('Starting server from:', serverPath)
-    console.log('Log file:', logFile)
-    console.log('Port:', port)
+    safeLog('Starting server from:', serverPath)
+    safeLog('Log file:', logFile)
+    safeLog('Port:', port)
     
     serverProcess = spawn(process.execPath, [serverPath], {
       env: { ...process.env, PORT: port },
@@ -103,30 +134,30 @@ app.whenReady().then(async () => {
     })
     
     serverProcess.stdout.on('data', (data) => {
-      console.log('Server stdout:', data.toString())
+      safeLog('Server stdout:', data.toString())
       out.write(data)
     })
     
     serverProcess.stderr.on('data', (data) => {
-      console.error('Server stderr:', data.toString())
+      safeError('Server stderr:', data.toString())
       out.write(data)
     })
     
     serverProcess.on('error', (err) => {
-      console.error('Failed to start server:', err)
+      safeError('Failed to start server:', err)
     })
     
     serverProcess.on('exit', (code) => {
-      console.log('Server exited with code:', code)
+      safeLog('Server exited with code:', code)
     })
   }
 
   try {
-    console.log('Waiting for server to be ready...')
+    safeLog('Waiting for server to be ready...')
     await waitForServerReady(`http://127.0.0.1:${port}/api/health`)
-    console.log('Server is ready!')
+    safeLog('Server is ready!')
   } catch (err) {
-    console.error('Server not ready after timeout:', err.message)
+    safeError('Server not ready after timeout:', err.message)
     // Show error to user
     const { dialog } = require('electron')
     dialog.showErrorBox('Server Error', 'Backend server failed to start. Please check MongoDB is running and try again.')
