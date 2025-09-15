@@ -34,7 +34,7 @@ const KpiCard = ({ icon: Icon, title, value, sub, color = "blue" }) => {
   }
   
   return (
-    <div className={`rounded-2xl ${colorClasses[color]} border p-6 shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 transform hover:scale-105`}>
+    <div className={`rounded-2xl ${colorClasses[color]} border p-6 shadow-lg hover:shadow-xl hover:-translate-y-2 transition-all duration-300 transform hover:scale-105 relative z-10`}>
       <div className="flex items-center justify-between">
         <div className="animate-fade-in">
           <div className="text-sm font-medium opacity-80 mb-1">{title}</div>
@@ -48,7 +48,7 @@ const KpiCard = ({ icon: Icon, title, value, sub, color = "blue" }) => {
 }
 
 const Card = ({ title, children, right, gradient = false }) => (
-  <div className={`rounded-2xl ${gradient ? 'bg-gradient-to-br from-white to-slate-50' : 'bg-white'} border border-slate-200 p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform`}>
+  <div className={`rounded-2xl ${gradient ? 'bg-gradient-to-br from-white to-slate-50' : 'bg-white'} border border-slate-200 p-6 shadow-lg hover:shadow-xl hover:-translate-y-1 transition-all duration-300 transform relative z-10`}>
     <div className="flex items-center justify-between mb-4">
       <h2 className="text-lg font-bold text-slate-800 bg-gradient-to-r from-slate-700 to-slate-900 bg-clip-text text-transparent">{title}</h2>
       {right}
@@ -97,7 +97,7 @@ const Dashboard = () => {
   }, [])
 
   return (
-    <div className="p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen">
+    <div className="p-6 bg-gradient-to-br from-slate-50 to-blue-50 min-h-screen relative z-0">
       <div className="animate-fade-in">
         <h1 className="text-4xl font-bold mb-2 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Dashboard</h1>
         <p className="text-slate-600 mb-8">Welcome to your business overview</p>
@@ -230,19 +230,19 @@ const Dashboard = () => {
       <div className="animate-slide-in-up" style={{animationDelay: '0.9s'}}>
         <Card title="⚡ Quick Actions" gradient={true}>
           <div className="flex flex-wrap gap-4">
-            <Link to="/billing/new" className="group inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
+            <Link to="/billing/new" className="group inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 relative z-10">
               <MdAddShoppingCart className="text-xl group-hover:animate-bounce" />
               <span className="font-semibold">New Bill</span>
             </Link>
-            <Link to="/purchases/add" className="group inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
+            <Link to="/purchases/add" className="group inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-green-500 to-green-600 text-white hover:from-green-600 hover:to-green-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 relative z-10">
               <MdPlayForWork className="text-xl group-hover:animate-bounce" />
               <span className="font-semibold">Add Purchase</span>
             </Link>
-            <Link to="/services/requests" className="group inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
+            <Link to="/services/requests" className="group inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-purple-500 to-purple-600 text-white hover:from-purple-600 hover:to-purple-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 relative z-10">
               <MdHomeRepairService className="text-xl group-hover:animate-bounce" />
               <span className="font-semibold">New Service</span>
             </Link>
-            <Link to="/transfers/new" className="group inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105">
+            <Link to="/transfers/new" className="group inline-flex items-center gap-3 px-6 py-4 rounded-2xl bg-gradient-to-r from-orange-500 to-orange-600 text-white hover:from-orange-600 hover:to-orange-700 shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 hover:scale-105 relative z-10">
               <MdCompareArrows className="text-xl group-hover:animate-bounce" />
               <span className="font-semibold">Transfer</span>
             </Link>

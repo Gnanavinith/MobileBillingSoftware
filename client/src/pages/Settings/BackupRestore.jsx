@@ -1,52 +1,39 @@
 import React, { useState, useEffect } from 'react'
-import { FiDownload, FiUpload, FiClock, FiHardDrive, FiCloud, FiAlertTriangle, FiCheckCircle, FiXCircle, FiRefreshCw, FiSettings } from 'react-icons/fi'
+import { FiDownload, FiUpload, FiClock, FiHardDrive, FiAlertTriangle, FiCheckCircle, FiXCircle, FiRefreshCw, FiTrash2, FiFile } from 'react-icons/fi'
 
 const BackupRestore = () => {
-  const [backupSettings, setBackupSettings] = useState({
-    autoBackup: true,
-    backupFrequency: 'daily',
-    backupLocation: 'local',
-    cloudProvider: 'google',
-    backupType: 'full',
-    retentionDays: 30
-  })
-
   const [backupHistory, setBackupHistory] = useState([
     {
       id: 1,
       date: '2025-01-15 14:30:00',
-      type: 'Full Backup',
+      type: 'Excel Backup',
       size: '2.5 MB',
-      location: 'Local',
       status: 'Success',
-      filePath: '/backups/mobilebill_20250115_143000.zip'
+      filePath: '/backups/mobilebill_20250115_143000.xlsx'
     },
     {
       id: 2,
       date: '2025-01-14 14:30:00',
-      type: 'Full Backup',
+      type: 'Excel Backup',
       size: '2.3 MB',
-      location: 'Google Drive',
       status: 'Success',
-      filePath: 'mobilebill_20250114_143000.zip'
+      filePath: '/backups/mobilebill_20250114_143000.xlsx'
     },
     {
       id: 3,
       date: '2025-01-13 14:30:00',
-      type: 'Database Only',
+      type: 'Excel Backup',
       size: '1.8 MB',
-      location: 'Local',
       status: 'Success',
-      filePath: '/backups/mobilebill_db_20250113_143000.sql'
+      filePath: '/backups/mobilebill_20250113_143000.xlsx'
     },
     {
       id: 4,
       date: '2025-01-12 14:30:00',
-      type: 'Full Backup',
+      type: 'Excel Backup',
       size: '2.1 MB',
-      location: 'Local',
       status: 'Failed',
-      filePath: '/backups/mobilebill_20250112_143000.zip'
+      filePath: '/backups/mobilebill_20250112_143000.xlsx'
     }
   ])
 
@@ -57,51 +44,39 @@ const BackupRestore = () => {
   const [selectedBackup, setSelectedBackup] = useState(null)
 
   useEffect(() => {
-    const savedSettings = localStorage.getItem('mobilebill:backupSettings')
-    if (savedSettings) {
-      setBackupSettings(JSON.parse(savedSettings))
+    const savedHistory = localStorage.getItem('mobilebill:backupHistory')
+    if (savedHistory) {
+      setBackupHistory(JSON.parse(savedHistory))
     }
   }, [])
 
-  const saveBackupSettings = () => {
-    localStorage.setItem('mobilebill:backupSettings', JSON.stringify(backupSettings))
-    alert('Backup settings saved successfully!')
-  }
-
-  const handleBackupSettingsChange = (field, value) => {
-    setBackupSettings(prev => ({
-      ...prev,
-      [field]: value
-    }))
+  const saveBackupHistory = (history) => {
+    localStorage.setItem('mobilebill:backupHistory', JSON.stringify(history))
+    setBackupHistory(history)
   }
 
   const createBackup = async () => {
     setIsBackingUp(true)
     
     try {
+      // Simulate backup creation
       await new Promise(resolve => setTimeout(resolve, 3000))
       
       const now = new Date()
       const timestamp = now.toISOString().replace(/[:.]/g, '-').slice(0, 19)
-      const backupType = backupSettings.backupType === 'full' ? 'Full Backup' : 
-                        backupSettings.backupType === 'database' ? 'Database Only' : 'Files Only'
       
       const newBackup = {
         id: Date.now(),
         date: now.toLocaleString(),
-        type: backupType,
+        type: 'Excel Backup',
         size: `${(Math.random() * 2 + 1).toFixed(1)} MB`,
-        location: backupSettings.backupLocation === 'local' ? 'Local' : 
-                 backupSettings.cloudProvider === 'google' ? 'Google Drive' :
-                 backupSettings.cloudProvider === 'dropbox' ? 'Dropbox' : 'OneDrive',
         status: 'Success',
-        filePath: backupSettings.backupLocation === 'local' ? 
-                 `/backups/mobilebill_${timestamp}.zip` :
-                 `mobilebill_${timestamp}.zip`
+        filePath: `/backups/mobilebill_${timestamp}.xlsx`
       }
       
-      setBackupHistory(prev => [newBackup, ...prev])
-      alert('Backup created successfully!')
+      const updatedHistory = [newBackup, ...backupHistory]
+      saveBackupHistory(updatedHistory)
+      alert('Excel backup created successfully!')
     } catch (error) {
       alert('Backup failed: ' + error.message)
     } finally {
@@ -126,6 +101,7 @@ const BackupRestore = () => {
     setIsRestoring(true)
     
     try {
+      // Simulate restore process
       await new Promise(resolve => setTimeout(resolve, 5000))
       alert('Data restored successfully! The application will reload.')
       window.location.reload()
@@ -156,6 +132,7 @@ const BackupRestore = () => {
     setIsRestoring(true)
     
     try {
+      // Simulate restore process
       await new Promise(resolve => setTimeout(resolve, 5000))
       alert('Data restored successfully! The application will reload.')
       window.location.reload()
@@ -170,9 +147,9 @@ const BackupRestore = () => {
 
   const downloadBackup = (backup) => {
     const element = document.createElement('a')
-    const file = new Blob(['Backup data for ' + backup.date], { type: 'text/plain' })
+    const file = new Blob(['Backup data for ' + backup.date], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' })
     element.href = URL.createObjectURL(file)
-    element.download = `mobilebill_backup_${backup.id}.zip`
+    element.download = `mobilebill_backup_${backup.id}.xlsx`
     document.body.appendChild(element)
     element.click()
     document.body.removeChild(element)
@@ -180,7 +157,8 @@ const BackupRestore = () => {
 
   const deleteBackup = (backupId) => {
     if (window.confirm('Are you sure you want to delete this backup?')) {
-      setBackupHistory(prev => prev.filter(backup => backup.id !== backupId))
+      const updatedHistory = backupHistory.filter(backup => backup.id !== backupId)
+      saveBackupHistory(updatedHistory)
       alert('Backup deleted successfully!')
     }
   }
@@ -219,131 +197,27 @@ const BackupRestore = () => {
           {isBackingUp ? (
             <FiRefreshCw className="w-4 h-4 animate-spin" />
           ) : (
-            <FiDownload className="w-4 h-4" />
+            <FiFile className="w-4 h-4" />
           )}
-          {isBackingUp ? 'Creating Backup...' : 'Create Backup Now'}
+          {isBackingUp ? 'Creating Excel Backup...' : 'Create Excel Backup'}
         </button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Backup Settings */}
-        <div className="lg:col-span-1">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
-            <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-              <FiSettings className="w-5 h-5" />
-              Backup Settings
-            </h3>
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <span className="text-sm text-slate-700">Auto Backup</span>
-                <button
-                  onClick={() => handleBackupSettingsChange('autoBackup', !backupSettings.autoBackup)}
-                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                    backupSettings.autoBackup ? 'bg-blue-600' : 'bg-slate-200'
-                  }`}
-                >
-                  <span
-                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                      backupSettings.autoBackup ? 'translate-x-6' : 'translate-x-1'
-                    }`}
-                  />
-                </button>
-              </div>
-
-              {backupSettings.autoBackup && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Frequency</label>
-                    <select
-                      value={backupSettings.backupFrequency}
-                      onChange={(e) => handleBackupSettingsChange('backupFrequency', e.target.value)}
-                      className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
-                    >
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="monthly">Monthly</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Backup Location</label>
-                    <select
-                      value={backupSettings.backupLocation}
-                      onChange={(e) => handleBackupSettingsChange('backupLocation', e.target.value)}
-                      className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
-                    >
-                      <option value="local">Local System</option>
-                      <option value="cloud">Cloud Storage</option>
-                    </select>
-                  </div>
-
-                  {backupSettings.backupLocation === 'cloud' && (
-                    <div>
-                      <label className="block text-sm font-medium text-slate-700 mb-2">Cloud Provider</label>
-                      <select
-                        value={backupSettings.cloudProvider}
-                        onChange={(e) => handleBackupSettingsChange('cloudProvider', e.target.value)}
-                        className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all"
-                      >
-                        <option value="google">Google Drive</option>
-                        <option value="dropbox">Dropbox</option>
-                        <option value="onedrive">OneDrive</option>
-                      </select>
-                    </div>
-                  )}
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Backup Type</label>
-                    <select
-                      value={backupSettings.backupType}
-                      onChange={(e) => handleBackupSettingsChange('backupType', e.target.value)}
-                      className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all"
-                    >
-                      <option value="full">Full Backup</option>
-                      <option value="database">Database Only</option>
-                      <option value="files">Files Only</option>
-                    </select>
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-slate-700 mb-2">Retention (Days)</label>
-                    <input
-                      type="number"
-                      value={backupSettings.retentionDays}
-                      onChange={(e) => handleBackupSettingsChange('retentionDays', parseInt(e.target.value))}
-                      className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all"
-                      min="1"
-                      max="365"
-                    />
-                  </div>
-                </>
-              )}
-
-              <button
-                onClick={saveBackupSettings}
-                className="w-full px-4 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 shadow-md hover:shadow-lg"
-              >
-                Save Settings
-              </button>
-            </div>
-          </div>
-        </div>
-
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Restore Options */}
-        <div className="lg:col-span-2">
-          <div className="bg-white rounded-2xl border border-slate-200 p-6 mb-6 shadow-lg hover:shadow-xl transition-all">
+          <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <FiUpload className="w-5 h-5" />
               Restore Options
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="space-y-4">
               <div className="border-2 border-dashed border-slate-300 rounded-xl p-6 text-center">
-                <FiUpload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
-                <h4 className="font-medium text-slate-700 mb-2">Upload Backup File</h4>
-                <p className="text-sm text-slate-500 mb-4">Upload a backup file to restore data</p>
+              <FiFile className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+              <h4 className="font-medium text-slate-700 mb-2">Upload Excel Backup</h4>
+              <p className="text-sm text-slate-500 mb-4">Upload an Excel backup file to restore data</p>
                 <input
                   type="file"
-                  accept=".zip,.sql,.json"
+                accept=".xlsx,.xls"
                   onChange={handleRestoreFileUpload}
                   className="hidden"
                   id="restore-file-upload"
@@ -372,8 +246,41 @@ const BackupRestore = () => {
             </div>
           </div>
 
-          {/* Backup History */}
+        {/* Backup Info */}
           <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
+          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+            <FiHardDrive className="w-5 h-5" />
+            Backup Information
+          </h3>
+          <div className="space-y-4">
+            <div className="p-4 bg-blue-50 rounded-lg">
+              <h4 className="font-medium text-blue-800 mb-2">What's Included in Excel Backup</h4>
+              <ul className="text-sm text-blue-700 space-y-1">
+                <li>• Customer data (separate sheet)</li>
+                <li>• Product inventory (separate sheet)</li>
+                <li>• Sales records (separate sheet)</li>
+                <li>• Purchase records (separate sheet)</li>
+                <li>• User accounts (separate sheet)</li>
+                <li>• System settings (separate sheet)</li>
+              </ul>
+            </div>
+            
+            <div className="p-4 bg-yellow-50 rounded-lg">
+              <h4 className="font-medium text-yellow-800 mb-2">Important Notes</h4>
+              <ul className="text-sm text-yellow-700 space-y-1">
+                <li>• Excel backups are stored locally</li>
+                <li>• Each data type is in a separate worksheet</li>
+                <li>• Restore will overwrite current data</li>
+                <li>• Always create a backup before restoring</li>
+                <li>• Keep Excel backup files in a safe location</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Backup History */}
+      <div className="mt-6 bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
             <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
               <FiClock className="w-5 h-5" />
               Backup History
@@ -385,7 +292,6 @@ const BackupRestore = () => {
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Date</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Type</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Size</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Location</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Actions</th>
                   </tr>
@@ -396,10 +302,6 @@ const BackupRestore = () => {
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">{backup.date}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{backup.type}</td>
                       <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{backup.size}</td>
-                      <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 flex items-center gap-1">
-                        {backup.location === 'Local' ? <FiHardDrive className="w-4 h-4" /> : <FiCloud className="w-4 h-4" />}
-                        {backup.location}
-                      </td>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <span className={`inline-flex items-center gap-1 px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(backup.status)}`}>
                           {getStatusIcon(backup.status)}
@@ -429,7 +331,7 @@ const BackupRestore = () => {
                             className="text-red-600 hover:text-red-800"
                             title="Delete"
                           >
-                            <FiXCircle className="w-4 h-4" />
+                        <FiTrash2 className="w-4 h-4" />
                           </button>
                         </div>
                       </td>
@@ -437,8 +339,6 @@ const BackupRestore = () => {
                   ))}
                 </tbody>
               </table>
-            </div>
-          </div>
         </div>
       </div>
 

@@ -359,8 +359,13 @@ const NewBill = () => {
                       value={draftItem.imei} 
                       onChange={e => setDraftItem({ ...draftItem, imei: e.target.value })} 
                       onBlur={lookupByImeiOrProduct}
+                      onKeyDown={(e)=>{ if(e.key==='Enter'){ e.preventDefault(); lookupByImeiOrProduct(); } }}
+                      autoFocus
+                      autoComplete="off"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
                       className="flex-1 rounded-xl border-2 border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 px-4 py-3 bg-white shadow-sm" 
-                      placeholder="Enter IMEI to auto-fill details" 
+                      placeholder="Enter/Scan IMEI and press Enter" 
                     />
                     <button 
                       type="button"
@@ -394,7 +399,7 @@ const NewBill = () => {
                   </div>
                 </div>
               )}
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-semibold text-slate-700 mb-2 block">Quantity</label>
                   <input type="number" value={draftItem.quantity} onChange={e => setDraftItem({ ...draftItem, quantity: e.target.value })} className="w-full rounded-xl border-2 border-orange-200 focus:border-orange-500 focus:ring-4 focus:ring-orange-100 transition-all duration-200 px-4 py-3 bg-white shadow-sm" />
@@ -414,7 +419,7 @@ const NewBill = () => {
                       <option value="percent">% Percentage</option>
                       <option value="flat">₹ Flat</option>
                     </select>
-                    <input type="number" value={draftItem.discountValue} onChange={e => setDraftItem({ ...draftItem, discountValue: e.target.value })} className="flex-1 rounded-xl border-2 border-red-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all duration-200 px-3 py-2 bg-white shadow-sm" />
+                    <input type="number" value={draftItem.discountValue} onChange={e => setDraftItem({ ...draftItem, discountValue: e.target.value })} className="w-24 rounded-xl border-2 border-red-200 focus:border-red-500 focus:ring-4 focus:ring-red-100 transition-all duration-200 px-3 py-2 bg-white shadow-sm" />
                   </div>
                 </div>
               </div>
@@ -624,7 +629,26 @@ const NewBill = () => {
 
       {/* Printable Invoice */}
       <div ref={invoiceRef} className="hidden print:block p-6">
-        <div className="text-center text-xl font-semibold">Invoice</div>
+        {/* Business Info Header */}
+        {(() => {
+          let biz = {}
+          try {
+            const raw = localStorage.getItem('mobilebill:settings')
+            if (raw) {
+              const parsed = JSON.parse(raw)
+              biz = parsed?.businessInfo || {}
+            }
+          } catch {}
+          const contactLine = [biz?.email, biz?.phone].filter(Boolean).join(' • ')
+          return (
+            <div className="text-center">
+              <div className="text-xl font-semibold">{biz?.businessName || 'Invoice'}</div>
+              {biz?.address ? <div className="text-xs text-slate-600 mt-0.5">{biz.address}</div> : null}
+              {contactLine ? <div className="text-xs text-slate-600 mt-0.5">{contactLine}</div> : null}
+              {biz?.gstin ? <div className="text-xs text-slate-600 mt-0.5">GSTIN: {biz.gstin}</div> : null}
+            </div>
+          )
+        })()}
         <div className="mt-2 text-sm">Bill No: {billNumber} • {now.toLocaleString()}</div>
         <div className="mt-2 text-sm">Customer: {customerName || 'Walk-in'} • {mobileNumber}</div>
         <table className="mt-4 w-full text-sm border-t border-b border-slate-300">

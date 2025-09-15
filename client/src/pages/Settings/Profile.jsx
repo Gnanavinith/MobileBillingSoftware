@@ -1,59 +1,63 @@
 import React, { useState, useEffect } from 'react'
-import { FiSave, FiUpload, FiUser, FiMail, FiPhone, FiShield, FiClock, FiEye, FiEyeOff, FiEdit3 } from 'react-icons/fi'
+import { FiSave, FiUser, FiMail, FiPhone, FiShield, FiClock, FiEye, FiEyeOff, FiLogIn, FiSettings } from 'react-icons/fi'
+import { useAuth } from '../../context/AuthContext'
 
 const Profile = () => {
+  const { auth } = useAuth()
   const [profile, setProfile] = useState({
     basicInfo: {
-      fullName: 'Admin User',
-      email: 'admin@mobilebillstore.com',
+      fullName: auth?.user?.name || 'Admin User',
+      email: auth?.user?.email || 'admin@mobilebill.com',
       phone: '+91 9876543210',
-      role: 'Super Admin',
-      profilePicture: null
+      role: auth?.user?.role || 'Super Admin',
     },
-    loginInfo: {
-      username: 'admin',
+    security: {
       currentPassword: '',
       newPassword: '',
       confirmPassword: '',
-      twoFactorEnabled: false
     }
   })
 
-  const [activityLogs, setActivityLogs] = useState([
+  const [loginHistory, setLoginHistory] = useState([
     {
       id: 1,
       action: 'Login',
       timestamp: '2025-01-15 14:30:00',
       ipAddress: '192.168.1.100',
-      device: 'Chrome on Windows'
+      device: 'Chrome on Windows',
+      status: 'Success'
     },
     {
       id: 2,
-      action: 'Updated Settings',
+      action: 'Password Change',
       timestamp: '2025-01-15 12:15:00',
       ipAddress: '192.168.1.100',
-      device: 'Chrome on Windows'
+      device: 'Chrome on Windows',
+      status: 'Success'
     },
     {
       id: 3,
-      action: 'Created New Bill',
-      timestamp: '2025-01-15 10:45:00',
+      action: 'Login',
+      timestamp: '2025-01-14 09:30:00',
       ipAddress: '192.168.1.100',
-      device: 'Chrome on Windows'
+      device: 'Chrome on Windows',
+      status: 'Success'
     },
     {
       id: 4,
-      action: 'Generated Report',
-      timestamp: '2025-01-14 16:20:00',
+      action: 'Login Failed',
+      timestamp: '2025-01-13 16:20:00',
       ipAddress: '192.168.1.100',
-      device: 'Chrome on Windows'
+      device: 'Chrome on Windows',
+      status: 'Failed'
     },
     {
       id: 5,
       action: 'Login',
-      timestamp: '2025-01-14 09:30:00',
+      timestamp: '2025-01-13 09:15:00',
       ipAddress: '192.168.1.100',
-      device: 'Chrome on Windows'
+      device: 'Chrome on Windows',
+      status: 'Success'
     }
   ])
 
@@ -66,7 +70,11 @@ const Profile = () => {
     // Load profile from localStorage
     const savedProfile = localStorage.getItem('mobilebill:profile')
     if (savedProfile) {
-      setProfile(JSON.parse(savedProfile))
+      const parsedProfile = JSON.parse(savedProfile)
+      setProfile(prev => ({
+        ...prev,
+        basicInfo: { ...prev.basicInfo, ...parsedProfile.basicInfo }
+      }))
     }
   }, [])
 
@@ -85,37 +93,26 @@ const Profile = () => {
     }))
   }
 
-  const handleLoginInfoChange = (field, value) => {
+  const handleSecurityChange = (field, value) => {
     setProfile(prev => ({
       ...prev,
-      loginInfo: {
-        ...prev.loginInfo,
+      security: {
+        ...prev.security,
         [field]: value
       }
     }))
   }
 
-  const handleProfilePictureUpload = (event) => {
-    const file = event.target.files[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onload = (e) => {
-        handleBasicInfoChange('profilePicture', e.target.result)
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
   const changePassword = () => {
-    if (!profile.loginInfo.currentPassword) {
+    if (!profile.security.currentPassword) {
       alert('Please enter current password')
       return
     }
-    if (profile.loginInfo.newPassword !== profile.loginInfo.confirmPassword) {
+    if (profile.security.newPassword !== profile.security.confirmPassword) {
       alert('New passwords do not match')
       return
     }
-    if (profile.loginInfo.newPassword.length < 6) {
+    if (profile.security.newPassword.length < 6) {
       alert('New password must be at least 6 characters long')
       return
     }
@@ -124,8 +121,7 @@ const Profile = () => {
     alert('Password changed successfully!')
     setProfile(prev => ({
       ...prev,
-      loginInfo: {
-        ...prev.loginInfo,
+      security: {
         currentPassword: '',
         newPassword: '',
         confirmPassword: ''
@@ -133,14 +129,15 @@ const Profile = () => {
     }))
   }
 
-  const toggleTwoFactor = () => {
-    setProfile(prev => ({
-      ...prev,
-      loginInfo: {
-        ...prev.loginInfo,
-        twoFactorEnabled: !prev.loginInfo.twoFactorEnabled
-      }
-    }))
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'Success':
+        return 'text-green-600 bg-green-100'
+      case 'Failed':
+        return 'text-red-600 bg-red-100'
+      default:
+        return 'text-yellow-600 bg-yellow-100'
+    }
   }
 
   const renderBasicInfo = () => (
@@ -148,195 +145,135 @@ const Profile = () => {
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <FiUser className="w-5 h-5" />
-          Basic Information
+          Personal Information
         </h3>
-        <div className="flex flex-col md:flex-row gap-6">
-          <div className="flex-shrink-0">
-            <div className="w-32 h-32 bg-slate-100 rounded-full flex items-center justify-center overflow-hidden">
-              {profile.basicInfo.profilePicture ? (
-                <img
-                  src={profile.basicInfo.profilePicture}
-                  alt="Profile"
-                  className="w-full h-full object-cover"
-                />
-              ) : (
-                <FiUser className="w-16 h-16 text-slate-400" />
-              )}
-            </div>
-            <div className="mt-4">
-              <input
-                type="file"
-                accept="image/*"
-                onChange={handleProfilePictureUpload}
-                className="hidden"
-                id="profile-upload"
-              />
-              <label
-                htmlFor="profile-upload"
-                className="inline-flex items-center gap-2 px-3 py-2 bg-slate-100 text-slate-700 rounded-xl cursor-pointer hover:bg-slate-200 text-sm"
-              >
-                <FiUpload className="w-4 h-4" />
-                Upload Photo
-              </label>
-            </div>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Full Name *</label>
+            <input
+              type="text"
+              value={profile.basicInfo.fullName}
+              onChange={(e) => handleBasicInfoChange('fullName', e.target.value)}
+              className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
+            />
           </div>
-          <div className="flex-1 space-y-4">
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Full Name *</label>
-              <input
-                type="text"
-                value={profile.basicInfo.fullName}
-                onChange={(e) => handleBasicInfoChange('fullName', e.target.value)}
-                className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
-              />
-            </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Email *</label>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Email *</label>
+            <div className="relative">
+              <FiMail className="absolute left-3 top-3 text-slate-400" />
               <input
                 type="email"
                 value={profile.basicInfo.email}
                 onChange={(e) => handleBasicInfoChange('email', e.target.value)}
-                className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
+                className="w-full rounded-xl border-2 border-slate-200 pl-10 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Phone Number</label>
+            <div className="relative">
+              <FiPhone className="absolute left-3 top-3 text-slate-400" />
               <input
                 type="tel"
                 value={profile.basicInfo.phone}
                 onChange={(e) => handleBasicInfoChange('phone', e.target.value)}
-                className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all"
+                className="w-full rounded-xl border-2 border-slate-200 pl-10 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all"
               />
             </div>
-            <div>
-              <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
-              <input
-                type="text"
-                value={profile.basicInfo.role}
-                disabled
-                className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-500"
-              />
-            </div>
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Role</label>
+            <input
+              type="text"
+              value={profile.basicInfo.role}
+              disabled
+              className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-500 px-3 py-2"
+            />
           </div>
         </div>
       </div>
     </div>
   )
 
-  const renderLoginInfo = () => (
+  const renderSecurity = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
           <FiShield className="w-5 h-5" />
-          Login Information
+          Security Settings
         </h3>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-medium text-slate-700 mb-2">Username</label>
-            <input
-              type="text"
-              value={profile.loginInfo.username}
-              disabled
-              className="w-full rounded-xl border-2 border-slate-200 bg-slate-50 text-slate-500"
-            />
-          </div>
-          <div className="border-t pt-4">
-            <h4 className="font-medium text-slate-700 mb-4">Change Password</h4>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Current Password</label>
-                <div className="relative">
-                  <input
-                    type={showPassword ? 'text' : 'password'}
-                    value={profile.loginInfo.currentPassword}
-                    onChange={(e) => handleLoginInfoChange('currentPassword', e.target.value)}
-                    className="w-full rounded-xl border-2 border-slate-200 pr-10 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">New Password</label>
-                <div className="relative">
-                  <input
-                    type={showNewPassword ? 'text' : 'password'}
-                    value={profile.loginInfo.newPassword}
-                    onChange={(e) => handleLoginInfoChange('newPassword', e.target.value)}
-                    className="w-full rounded-xl border-2 border-slate-200 pr-10 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showNewPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-2">Confirm New Password</label>
-                <div className="relative">
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    value={profile.loginInfo.confirmPassword}
-                    onChange={(e) => handleLoginInfoChange('confirmPassword', e.target.value)}
-                    className="w-full rounded-xl border-2 border-slate-200 pr-10 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
-                  >
-                    {showConfirmPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Current Password</label>
+            <div className="relative">
+              <input
+                type={showPassword ? 'text' : 'password'}
+                value={profile.security.currentPassword}
+                onChange={(e) => handleSecurityChange('currentPassword', e.target.value)}
+                className="w-full rounded-xl border-2 border-slate-200 pr-10 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all"
+              />
               <button
-                onClick={changePassword}
-                className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg"
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                Change Password
+                {showPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
               </button>
             </div>
           </div>
-          <div className="border-t pt-4">
-            <h4 className="font-medium text-slate-700 mb-4">Security Settings</h4>
-            <div className="flex items-center justify-between">
-              <div>
-                <div className="font-medium text-slate-700">Two-Factor Authentication</div>
-                <div className="text-sm text-slate-500">Add an extra layer of security to your account</div>
-              </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">New Password</label>
+            <div className="relative">
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                value={profile.security.newPassword}
+                onChange={(e) => handleSecurityChange('newPassword', e.target.value)}
+                className="w-full rounded-xl border-2 border-slate-200 pr-10 px-3 py-2 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all"
+              />
               <button
-                onClick={toggleTwoFactor}
-                className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
-                  profile.loginInfo.twoFactorEnabled ? 'bg-blue-600' : 'bg-slate-200'
-                }`}
+                type="button"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
               >
-                <span
-                  className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
-                    profile.loginInfo.twoFactorEnabled ? 'translate-x-6' : 'translate-x-1'
-                  }`}
-                />
+                {showNewPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
               </button>
             </div>
           </div>
+          <div>
+            <label className="block text-sm font-medium text-slate-700 mb-2">Confirm New Password</label>
+            <div className="relative">
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                value={profile.security.confirmPassword}
+                onChange={(e) => handleSecurityChange('confirmPassword', e.target.value)}
+                className="w-full rounded-xl border-2 border-slate-200 pr-10 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all"
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-slate-400 hover:text-slate-600"
+              >
+                {showConfirmPassword ? <FiEyeOff className="w-4 h-4" /> : <FiEye className="w-4 h-4" />}
+              </button>
+            </div>
+          </div>
+          <button
+            onClick={changePassword}
+            className="px-4 py-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-xl hover:from-blue-600 hover:to-blue-700 shadow-md hover:shadow-lg"
+          >
+            Change Password
+          </button>
         </div>
       </div>
     </div>
   )
 
-  const renderActivityLogs = () => (
+  const renderLoginHistory = () => (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-lg hover:shadow-xl transition-all">
         <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-          <FiClock className="w-5 h-5" />
-          Activity Logs
+          <FiLogIn className="w-5 h-5" />
+          Login History
         </h3>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
@@ -346,15 +283,21 @@ const Profile = () => {
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Timestamp</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">IP Address</th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Device</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-slate-200">
-              {activityLogs.map((log) => (
+              {loginHistory.map((log) => (
                 <tr key={log.id} className="hover:bg-slate-50 transition-colors">
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900">{log.action}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{log.timestamp}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{log.ipAddress}</td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">{log.device}</td>
+                  <td className="px-6 py-4 whitespace-nowrap">
+                    <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(log.status)}`}>
+                      {log.status}
+                    </span>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -391,29 +334,29 @@ const Profile = () => {
                 }`}
               >
                 <FiUser className="w-4 h-4" />
-                Basic Info
+                Personal Info
               </button>
               <button
-                onClick={() => setActiveTab('login')}
+                onClick={() => setActiveTab('security')}
                 className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl transition-colors ${
-                  activeTab === 'login'
+                  activeTab === 'security'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 <FiShield className="w-4 h-4" />
-                Login Info
+                Security
               </button>
               <button
-                onClick={() => setActiveTab('activity')}
+                onClick={() => setActiveTab('history')}
                 className={`w-full flex items-center gap-3 px-3 py-2 text-left rounded-xl transition-colors ${
-                  activeTab === 'activity'
+                  activeTab === 'history'
                     ? 'bg-blue-100 text-blue-700'
                     : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 <FiClock className="w-4 h-4" />
-                Activity Logs
+                Login History
               </button>
             </nav>
           </div>
@@ -422,8 +365,8 @@ const Profile = () => {
         {/* Main Content */}
         <div className="flex-1">
           {activeTab === 'basic' && renderBasicInfo()}
-          {activeTab === 'login' && renderLoginInfo()}
-          {activeTab === 'activity' && renderActivityLogs()}
+          {activeTab === 'security' && renderSecurity()}
+          {activeTab === 'history' && renderLoginHistory()}
         </div>
       </div>
     </div>
@@ -431,5 +374,3 @@ const Profile = () => {
 }
 
 export default Profile
-
-

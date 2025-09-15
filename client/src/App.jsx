@@ -7,7 +7,6 @@ import Login from './pages/Login'
 
 import Dashboard from './pages/Dashboard'
 import NewBill from './pages/Billing/NewBill'
-import ServiceBill from './pages/Billing/ServiceBill'
 import SecondHandMobilesBilling from './pages/Billing/SecondHandMobilesBilling'
 import ManageDealers from './pages/Dealers/ManageDealers'
 import DealerHistory from './pages/Dealers/DealerHistory'
@@ -17,6 +16,7 @@ import Mobiles from './pages/Inventory/Mobiles'
 import Accessories from './pages/Inventory/Accessories'
 import ServiceRequests from './pages/Services/ServiceRequests'
 import ServiceHistory from './pages/Services/ServiceHistory'
+import ServiceBill from './pages/Billing/ServiceBill'
 import NewTransfer from './pages/Transfers/NewTransfer'
 import TransferHistory from './pages/Transfers/TransferHistory'
 import SalesReport from './pages/Reports/SalesReport'
@@ -29,6 +29,7 @@ import MobilesStock from './pages/Stock/MobilesStock'
 import AccessoriesStock from './pages/Stock/AccessoriesStock'
 import SecondHandMobiles from './SecondHandMobile/SecondHandMobiles'
 import SecondHandMobilesHistory from './SecondHandMobile/SecondHandMobilesHistory'
+import Notifications from './pages/Notifications'
 
 const RequireAuth = ({ children }) => {
   const { auth } = useAuth()
@@ -54,9 +55,9 @@ const AppShell = () => {
                 <Route path="/login" element={<Login />} />
 
                 <Route path="/dashboard" element={<RequireAuth><Dashboard /></RequireAuth>} />
+                <Route path="/notifications" element={<RequireAuth><Notifications /></RequireAuth>} />
 
                 <Route path="/billing/new" element={<RequireAuth><NewBill /></RequireAuth>} />
-                <Route path="/billing/service" element={<RequireAuth><ServiceBill /></RequireAuth>} />
                 <Route path="/billing/secondhand" element={<RequireAuth><SecondHandMobilesBilling /></RequireAuth>} />
 
                 <Route path="/dealers/manage" element={<RequireAuth><ManageDealers /></RequireAuth>} />
@@ -70,6 +71,8 @@ const AppShell = () => {
 
                 <Route path="/services/requests" element={<RequireAuth><ServiceRequests /></RequireAuth>} />
                 <Route path="/services/history" element={<RequireAuth><ServiceHistory /></RequireAuth>} />
+                <Route path="/services/generate-bill" element={<RequireAuth><ServiceBill /></RequireAuth>} />
+                <Route path="/billing/service" element={<RequireAuth><ServiceBill /></RequireAuth>} />
 
                 <Route path="/transfers/new" element={<RequireAuth><NewTransfer /></RequireAuth>} />
                 <Route path="/transfers/history" element={<RequireAuth><TransferHistory /></RequireAuth>} />

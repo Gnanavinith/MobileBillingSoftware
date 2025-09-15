@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react'
-import { MdSearch, MdShoppingCart, MdAttachMoney, MdPerson, MdPhoneAndroid, MdReceipt } from 'react-icons/md'
+import React, { useState, useEffect, useRef } from 'react'
+import { MdSearch, MdShoppingCart, MdAttachMoney, MdPerson, MdPhoneAndroid, MdReceipt, MdPrint } from 'react-icons/md'
 
 const SecondHandMobilesBilling = () => {
   const [availableMobiles, setAvailableMobiles] = useState([])
@@ -14,6 +14,8 @@ const SecondHandMobilesBilling = () => {
   const [paymentMethod, setPaymentMethod] = useState('Cash')
   const [billNumber, setBillNumber] = useState('')
   const [processingSale, setProcessingSale] = useState(false)
+  const invoiceRef = useRef(null)
+  const now = new Date()
 
   // Fetch available mobiles
   const fetchAvailableMobiles = async () => {
@@ -92,6 +94,37 @@ const SecondHandMobilesBilling = () => {
   }
 
   const totals = calculateTotals()
+
+  const printInvoice = () => {
+    const printContent = invoiceRef.current
+    if (!printContent) return
+    const printWindow = window.open('', '_blank')
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Invoice ${billNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; }
+            table { width: 100%; border-collapse: collapse; }
+            th, td { padding: 8px; text-align: left; border-bottom: 1px solid #ddd; }
+            .text-right { text-align: right; }
+            .text-sm { font-size: 0.875rem; }
+            .text-base { font-size: 1rem; }
+            .font-semibold { font-weight: 600; }
+            .mt-2 { margin-top: 0.5rem; }
+            .mt-4 { margin-top: 1rem; }
+          </style>
+        </head>
+        <body>
+          ${printContent.innerHTML}
+        </body>
+      </html>
+    `)
+    printWindow.document.close()
+    printWindow.focus()
+    printWindow.print()
+    printWindow.close()
+  }
 
   // Process sale
   const processSale = async () => {
@@ -174,6 +207,9 @@ const SecondHandMobilesBilling = () => {
           }),
         })
       }
+
+      // Print invoice before resetting
+      try { printInvoice() } catch {}
 
       // Reset form
       setSelectedMobiles([])
@@ -429,9 +465,64 @@ const SecondHandMobilesBilling = () => {
                     </>
                   )}
                 </button>
+                <button
+                  type="button"
+                  onClick={printInvoice}
+                  className="w-full mt-2 bg-gradient-to-r from-blue-500 to-blue-600 text-white py-3 px-4 rounded-xl hover:from-blue-600 hover:to-blue-700 flex items-center justify-center gap-2 shadow-md hover:shadow-lg transition-all"
+                >
+                  <MdPrint className="w-5 h-5" /> Print Invoice
+                </button>
               </div>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* Printable Invoice */}
+      <div ref={invoiceRef} className="hidden print:block p-6">
+        <div className="text-center">
+          <div className="text-xl font-semibold">Second Hand Mobile Invoice</div>
+        </div>
+        <div className="mt-2 text-sm">Bill No: {billNumber} • {now.toLocaleString()}</div>
+        <div className="mt-2 text-sm">Customer: {customerInfo.name || '-'} • {customerInfo.phone || '-'}</div>
+        {customerInfo.address ? <div className="mt-1 text-sm">Address: {customerInfo.address}</div> : null}
+        <table className="mt-4 w-full text-sm border-t border-b border-slate-300">
+          <thead>
+            <tr className="text-left">
+              <th className="py-1 pr-2">Item</th>
+              <th className="py-1 pr-2">Qty</th>
+              <th className="py-1 pr-2">GST</th>
+              <th className="py-1 pr-2">Amount</th>
+            </tr>
+          </thead>
+          <tbody>
+            {selectedMobiles.map((m, idx) => {
+              const qty = Number(m.quantity) || 0
+              const price = Number(m.sellingPrice) || 0
+              const gross = qty * price
+              const gst = 0 // secondhand: GST typically 0
+              const total = gross + gst
+              return (
+                <tr key={idx} className="border-t border-slate-200">
+                  <td className="py-1 pr-2">
+                    <div>
+                      <div className="font-medium">{m.brand} {m.model}</div>
+                      {m.modelNumber && <div className="text-xs text-slate-600">Model: {m.modelNumber}</div>}
+                      {m.imeiNumber1 && <div className="text-xs text-slate-600">IMEI: {m.imeiNumber1}</div>}
+                    </div>
+                  </td>
+                  <td className="py-1 pr-2">{qty}</td>
+                  <td className="py-1 pr-2">{gst.toFixed(2)}</td>
+                  <td className="py-1 pr-2">{total.toFixed(2)}</td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+        <div className="mt-2 text-right text-sm">
+          <div>Subtotal: {totals.subTotal.toFixed(2)}</div>
+          <div>GST Total: {0..toFixed ? (0).toFixed(2) : '0.00'}</div>
+          <div className="font-semibold text-base">Grand Total: {totals.grandTotal.toFixed(2)}</div>
         </div>
       </div>
     </div>

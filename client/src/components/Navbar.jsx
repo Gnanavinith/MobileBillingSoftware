@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react'
-import { MdAccountCircle } from 'react-icons/md'
-import { FiBell, FiAlertTriangle } from 'react-icons/fi'
+import { MdAccountCircle, MdInventory, MdWarning, MdInfo } from 'react-icons/md'
+import { FiBell } from 'react-icons/fi'
 import { useAuth } from '../context/AuthContext'
 import { useNavigate } from 'react-router-dom'
 
@@ -8,68 +8,113 @@ const Navbar = () => {
   const { auth, logout } = useAuth()
   const navigate = useNavigate()
   const [lowStock, setLowStock] = useState([])
-  const [open, setOpen] = useState(false)
+  const [viewedItems, setViewedItems] = useState(new Set())
+  const [unreadCount, setUnreadCount] = useState(0)
 
   const isElectron = (typeof navigator !== 'undefined' && /Electron/i.test(navigator.userAgent))
   const apiBase = isElectron ? 'http://127.0.0.1:5000' : (import.meta?.env?.VITE_API_BASE || '')
+
+  // Load viewed items from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem('mobilebill:viewedNotifications')
+    if (saved) {
+      try {
+        setViewedItems(new Set(JSON.parse(saved)))
+      } catch (e) {
+        console.warn('Failed to parse viewed notifications:', e)
+      }
+    }
+  }, [])
+
+  // Save viewed items to localStorage
+  useEffect(() => {
+    if (viewedItems.size > 0) {
+      localStorage.setItem('mobilebill:viewedNotifications', JSON.stringify([...viewedItems]))
+    }
+  }, [viewedItems])
 
   useEffect(() => {
     let mounted = true
     const load = async () => {
       try {
+        console.log('Loading low stock data from:', `${apiBase}/api/low-stock?threshold=20`)
         const res = await fetch(`${apiBase}/api/low-stock?threshold=20`)
         const data = await res.json()
-        if (mounted) setLowStock(Array.isArray(data) ? data.slice(0, 20) : [])
-      } catch { if (mounted) setLowStock([]) }
+        console.log('Low stock API response:', data)
+        if (mounted) {
+          const stockData = Array.isArray(data) ? data.slice(0, 20) : []
+          setLowStock(stockData)
+          console.log('Set low stock data:', stockData)
+          
+          // Calculate unread count (items not in viewedItems)
+          const unread = stockData.filter(item => {
+            const itemKey = `${item.type}-${item.id}-${item.name}`
+            return !viewedItems.has(itemKey)
+          })
+          setUnreadCount(unread.length)
+          console.log('Unread count:', unread.length)
+        }
+      } catch (error) { 
+        console.error('Error loading low stock data:', error)
+        if (mounted) {
+          setLowStock([])
+          setUnreadCount(0)
+        }
+      }
     }
     load()
     const id = setInterval(load, 60_000)
     return () => { mounted = false; clearInterval(id) }
-  }, [])
+  }, [viewedItems])
 
   const onLogout = () => {
     logout()
     navigate('/login', { replace: true })
   }
+
+  const handleNotificationClick = () => {
+    navigate('/notifications')
+  }
   return (
-    <header className="h-14 bg-white/80 backdrop-blur border-b border-slate-200 flex items-center px-4 justify-between transition-colors duration-200 print:hidden">
-      <div className="font-semibold tracking-wide text-slate-900">MobileBill</div>
+    <header className="h-16 bg-white/95 backdrop-blur border-b border-slate-200 flex items-center px-6 justify-between transition-colors duration-200 print:hidden shadow-sm">
+      <div className="flex items-center gap-3">
+        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
+          <span className="text-white font-bold text-sm">MB</span>
+        </div>
+        <div className="font-bold text-xl tracking-wide bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">MobileBill</div>
+      </div>
       <div className="flex items-center gap-3">
         <div className="relative">
-          <button onClick={()=>setOpen(!open)} className="relative p-2 rounded-md hover:bg-slate-100">
-            <FiBell className="w-5 h-5 text-slate-700" />
-            {lowStock.length > 0 && (
-              <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[10px] leading-none px-1.5 py-0.5 rounded-full">{lowStock.length}</span>
+          <button 
+            onClick={handleNotificationClick}
+            className={`relative p-2.5 rounded-xl transition-all duration-200 ${
+              unreadCount > 0 
+                ? 'bg-red-50 hover:bg-red-100 text-red-600 shadow-sm' 
+                : 'hover:bg-slate-100 text-slate-600 hover:text-slate-800'
+            }`}
+          >
+            <FiBell className={`w-5 h-5 transition-transform duration-200 ${
+              unreadCount > 0 ? 'animate-pulse' : ''
+            }`} />
+            {unreadCount > 0 && (
+              <span className="absolute -top-1 -right-1 bg-gradient-to-r from-red-500 to-red-600 text-white text-[10px] leading-none px-2 py-1 rounded-full font-semibold shadow-lg animate-bounce">
+                {unreadCount > 99 ? '99+' : unreadCount}
+              </span>
             )}
           </button>
-          {open && (
-            <div className="absolute right-0 mt-2 w-72 bg-white border border-slate-200 rounded-md shadow-lg z-50">
-              <div className="px-3 py-2 border-b flex items-center gap-2 text-sm font-semibold text-slate-700">
-                <FiAlertTriangle className="text-red-600" /> Low Stock Alerts
-              </div>
-              <div className="max-h-80 overflow-auto">
-                {lowStock.length === 0 ? (
-                  <div className="p-3 text-sm text-slate-500">All stocks are healthy.</div>
-                ) : lowStock.map((it, idx) => (
-                  <div key={idx} className="px-3 py-2 text-sm flex items-center justify-between border-b last:border-b-0">
-                    <div>
-                      <div className="font-medium">{it.name}</div>
-                      <div className="text-xs text-slate-600">{it.model}</div>
-                    </div>
-                    <div className="text-xs font-semibold text-red-600">{it.quantity}</div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
         {auth?.user ? (
-          <div className="text-sm text-slate-600"><span className="font-medium text-slate-900">{auth.user.role.toUpperCase()}</span> • {auth.user.email}</div>
+          <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-100 rounded-lg">
+              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <span className="text-sm font-medium text-slate-700">{auth.user.role}</span>
+            </div>
+            <button onClick={onLogout} className="flex items-center gap-2 px-3 py-1.5 text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg transition-all duration-200">
+              <MdAccountCircle className="w-5 h-5" />
+              <span className="text-sm font-medium">Logout</span>
+            </button>
+          </div>
         ) : null}
-        <button onClick={onLogout} className="text-slate-600 hover:text-slate-900 transition-colors flex items-center gap-1">
-          <MdAccountCircle className="text-2xl" />
-          <span className="text-sm">Logout</span>
-        </button>
       </div>
     </header>
   )

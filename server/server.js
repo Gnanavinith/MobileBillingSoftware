@@ -34,6 +34,7 @@ const dashboardRoutes = require("./routes/dashboardRoutes");
 const serviceInvoiceRoutes = require("./routes/serviceInvoiceRoutes");
 const transferRoutes = require("./routes/transferRoutes");
 const secondHandMobileRoutes = require("./routes/secondHandMobileRoutes");
+const notificationRoutes = require("./routes/notificationRoutes");
 const app = express();
 
 app.use(cors());
@@ -73,6 +74,7 @@ app.use('/api/service-invoices', serviceInvoiceRoutes)
 app.use('/api/transfers', transferRoutes)
 app.use('/api/secondhand-mobiles', secondHandMobileRoutes)
 app.use('/api/dashboard', dashboardRoutes)
+app.use('/api/notifications', notificationRoutes)
 
 // Global error handler
 app.use((err, req, res, _next) => {

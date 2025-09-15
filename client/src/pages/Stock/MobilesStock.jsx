@@ -185,11 +185,30 @@ const MobilesStock = () => {
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">IMEI 1</label>
-                  <input className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all" value={form.imeiNumber1} onChange={e=>setForm({...form, imeiNumber1:e.target.value})} />
+                  <input 
+                    className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all" 
+                    value={form.imeiNumber1} 
+                    onChange={e=>setForm({...form, imeiNumber1:e.target.value})}
+                    onKeyDown={(e)=>{ if(e.key==='Enter'){ e.preventDefault() } }}
+                    autoFocus
+                    autoComplete="off"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="Scan/enter IMEI 1 and press Enter"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">IMEI 2 (optional)</label>
-                  <input className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all" value={form.imeiNumber2} onChange={e=>setForm({...form, imeiNumber2:e.target.value})} />
+                  <input 
+                    className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all" 
+                    value={form.imeiNumber2} 
+                    onChange={e=>setForm({...form, imeiNumber2:e.target.value})}
+                    onKeyDown={(e)=>{ if(e.key==='Enter'){ e.preventDefault() } }}
+                    autoComplete="off"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    placeholder="Scan/enter IMEI 2"
+                  />
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Color</label>

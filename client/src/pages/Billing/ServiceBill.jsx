@@ -1,10 +1,13 @@
-import React, { useMemo, useRef, useState } from 'react'
+import React, { useEffect, useMemo, useRef, useState } from 'react'
+import { useLocation } from 'react-router-dom'
 import { jsPDF } from 'jspdf'
 import html2canvas from 'html2canvas'
 
 const emptyPart = () => ({ name: '', productId: '', quantity: 1, price: 0, gstPercent: 18, discountType: 'percent', discountValue: 0 })
 
 const ServiceBill = () => {
+  const location = useLocation()
+  const incoming = location?.state?.service
   const [customerName, setCustomerName] = useState('')
   const [phoneNumber, setPhoneNumber] = useState('')
   const [address, setAddress] = useState('')
@@ -17,7 +20,38 @@ const ServiceBill = () => {
   const [draftPart, setDraftPart] = useState(emptyPart())
   const [paymentMethod, setPaymentMethod] = useState('Cash')
   const [serviceBillNumber] = useState(() => `SRV-${Date.now().toString().slice(-6)}`)
+  const [serviceIdLookup, setServiceIdLookup] = useState('')
+  const [phoneLookup, setPhoneLookup] = useState('')
+  const [advancePaid, setAdvancePaid] = useState(0)
+  const [billDiscountPercent, setBillDiscountPercent] = useState(0)
+  const [billGstPercent, setBillGstPercent] = useState(0)
   const invoiceRef = useRef(null)
+
+  // Prefill from service request if provided
+  useEffect(() => {
+    if (incoming) {
+      setCustomerName(incoming?.customerDetails?.name || '')
+      setPhoneNumber(incoming?.customerDetails?.phone || '')
+      setAddress(incoming?.customerDetails?.address || '')
+      setModelName(incoming?.deviceDetails?.model || '')
+      setImei(incoming?.deviceDetails?.imei || '')
+      setProblem(incoming?.deviceDetails?.problemDescription || '')
+      const partsFromRequest = Array.isArray(incoming?.serviceDetails?.serviceParts)
+        ? incoming.serviceDetails.serviceParts.map(p => ({
+            name: p.partName || '',
+            productId: p.partId || '',
+            quantity: Number(p.quantity) || 1,
+            price: Number(p.unitPrice) || 0,
+            gstPercent: Number(incoming?.serviceDetails?.gstPercentage) || 18,
+            discountType: 'percent',
+            discountValue: Number(incoming?.serviceDetails?.discount) || 0,
+          }))
+        : []
+      setParts(partsFromRequest)
+      setLaborCost(Number(incoming?.serviceDetails?.estimatedCost) || 0)
+      setPaymentMethod(incoming?.serviceDetails?.paymentMode || 'Cash')
+    }
+  }, [incoming])
 
   const removePart = (index) => setParts(prev => prev.filter((_, i) => i !== index))
   const addDraftPart = () => {
@@ -78,12 +112,20 @@ const ServiceBill = () => {
 
     const labor = Number(laborCost) || 0
     const subtotal = partsSubtotal + labor
-    const cgst = partsGst / 2
-    const sgst = partsGst / 2
-    const grandTotal = subtotal + partsGst
 
-    return { partsSubtotal, partsDiscounts, partsGst, labor, subtotal, cgst, sgst, grandTotal }
-  }, [parts, laborCost, draftPartActive, draftPart])
+    // Bill-level discount (on top of line discounts)
+    const billLevelDiscount = Math.max(0, (Number(billDiscountPercent) || 0) * subtotal / 100)
+    const afterBillDiscount = Math.max(subtotal - billLevelDiscount, 0)
+
+    // GST: either per-part (default) or bill-level override
+    const gstOverride = Number(billGstPercent) || 0
+    const gstTotal = gstOverride > 0 ? (afterBillDiscount * gstOverride / 100) : partsGst
+    const cgst = gstTotal / 2
+    const sgst = gstTotal / 2
+    const grandTotal = afterBillDiscount + gstTotal
+
+    return { partsSubtotal, partsDiscounts, partsGst, labor, subtotal, billLevelDiscount, afterBillDiscount, gstTotal, cgst, sgst, grandTotal }
+  }, [parts, laborCost, draftPartActive, draftPart, billDiscountPercent, billGstPercent])
 
   const printInvoice = () => window.print()
 
@@ -116,7 +158,59 @@ const ServiceBill = () => {
 
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
+      <div className="print:hidden">
       <h1 className="text-3xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Service Billing</h1>
+
+      {/* Lookup existing service by ID and Phone */}
+      <div className="mb-6 rounded-2xl bg-white border border-slate-200 p-6 shadow-lg">
+        <div className="text-lg font-semibold mb-3">Lookup Service</div>
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+          <div>
+            <label className="text-sm font-medium text-slate-700">Service ID</label>
+            <input value={serviceIdLookup} onChange={e=>setServiceIdLookup(e.target.value)} className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100" placeholder="SRV-XXXXXX" />
+          </div>
+          <div>
+            <label className="text-sm font-medium text-slate-700">Phone</label>
+            <input value={phoneLookup} onChange={e=>setPhoneLookup(e.target.value)} className="mt-1 w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-blue-400 focus:ring-4 focus:ring-blue-100" placeholder="Customer phone" />
+          </div>
+          <div className="flex items-end">
+            <button
+              onClick={() => {
+                try {
+                  const saved = JSON.parse(localStorage.getItem('mobilebill:services') || '[]')
+                  const svc = saved.find(s => String(s.id).trim() === String(serviceIdLookup).trim() && String(s.customerDetails?.phone||'').trim() === String(phoneLookup).trim())
+                  if (!svc) { alert('Service not found'); return }
+                  setCustomerName(svc.customerDetails?.name||'')
+                  setPhoneNumber(svc.customerDetails?.phone||'')
+                  setAddress(svc.customerDetails?.address||'')
+                  setModelName(svc.deviceDetails?.model||'')
+                  setImei(svc.deviceDetails?.imei||'')
+                  setProblem(svc.deviceDetails?.problemDescription||'')
+                  const partsFromRequest = Array.isArray(svc?.serviceDetails?.serviceParts)
+                    ? svc.serviceDetails.serviceParts.map(p => ({
+                        name: p.partName || '',
+                        productId: p.partId || '',
+                        quantity: Number(p.quantity) || 1,
+                        price: Number(p.unitPrice) || 0,
+                        gstPercent: Number(svc?.serviceDetails?.gstPercentage) || 18,
+                        discountType: 'percent',
+                        discountValue: Number(svc?.serviceDetails?.discount) || 0,
+                      }))
+                    : []
+                  setParts(partsFromRequest)
+                  setLaborCost(Number(svc?.serviceDetails?.estimatedCost) || 0)
+                  setPaymentMethod(svc?.serviceDetails?.paymentMode || 'Cash')
+                  const adv = Number(svc?.serviceDetails?.advancePayment)||0
+                  setAdvancePaid(adv)
+                } catch (e) { alert('Lookup failed') }
+              }}
+              className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 shadow-md"
+            >
+              Fetch
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 space-y-6">
@@ -267,6 +361,18 @@ const ServiceBill = () => {
               <label className="text-sm font-semibold text-slate-700">Service Charges (Labor)</label>
               <input type="number" value={laborCost} onChange={e => setLaborCost(e.target.value)} className="mt-1 w-52 rounded-xl border-2 border-slate-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all px-4 py-2.5" />
             </div>
+
+            <div className="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="text-sm font-semibold text-slate-700">Bill Discount (%)</label>
+                <input type="number" min="0" max="100" step="0.01" value={billDiscountPercent} onChange={e=>setBillDiscountPercent(Number(e.target.value)||0)} className="mt-1 w-52 rounded-xl border-2 border-slate-200 focus:border-rose-400 focus:ring-4 focus:ring-rose-100 transition-all px-4 py-2.5" />
+              </div>
+              <div>
+                <label className="text-sm font-semibold text-slate-700">Bill GST Override (%)</label>
+                <input type="number" min="0" max="100" step="0.01" value={billGstPercent} onChange={e=>setBillGstPercent(Number(e.target.value)||0)} className="mt-1 w-52 rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5" />
+                <div className="text-xs text-slate-500 mt-1">Leave 0 to use line-item GST.</div>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -282,9 +388,16 @@ const ServiceBill = () => {
             <div className="flex justify-between"><span className="font-semibold text-slate-700">Parts Subtotal</span><span className="font-bold text-slate-900">{calc.partsSubtotal.toFixed(2)}</span></div>
             <div className="flex justify-between"><span className="font-semibold text-rose-600">Parts Discounts</span><span className="font-bold text-rose-600">- {calc.partsDiscounts.toFixed(2)}</span></div>
             <div className="flex justify-between"><span className="font-semibold text-slate-700">Labor</span><span className="font-bold text-slate-900">{calc.labor.toFixed(2)}</span></div>
+            {billDiscountPercent > 0 ? (
+              <div className="flex justify-between"><span className="font-semibold text-rose-700">Bill Discount ({billDiscountPercent}%)</span><span className="font-bold text-rose-700">- {calc.billLevelDiscount.toFixed(2)}</span></div>
+            ) : null}
             <div className="flex justify-between"><span className="font-semibold text-blue-600">CGST</span><span className="font-bold text-blue-600">{calc.cgst.toFixed(2)}</span></div>
             <div className="flex justify-between"><span className="font-semibold text-blue-600">SGST</span><span className="font-bold text-blue-600">{calc.sgst.toFixed(2)}</span></div>
-            <div className="pt-3 mt-3 border-t-2 border-indigo-200 flex justify-between items-center text-lg"><span className="font-bold text-indigo-800">Total</span><span className="font-extrabold text-indigo-800">{calc.grandTotal.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="font-semibold text-indigo-700">GST Total</span><span className="font-bold text-indigo-700">{calc.gstTotal.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="font-semibold text-slate-700">Total Amount</span><span className="font-bold text-slate-900">{calc.afterBillDiscount.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="font-semibold text-slate-700">Total Payment</span><span className="font-bold text-slate-900">{calc.grandTotal.toFixed(2)}</span></div>
+            <div className="flex justify-between"><span className="font-semibold text-emerald-700">Advance Paid</span><span className="font-bold text-emerald-700">-{advancePaid.toFixed(2)}</span></div>
+            <div className="pt-3 mt-3 border-t-2 border-indigo-200 flex justify-between items-center text-lg"><span className="font-bold text-indigo-800">Balance</span><span className="font-extrabold text-indigo-800">{Math.max(calc.grandTotal - advancePaid, 0).toFixed(2)}</span></div>
           </div>
 
           <div className="mt-4 flex gap-3">
@@ -325,10 +438,30 @@ const ServiceBill = () => {
           </div>
         </div>
       </div>
+      </div>
 
       {/* Printable Invoice */}
       <div ref={invoiceRef} className="hidden print:block p-6">
-        <div className="text-center text-xl font-semibold">Service Invoice</div>
+        {/* Business Info Header */}
+        {(() => {
+          let biz = {}
+          try {
+            const raw = localStorage.getItem('mobilebill:settings')
+            if (raw) {
+              const parsed = JSON.parse(raw)
+              biz = parsed?.businessInfo || {}
+            }
+          } catch {}
+          const contactLine = [biz?.email, biz?.phone].filter(Boolean).join(' • ')
+          return (
+            <div className="text-center">
+              <div className="text-xl font-semibold">{biz?.businessName || 'Service Invoice'}</div>
+              {biz?.address ? <div className="text-xs text-slate-600 mt-0.5">{biz.address}</div> : null}
+              {contactLine ? <div className="text-xs text-slate-600 mt-0.5">{contactLine}</div> : null}
+              {biz?.gstin ? <div className="text-xs text-slate-600 mt-0.5">GSTIN: {biz.gstin}</div> : null}
+            </div>
+          )
+        })()}
         <div className="mt-2 text-sm">Bill No: {serviceBillNumber} • {now.toLocaleString()}</div>
         <div className="mt-2 text-sm">Customer: {customerName} • {phoneNumber}</div>
         <div className="mt-1 text-sm">Device: {modelName} • IMEI: {imei}</div>
@@ -366,8 +499,11 @@ const ServiceBill = () => {
         <div className="mt-2 text-right text-sm">
           <div>Parts Subtotal: {calc.partsSubtotal.toFixed(2)}</div>
           <div>Labor: {calc.labor.toFixed(2)}</div>
+          {billDiscountPercent > 0 ? <div>Bill Discount ({billDiscountPercent}%): -{calc.billLevelDiscount.toFixed(2)}</div> : null}
           <div>CGST: {calc.cgst.toFixed(2)} • SGST: {calc.sgst.toFixed(2)}</div>
-          <div className="font-semibold text-base">Grand Total: {calc.grandTotal.toFixed(2)}</div>
+          <div>GST Total: {calc.gstTotal.toFixed(2)}</div>
+          <div>Total Amount: {calc.afterBillDiscount.toFixed(2)}</div>
+          <div className="font-semibold text-base">Total Payment: {calc.grandTotal.toFixed(2)}</div>
         </div>
       </div>
     </div>
