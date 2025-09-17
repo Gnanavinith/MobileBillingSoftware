@@ -20,6 +20,7 @@ const Mobiles = () => {
   const [filterRam, setFilterRam] = useState('')
   const [filterStorage, setFilterStorage] = useState('')
   const [filterProcessor, setFilterProcessor] = useState('')
+  const [filterProductId, setFilterProductId] = useState('')
   const [brandOptions, setBrandOptions] = useState([])
   const [mobileOptions, setMobileOptions] = useState([])
   const [modelOptions, setModelOptions] = useState([])
@@ -59,6 +60,7 @@ const Mobiles = () => {
         ram: r.ram || '',
         storage: r.storage || '',
         processor: r.processor || '',
+        productIds: Array.isArray(r.productIds) ? r.productIds : [],
         stock: Number(r.totalQuantity) || 0,
         purchasePrice: Number(r.pricePerProduct) || 0,
         sellingPrice: Number(r.sellingPrice ?? r.pricePerProduct) || 0,
@@ -97,6 +99,11 @@ const Mobiles = () => {
       .filter(it => (!filterRam || it.ram === filterRam))
       .filter(it => (!filterStorage || it.storage === filterStorage))
       .filter(it => (!filterProcessor || it.processor === filterProcessor))
+      .filter(it => {
+        if (!filterProductId) return true
+        const pid = String(filterProductId).trim().toUpperCase()
+        return Array.isArray(it.productIds) && it.productIds.some(x => String(x||'').toUpperCase().includes(pid))
+      })
     // Group by brand+model, sum stock and compute min createdAt
     const grouped = mobileItems.reduce((map, it) => {
       const key = `${(it.brand||'').toLowerCase()}::${(it.model||'').toLowerCase()}`
@@ -114,7 +121,7 @@ const Mobiles = () => {
         .reduce((sum, r) => sum + (Number(r.quantity) || 0), 0)
       return { ...item, remainingStock: qty }
     })
-  }, [inventory, storeId, storeStock, search, filterBrand, filterMobile, filterModel, filterColor, filterRam, filterStorage, filterProcessor])
+  }, [inventory, storeId, storeStock, search, filterBrand, filterMobile, filterModel, filterColor, filterRam, filterStorage, filterProcessor, filterProductId])
 
   // Build dependent dropdown options based on brand/mobile/model selections
   useEffect(() => {
@@ -212,7 +219,7 @@ const Mobiles = () => {
             <span>Find</span>
           </button>
           <button
-            onClick={()=>{ setSearchInput(''); setSearch(''); setFilterMobile(''); setFilterModel(''); setFilterColor(''); setFilterRam(''); setFilterStorage('') }}
+            onClick={()=>{ setSearchInput(''); setSearch(''); setFilterMobile(''); setFilterModel(''); setFilterColor(''); setFilterRam(''); setFilterStorage(''); setFilterProcessor(''); setFilterProductId('') }}
             className="px-5 py-2.5 rounded-xl border-2 border-slate-300 hover:bg-slate-50 hover:border-slate-400 transition-all"
           >
             Clear Filters
@@ -274,6 +281,13 @@ const Mobiles = () => {
             <option value="">All Processor</option>
             {processorOptions.map(p => <option key={p} value={p}>{p}</option>)}
           </select>
+          <input
+            type="text"
+            value={filterProductId}
+            onChange={e=>setFilterProductId(e.target.value)}
+            placeholder="Product ID"
+            className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all"
+          />
         </div>
       </div>
 
@@ -343,6 +357,7 @@ const Mobiles = () => {
                 <th className="py-3 px-4"><div className="flex items-center gap-1"><FiTag className="w-4 h-4" /> Product Name</div></th>
                 <th className="py-3 px-4"><div className="flex items-center gap-1"><FiTag className="w-4 h-4" /> Brand</div></th>
                 <th className="py-3 px-4"><div className="flex items-center gap-1"><FiSmartphone className="w-4 h-4" /> Model/Variant</div></th>
+                <th className="py-3 px-4"><div className="flex items-center gap-1"><FiTag className="w-4 h-4" /> Product IDs</div></th>
                 <th className="py-3 px-4">Remaining Stock</th>
                 <th className="py-3 px-4"><div className="flex items-center gap-1"><FiDollarSign className="w-4 h-4" /> Purchase Price</div></th>
                 <th className="py-3 px-4"><div className="flex items-center gap-1"><FiDollarSign className="w-4 h-4" /> Stock Value</div></th>
@@ -354,7 +369,7 @@ const Mobiles = () => {
             <tbody>
               {filteredInventory.length === 0 ? (
                 <tr>
-                  <td className="py-8 px-4 text-center text-slate-500" colSpan={10}>
+                  <td className="py-8 px-4 text-center text-slate-500" colSpan={11}>
                     No mobile products found in inventory.
                   </td>
                 </tr>
@@ -369,6 +384,13 @@ const Mobiles = () => {
                       <td className="py-3 px-4 font-medium">{item.productName}</td>
                       <td className="py-3 px-4">{item.brand || '-'}</td>
                       <td className="py-3 px-4">{item.model}</td>
+                      <td className="py-3 px-4 max-w-xs">
+                        <div className="text-xs text-slate-600 break-words">
+                          {Array.isArray(item.productIds) && item.productIds.length > 0 
+                            ? item.productIds.join(', ') 
+                            : '-'}
+                        </div>
+                      </td>
                       <td className="py-3 px-4">
                         <span className={`px-2 py-1 text-xs rounded-full font-medium ${
                           item.remainingStock <= 0 

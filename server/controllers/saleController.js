@@ -62,6 +62,7 @@ exports.createSale = async (req, res) => {
       const qty = Math.max(0, Number(it.quantity) || 0)
       if (qty <= 0) continue
       const imei = String(it.imei || '').trim()
+      const productId = String(it.productId || '').trim()
 
       // Try mobile by IMEI first
       let updated = false
@@ -77,6 +78,40 @@ exports.createSale = async (req, res) => {
       }
 
       if (updated) continue
+
+      // Try by generated productId for mobiles or accessories
+      if (productId) {
+        let adjusted = false
+        // Accessories keep prefix in productId field and all item codes in productIds[]
+        try {
+          const acc = await Accessory.findOne({ $or: [ { productIds: productId }, { productId: productId } ] })
+          if (acc) {
+            const dec = Math.min(qty, Number(acc.quantity) || 0)
+            acc.quantity = Math.max(0, (Number(acc.quantity) || 0) - dec)
+            // Remove consumed codes
+            if (acc.productIds && acc.productIds.length > 0) {
+              const toRemove = acc.productIds.indexOf(productId)
+              if (toRemove >= 0) acc.productIds.splice(toRemove, 1)
+            }
+            await acc.save()
+            adjusted = true
+          }
+        } catch {}
+        if (adjusted) continue
+
+        // Mobiles store codes in productIds[] on the model document
+        try {
+          const mob = await Mobile.findOne({ productIds: productId })
+          if (mob) {
+            const dec = Math.min(qty, Number(mob.totalQuantity) || 0)
+            mob.totalQuantity = Math.max(0, (Number(mob.totalQuantity) || 0) - dec)
+            const idx = mob.productIds.indexOf(productId)
+            if (idx >= 0) mob.productIds.splice(idx, 1)
+            await mob.save()
+            continue
+          }
+        } catch {}
+      }
 
       // Accessory by productId (if provided as imei/name field), else by productName
       try {

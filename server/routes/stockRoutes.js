@@ -22,6 +22,9 @@ router.get('/low-stock', ctrl.listLowStock)
 // Maintenance
 router.post('/mobiles/normalize-imeis', ctrl.normalizeMobileImeis)
 
+// Lookup by generated product ID
+router.get('/product-by-id/:id', ctrl.findByProductId)
+
 module.exports = router
 
 // Extra endpoint: per-store stock query

@@ -43,9 +43,21 @@ const NewBill = () => {
 
   const removeItem = (index) => setItems(prev => prev.filter((_, i) => i !== index))
 
-  // Fetch available stock for a given item (mobile by IMEI/model or accessory by productId/name)
+  // Fetch available stock for a given item (prefer Product ID; fallback IMEI/model/name)
   const getAvailableStock = async (it) => {
     try {
+      // Prefer direct productId lookup (works for both mobiles and accessories)
+      const pid = String(it.productId || '').trim()
+      if (pid) {
+        try {
+          const res = await fetch(`${apiBase}/api/product-by-id/${encodeURIComponent(pid)}`)
+          if (res.ok) {
+            const data = await res.json()
+            const qty = Number(data?.quantity)
+            if (!Number.isNaN(qty)) return qty
+          }
+        } catch {}
+      }
       // Try mobiles first
       const mobRes = await fetch(`${apiBase}/api/mobiles`)
       const mobiles = await mobRes.json()
@@ -112,41 +124,59 @@ const NewBill = () => {
   const removeLastItem = () => setItems(prev => prev.slice(0, -1))
 
   const lookupByImeiOrProduct = async () => {
-    // Branch on type
-    if (draftItem.type === 'Accessory') {
       const pid = String(draftItem.productId || '').trim()
-      if (!pid) return
       setLookupLoading(true)
       try {
-        const accRes = await fetch(`${apiBase}/api/accessories?productId=${encodeURIComponent(pid)}`)
-        const accessories = await accRes.json()
-        const accessory = Array.isArray(accessories) ? accessories.find(a => a.productId === pid) : null
-        if (accessory) {
+      if (pid) {
+        const res = await fetch(`${apiBase}/api/product-by-id/${encodeURIComponent(pid)}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data?.type === 'accessory') {
           setDraftItem(prev => ({
             ...prev,
-            name: accessory.productName || prev.name,
-            price: Number(accessory.sellingPrice ?? accessory.unitPrice) || prev.price,
+              type: 'Accessory',
+              name: data.name || prev.name,
+              price: Number(data.sellingPrice ?? data.unitPrice) || prev.price,
+              productId: pid,
+              imei: '',
+              model: '',
           }))
           return
         }
-        alert('No accessory found with this Product ID')
-      } catch (e) {
-        alert('Failed to lookup accessory')
-      } finally { setLookupLoading(false) }
+          if (data?.type === 'mobile') {
+            setDraftItem(prev => ({
+              ...prev,
+              type: 'Mobile',
+              name: data.name || prev.name,
+              price: Number(data.sellingPrice ?? data.pricePerProduct) || prev.price,
+              productId: pid,
+              imei: '',
+              model: data.model || prev.model,
+              color: data.features?.color || prev.color,
+              ram: data.features?.ram || prev.ram,
+              storage: data.features?.storage || prev.storage,
+              simSlot: data.features?.simSlot || prev.simSlot,
+              processor: data.features?.processor || prev.processor,
+              displaySize: data.features?.displaySize || prev.displaySize,
+              camera: data.features?.camera || prev.camera,
+              battery: data.features?.battery || prev.battery,
+              operatingSystem: data.features?.operatingSystem || prev.operatingSystem,
+              networkType: data.features?.networkType || prev.networkType,
+            }))
       return
     }
-
+        }
+        // If not found via productId, fall through to IMEI for mobiles
+      }
     const imei = String(draftItem.imei || '').trim()
-    if (!imei) return
-    setLookupLoading(true)
-    try {
-      // Try mobile by IMEI first
+      if (imei) {
       const mobRes = await fetch(`${apiBase}/api/mobiles`)
       const mobiles = await mobRes.json()
       const mobile = Array.isArray(mobiles) ? mobiles.find(m => m.imeiNumber1 === imei || m.imeiNumber2 === imei) : null
       if (mobile) {
         setDraftItem(prev => ({
           ...prev,
+            type: 'Mobile',
           name: mobile.mobileName || prev.name,
           price: Number((mobile.sellingPrice ?? mobile.pricePerProduct)) || prev.price,
           imei: imei,
@@ -165,6 +195,9 @@ const NewBill = () => {
         return
       }
       alert('No mobile found with this IMEI')
+        return
+      }
+      alert('Enter Product ID or IMEI to lookup')
     } catch (error) {
       console.error('Lookup failed:', error)
       alert('Failed to lookup product details')
@@ -353,7 +386,7 @@ const NewBill = () => {
               </div>
               {draftItem.type === 'Mobile' ? (
                 <div>
-                  <label className="text-sm font-semibold text-slate-700 mb-2 block flex items-center gap-2"><MdSearch /> IMEI Number</label>
+                  <label className="text-sm font-semibold text-slate-700 mb-2 block flex items-center gap-2"><MdSearch /> IMEI Number or Product ID</label>
                   <div className="flex gap-3">
                     <input 
                       value={draftItem.imei} 
@@ -365,12 +398,19 @@ const NewBill = () => {
                       inputMode="numeric"
                       pattern="[0-9]*"
                       className="flex-1 rounded-xl border-2 border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 px-4 py-3 bg-white shadow-sm" 
-                      placeholder="Enter/Scan IMEI and press Enter" 
+                      placeholder="Enter/Scan IMEI or type Product ID and press Enter" 
+                    />
+                    <input 
+                      value={draftItem.productId}
+                      onChange={e => setDraftItem({ ...draftItem, productId: e.target.value })}
+                      onBlur={lookupByImeiOrProduct}
+                      className="flex-1 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 px-4 py-3 bg-white shadow-sm" 
+                      placeholder="Or enter Product ID (e.g., VIV-MOB-Y21-0001)" 
                     />
                     <button 
                       type="button"
                       onClick={lookupByImeiOrProduct}
-                      disabled={lookupLoading || !draftItem.imei}
+                      disabled={lookupLoading || (!draftItem.imei && !draftItem.productId)}
                       className="px-6 py-3 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white hover:from-blue-600 hover:to-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shadow-lg hover:shadow-xl transition-all duration-300 transform hover:-translate-y-1 font-semibold"
                     >
                       <span className="flex items-center gap-2">{lookupLoading ? 'Finding...' : (<><MdSearch /> Find</>)}</span>

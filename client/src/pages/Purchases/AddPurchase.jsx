@@ -31,11 +31,39 @@ const AddPurchase = () => {
     category: 'Mobile',
     productName: '',
     model: '',
+    productId: '',
+    brand: '',
+    color: '',
+    ram: '',
+    storage: '',
+    imeiNumber1: '',
+    imeiNumber2: '',
+    simSlot: '',
+    processor: '',
+    displaySize: '',
+    camera: '',
+    battery: '',
+    operatingSystem: '',
+    networkType: '',
     quantity: 1,
     purchasePrice: 0,
     sellingPrice: 0,
     totalPrice: 0
   })
+
+  const genAccessoryId = (name) => {
+    const prefix = 'ACC'
+    const short = (name || 'XXX').toString().trim().substring(0,3).toUpperCase() || 'XXX'
+    const unique = Date.now().toString().slice(-4)
+    return `${prefix}-${short}-${unique}`
+  }
+  const genMobileId = (brand, model) => {
+    const prefix = 'MOB'
+    const brandCode = (brand || 'XXX').toString().trim().substring(0,3).toUpperCase() || 'XXX'
+    const modelCode = (model || '000').toString().trim().substring(0,3).toUpperCase() || '000'
+    const unique = Date.now().toString().slice(-4)
+    return `${prefix}-${brandCode}-${modelCode}-${unique}`
+  }
 
   useEffect(() => {
     const load = async () => {
@@ -68,8 +96,19 @@ const AddPurchase = () => {
   }
 
   const addItem = () => {
-    if (!newItem.productName || !newItem.model || newItem.quantity <= 0 || newItem.purchasePrice <= 0) {
+    if (!newItem.productName || newItem.quantity <= 0 || newItem.purchasePrice <= 0) {
       alert('Please fill all required fields for the product')
+      return
+    }
+    
+    // For accessories, model is required. For mobiles, brand is required.
+    if (newItem.category === 'Accessories' && !newItem.model) {
+      alert('Please fill the Model/Variant field for accessories')
+      return
+    }
+    
+    if (newItem.category === 'Mobile' && !newItem.brand) {
+      alert('Please fill the Brand field for mobiles')
       return
     }
 
@@ -88,6 +127,20 @@ const AddPurchase = () => {
       category: 'Mobile',
       productName: '',
       model: '',
+      productId: '',
+      brand: '',
+      color: '',
+      ram: '',
+      storage: '',
+      imeiNumber1: '',
+      imeiNumber2: '',
+      simSlot: '',
+      processor: '',
+      displaySize: '',
+      camera: '',
+      battery: '',
+      operatingSystem: '',
+      networkType: '',
       quantity: 1,
       purchasePrice: 0,
       sellingPrice: 0,
@@ -108,7 +161,7 @@ const AddPurchase = () => {
   }, [form.gstEnabled, form.gstPercentage])
 
 
-  const savePurchase = async () => {
+  const savePurchase = async (mode = 'pending') => {
     if (!form.dealerId) {
       alert('Please select a dealer')
       return
@@ -129,7 +182,22 @@ const AddPurchase = () => {
         const msg = await res.json().catch(() => ({}))
         throw new Error(msg.error || 'Failed to save purchase')
       }
-      alert('Purchase saved successfully!')
+      const saved = await res.json()
+      if (mode === 'received') {
+        try {
+          // Mark as received to generate Product IDs and move to stock
+          const rx = await fetch(`${apiBase}/api/purchases/${encodeURIComponent(saved.id)}/receive`, { method: 'POST' })
+          if (!rx.ok) {
+            const msg = await rx.json().catch(()=>({}))
+            throw new Error(msg?.error || 'Failed to mark as received')
+          }
+          alert('Purchase saved and marked Received. Product IDs generated.')
+        } catch (e) {
+          alert('Saved as Pending (failed to mark Received): ' + (e?.message || e))
+        }
+      } else {
+        alert('Purchase saved as Pending.')
+      }
       setForm({
         dealerId: '',
         purchaseDate: new Date().toISOString().split('T')[0],
@@ -274,22 +342,209 @@ const AddPurchase = () => {
                 <input
                   type="text"
                   value={newItem.productName}
-                  onChange={(e) => setNewItem({ ...newItem, productName: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    setNewItem(prev => {
+                      const next = { ...prev, productName: val }
+                      const isEmpty = !val || !val.trim()
+                      // Only auto-generate Product ID; do not auto-fill model/variant
+                      if (prev.category === 'Accessories') {
+                        next.productId = isEmpty ? '' : genAccessoryId(val)
+                      } else if (prev.category === 'Mobile') {
+                        next.productId = isEmpty ? '' : genMobileId(prev.brand, prev.model)
+                      }
+                      return next
+                    })
+                  }}
                   className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                   placeholder="e.g., Ear Buds"
                 />
               </div>
 
+              {newItem.category === 'Mobile' && (
+                <div>
+                  <label className="block text-sm font-medium text-slate-700 mb-1">Brand *</label>
+                  <input
+                    type="text"
+                    value={newItem.brand}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      setNewItem(prev => {
+                        const next = { ...prev, brand: val }
+                        // Auto-generate Product ID when brand or model changes
+                        next.productId = genMobileId(val, prev.model)
+                        return next
+                      })
+                    }}
+                    className="w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5"
+                    placeholder="e.g., Vivo"
+                  />
+                </div>
+              )}
+
               <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Model/Variant *</label>
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  {newItem.category === 'Accessories' ? 'Product ID (unique) *' : 'Model/Variant'}
+                </label>
                 <input
                   type="text"
                   value={newItem.model}
-                  onChange={(e) => setNewItem({ ...newItem, model: e.target.value })}
+                  onChange={(e) => {
+                    const val = e.target.value
+                    setNewItem(prev => {
+                      const next = { ...prev, model: val }
+                      // Auto-generate Product ID when model changes for mobiles
+                      if (prev.category === 'Mobile') {
+                        next.productId = genMobileId(prev.brand, val)
+                      }
+                      return next
+                    })
+                  }}
                   className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
-                  placeholder="e.g., OnePlus Buds"
+                  placeholder={newItem.category === 'Accessories' ? 'e.g., ACC-EAR-5632' : 'e.g., Y21 (optional)'}
                 />
               </div>
+
+              {/* Product ID for both categories */}
+              <div>
+                <label className="block text-sm font-medium text-slate-700 mb-1">Product ID</label>
+                <input
+                  type="text"
+                  value={newItem.productId}
+                  onChange={(e) => setNewItem({ ...newItem, productId: e.target.value })}
+                  className="w-full rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all px-4 py-2.5"
+                  placeholder="Auto-generated; you can edit"
+                />
+              </div>
+
+              {newItem.category === 'Mobile' && (
+                <>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Color</label>
+                    <input
+                      type="text"
+                      value={newItem.color}
+                      onChange={(e) => setNewItem({ ...newItem, color: e.target.value })}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-pink-400 focus:ring-4 focus:ring-pink-100 transition-all px-4 py-2.5"
+                      placeholder="e.g., Black"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">RAM</label>
+                    <input
+                      type="text"
+                      value={newItem.ram}
+                      onChange={(e) => setNewItem({ ...newItem, ram: e.target.value })}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all px-4 py-2.5"
+                      placeholder="e.g., 8GB"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Storage</label>
+                    <input
+                      type="text"
+                      value={newItem.storage}
+                      onChange={(e) => setNewItem({ ...newItem, storage: e.target.value })}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all px-4 py-2.5"
+                      placeholder="e.g., 128GB"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">IMEI 1</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={newItem.imeiNumber1}
+                      onChange={(e) => setNewItem({ ...newItem, imeiNumber1: e.target.value.replace(/\D/g, '') })}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all px-4 py-2.5"
+                      placeholder="Scan/enter IMEI 1"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">IMEI 2 (optional)</label>
+                    <input
+                      type="text"
+                      inputMode="numeric"
+                      pattern="[0-9]*"
+                      value={newItem.imeiNumber2}
+                      onChange={(e) => setNewItem({ ...newItem, imeiNumber2: e.target.value.replace(/\D/g, '') })}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all px-4 py-2.5"
+                      placeholder="Scan/enter IMEI 2"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">SIM Slot</label>
+                    <input
+                      type="text"
+                      value={newItem.simSlot}
+                      onChange={(e) => setNewItem({ ...newItem, simSlot: e.target.value })}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all px-4 py-2.5"
+                      placeholder="e.g., Dual SIM"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Processor</label>
+                    <input
+                      type="text"
+                      value={newItem.processor}
+                      onChange={(e) => setNewItem({ ...newItem, processor: e.target.value })}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 transition-all px-4 py-2.5"
+                      placeholder="e.g., Snapdragon 888"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Display Size</label>
+                    <input
+                      type="text"
+                      value={newItem.displaySize}
+                      onChange={(e) => setNewItem({ ...newItem, displaySize: e.target.value })}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 transition-all px-4 py-2.5"
+                      placeholder="e.g., 6.7 inches"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Camera</label>
+                    <input
+                      type="text"
+                      value={newItem.camera}
+                      onChange={(e) => setNewItem({ ...newItem, camera: e.target.value })}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-green-400 focus:ring-4 focus:ring-green-100 transition-all px-4 py-2.5"
+                      placeholder="e.g., 108MP + 12MP"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Battery</label>
+                    <input
+                      type="text"
+                      value={newItem.battery}
+                      onChange={(e) => setNewItem({ ...newItem, battery: e.target.value })}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-4 focus:ring-red-100 transition-all px-4 py-2.5"
+                      placeholder="e.g., 5000mAh"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Operating System</label>
+                    <input
+                      type="text"
+                      value={newItem.operatingSystem}
+                      onChange={(e) => setNewItem({ ...newItem, operatingSystem: e.target.value })}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 transition-all px-4 py-2.5"
+                      placeholder="e.g., Android 12"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-slate-700 mb-1">Network Type</label>
+                    <input
+                      type="text"
+                      value={newItem.networkType}
+                      onChange={(e) => setNewItem({ ...newItem, networkType: e.target.value })}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all px-4 py-2.5"
+                      placeholder="e.g., 5G, 4G LTE"
+                    />
+                  </div>
+                </>
+              )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">Quantity *</label>
@@ -420,16 +675,26 @@ const AddPurchase = () => {
               </div>
             )}
 
-            {/* Save Button */}
+            {/* Save Buttons */}
             <div className="mt-6 flex justify-end">
+              <div className="flex gap-3">
+                <button
+                  onClick={() => savePurchase('pending')}
+                  disabled={form.items.length === 0 || !form.dealerId}
+                  className="flex items-center space-x-2 px-6 py-2.5 bg-gradient-to-r from-slate-500 to-slate-600 text-white rounded-xl hover:from-slate-600 hover:to-slate-700 shadow-md hover:shadow-lg transition-all disabled:bg-slate-400 disabled:cursor-not-allowed"
+                >
+                  <FiSave className="w-4 h-4" />
+                  <span>Save as Pending</span>
+                </button>
               <button
-                onClick={savePurchase}
+                  onClick={() => savePurchase('received')}
                 disabled={form.items.length === 0 || !form.dealerId}
                 className="flex items-center space-x-2 px-6 py-2.5 bg-gradient-to-r from-emerald-500 to-emerald-600 text-white rounded-xl hover:from-emerald-600 hover:to-emerald-700 shadow-md hover:shadow-lg transition-all disabled:bg-slate-400 disabled:cursor-not-allowed"
               >
                 <FiSave className="w-4 h-4" />
-                <span>Save Purchase</span>
+                  <span>Save & Receive</span>
               </button>
+              </div>
             </div>
           </div>
         </div>

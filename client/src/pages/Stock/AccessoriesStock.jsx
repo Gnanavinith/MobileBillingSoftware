@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
-const apiBase = ''
+const apiBase = 'http://localhost:5000'
 
 const AccessoriesStock = () => {
   const [rows, setRows] = useState([])
@@ -45,7 +45,7 @@ const AccessoriesStock = () => {
       setForm({ dealerId: '', productId: '', productName: '', quantity: 1, unitPrice: 0, sellingPrice: 0 })
       setEditingId('')
       await load()
-      alert('Saved')
+      alert('Added to Inventory')
     } catch (ex) { alert(ex.message) } finally { setSaving(false) }
   }
 
@@ -101,7 +101,7 @@ const AccessoriesStock = () => {
               <input type="number" className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all" value={form.sellingPrice} onChange={e=>setForm({...form, sellingPrice: parseFloat(e.target.value)||0})} />
             </div>
             <div className="flex gap-2">
-              <button disabled={saving} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white disabled:opacity-50 shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all">{saving ? 'Saving...' : (editingId ? 'Update' : 'Save')}</button>
+              <button disabled={saving} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white disabled:opacity-50 shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all">{saving ? 'Saving...' : (editingId ? 'Update' : 'Add to Inventory')}</button>
               {editingId ? (
                 <button type="button" onClick={()=>{ setEditingId(''); setForm({ dealerId: '', productId: '', productName: '', quantity: 1, unitPrice: 0, sellingPrice: 0 }) }} className="px-4 py-2.5 rounded-xl border-2 border-slate-300 hover:bg-slate-50 transition-all">Cancel</button>
               ) : null}
@@ -124,6 +124,7 @@ const AccessoriesStock = () => {
                   <th className="py-2 pr-4">Dealer</th>
                   <th className="py-2 pr-4">Product ID</th>
                   <th className="py-2 pr-4">Product Name</th>
+                  <th className="py-2 pr-4">Item Codes</th>
                   <th className="py-2 pr-4">Qty</th>
                   <th className="py-2 pr-4">Unit Price</th>
                   <th className="py-2 pr-4">Selling Price</th>
@@ -136,6 +137,7 @@ const AccessoriesStock = () => {
                     <td className="py-2 pr-4">{r.dealerName}</td>
                     <td className="py-2 pr-4">{r.productId}</td>
                     <td className="py-2 pr-4">{r.productName}</td>
+                    <td className="py-2 pr-4 max-w-xs whitespace-pre-wrap break-words">{Array.isArray(r.productIds) && r.productIds.length ? r.productIds.join(', ') : '-'}</td>
                     <td className="py-2 pr-4">{r.quantity}</td>
                     <td className="py-2 pr-4">{r.unitPrice}</td>
                     <td className="py-2 pr-4">{r.sellingPrice || '-'}</td>

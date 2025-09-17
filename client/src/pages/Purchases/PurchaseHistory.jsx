@@ -3,13 +3,14 @@ import { FiFilter, FiDownload, FiEye, FiSearch } from 'react-icons/fi'
 import { jsPDF } from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
-const apiBase = ''
+const apiBase = 'http://localhost:5000'
 
 const PurchaseHistory = () => {
   const [purchases, setPurchases] = useState([])
   const [dealers, setDealers] = useState([])
   const [inventory, setInventory] = useState([])
   const [sales, setSales] = useState([])
+  const [itemCodes, setItemCodes] = useState({}) // key: `${purchase.id}-${idx}` -> string[]
   const [filters, setFilters] = useState({
     dealerId: '',
     dateFrom: '',
@@ -39,6 +40,18 @@ const PurchaseHistory = () => {
     }
     load()
   }, [])
+
+  
+
+  const reloadPurchases = async () => {
+    try {
+      const res = await fetch(`${apiBase}/api/purchases`)
+      const p = await res.json()
+      setPurchases(Array.isArray(p) ? p : [])
+    } catch (e) {
+      console.error('Failed to reload purchases', e)
+    }
+  }
 
   const calculateRemainingStock = () => {
     return '—'
@@ -244,6 +257,49 @@ const PurchaseHistory = () => {
     return dealer ? dealer.name : 'Unknown'
   }
 
+  const markReceived = async (purchaseId) => {
+    try {
+      console.log('Marking purchase as received:', purchaseId)
+      const res = await fetch(`${apiBase}/api/purchases/${encodeURIComponent(purchaseId)}/receive`, { method: 'POST' })
+      if (!res.ok) {
+        const msg = await res.json().catch(()=>({}))
+        throw new Error(msg.error || 'Failed to mark received')
+      }
+      console.log('Purchase marked as received successfully')
+      await reloadPurchases()
+      alert('Purchase marked as Received and moved into stock. Click OK to go to Update Stock page.')
+      // Navigate to Update Stock page
+      window.location.href = '/stock/mobiles'
+    } catch (e) {
+      console.error('Error marking as received:', e)
+      alert(String(e?.message || e))
+    }
+  }
+
+  const loadItemCodes = async (purchase, item, idx) => {
+    const key = `${purchase.id}-${idx}`
+    // avoid refetch if already loaded
+    if (itemCodes[key]) return
+    try {
+      const codes = []
+      const category = String(item.category || '').toLowerCase()
+      if (category === 'mobile' || category === 'mobiles') {
+        const res = await fetch(`${apiBase}/api/mobiles?dealerId=${encodeURIComponent(purchase.dealerId)}&modelNumber=${encodeURIComponent(item.model || '')}`)
+        const rows = await res.json()
+        const list = Array.isArray(rows) ? rows : []
+        list.forEach(m => { if (Array.isArray(m.productIds)) codes.push(...m.productIds) })
+      } else if (category === 'accessories' || category === 'accessory') {
+        const res = await fetch(`${apiBase}/api/accessories?dealerId=${encodeURIComponent(purchase.dealerId)}`)
+        const rows = await res.json()
+        const list = Array.isArray(rows) ? rows : []
+        list.filter(a => String(a.productName || '') === String(item.productName || '')).forEach(a => { if (Array.isArray(a.productIds)) codes.push(...a.productIds) })
+      }
+      setItemCodes(prev => ({ ...prev, [key]: codes }))
+    } catch {
+      setItemCodes(prev => ({ ...prev, [key]: [] }))
+    }
+  }
+
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <div className="flex justify-between items-center mb-6">
@@ -356,9 +412,11 @@ const PurchaseHistory = () => {
                 <th className="py-3 px-4">Dealer</th>
                 <th className="py-3 px-4">Product</th>
                 <th className="py-3 px-4">Model</th>
+                <th className="py-3 px-4">Product ID</th>
                 <th className="py-3 px-4">Category</th>
                 <th className="py-3 px-4">Qty Purchased</th>
-                <th className="py-3 px-4">Remaining Stock</th>
+                <th className="py-3 px-4">Generated Product IDs</th>
+                <th className="py-3 px-4">Status</th>
                 <th className="py-3 px-4">Purchase Price</th>
                 <th className="py-3 px-4">Selling Price</th>
                 <th className="py-3 px-4">Total</th>
@@ -383,18 +441,36 @@ const PurchaseHistory = () => {
                       <td className="py-3 px-4">{item.productName}</td>
                       <td className="py-3 px-4">{item.model}</td>
                       <td className="py-3 px-4">
+                        {item.productId && String(item.productId).trim() ? (
+                          item.productId
+                        ) : (
+                          itemCodes[`${purchase.id}-${itemIndex}`] && itemCodes[`${purchase.id}-${itemIndex}`].length
+                            ? itemCodes[`${purchase.id}-${itemIndex}`].join(', ')
+                            : '-'
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
                         <span className="px-2 py-1 text-xs rounded-full bg-slate-100 text-slate-700">
                           {item.category}
                         </span>
                       </td>
                       <td className="py-3 px-4">{item.quantity}</td>
                       <td className="py-3 px-4">
-                        <span className={`px-2 py-1 text-xs rounded-full ${
-                          calculateRemainingStock(item.productName, item.model) > 0 
-                            ? 'bg-green-100 text-green-700' 
-                            : 'bg-red-100 text-red-700'
-                        }`}>
-                          {calculateRemainingStock(item.productName, item.model)}
+                        <button
+                          onClick={() => loadItemCodes(purchase, item, itemIndex)}
+                          className="text-indigo-600 hover:text-indigo-800 underline"
+                        >
+                          View IDs
+                        </button>
+                        {itemCodes[`${purchase.id}-${itemIndex}`] && (
+                          <div className="mt-1 text-xs text-slate-600 max-w-sm whitespace-pre-wrap break-words">
+                            {itemCodes[`${purchase.id}-${itemIndex}`].length ? itemCodes[`${purchase.id}-${itemIndex}`].join(', ') : '—'}
+                          </div>
+                        )}
+                      </td>
+                      <td className="py-3 px-4">
+                        <span className={`px-2 py-1 text-xs rounded-full ${purchase.status === 'Received' ? 'bg-emerald-100 text-emerald-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                          {purchase.status || 'Pending'}
                         </span>
                       </td>
                       <td className="py-3 px-4">₹{item.purchasePrice.toFixed(2)}</td>
@@ -423,6 +499,15 @@ const PurchaseHistory = () => {
                           >
                             <FiDownload className="w-4 h-4" />
                           </button>
+                          {purchase.status !== 'Received' && (
+                            <button
+                              onClick={() => markReceived(purchase.id)}
+                              className="px-3 py-1 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 transition-colors"
+                              title="Mark Received and move to stock"
+                            >
+                              Received
+                            </button>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -456,6 +541,10 @@ const PurchaseHistory = () => {
                   <p><span className="font-medium">Date:</span> {selectedPurchase.purchaseDate}</p>
                   <p><span className="font-medium">Dealer:</span> {getDealerName(selectedPurchase.dealerId)}</p>
                   <p><span className="font-medium">Payment Mode:</span> {selectedPurchase.paymentMode}</p>
+                  <p><span className="font-medium">Status:</span> {selectedPurchase.status || 'Pending'}</p>
+                  {selectedPurchase.status === 'Received' && selectedPurchase.receivedAt && (
+                    <p><span className="font-medium">Received At:</span> {new Date(selectedPurchase.receivedAt).toLocaleString()}</p>
+                  )}
                   <p><span className="font-medium">GST Applied:</span> {selectedPurchase.gstEnabled ? 'Yes' : 'No'}</p>
                   {selectedPurchase.gstEnabled && (
                     <p><span className="font-medium">GST %:</span> {selectedPurchase.gstPercentage}%</p>
@@ -505,6 +594,12 @@ const PurchaseHistory = () => {
                   </tbody>
                 </table>
               </div>
+            </div>
+            <div className="mt-4 flex justify-end gap-2">
+              {selectedPurchase.status !== 'Received' && (
+                <button onClick={() => markReceived(selectedPurchase.id)} className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700">Mark as Received</button>
+              )}
+              <button onClick={() => setShowModal(false)} className="px-4 py-2 rounded-lg border-2 border-slate-300 hover:bg-slate-50">Close</button>
             </div>
           </div>
         </div>

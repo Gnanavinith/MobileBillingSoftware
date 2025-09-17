@@ -1,15 +1,17 @@
 import React, { useEffect, useMemo, useState } from 'react'
 
-const apiBase = ''
+const apiBase = 'http://localhost:5000'
 
 const MobilesStock = () => {
   const [rows, setRows] = useState([])
   const [dealers, setDealers] = useState([])
-  const [q, setQ] = useState({ dealerId: '', modelNumber: '' })
+  const [q, setQ] = useState({ dealerId: '', modelNumber: '', productId: '' })
   const [form, setForm] = useState({
     mobileName: '',
     brand: '',
     modelNumber: '',
+    productId: '',
+    productIds: [],
     imeiNumber1: '',
     imeiNumber2: '',
     dealerId: '',
@@ -45,18 +47,41 @@ const MobilesStock = () => {
   }
 
   const load = async () => {
-    const [mRes, dRes] = await Promise.all([
-      fetch(`${apiBase}/api/mobiles?dealerId=${q.dealerId}&modelNumber=${q.modelNumber}`),
-      fetch(`${apiBase}/api/dealers`),
-    ])
-    const m = await mRes.json(); const d = await dRes.json()
-    setRows(Array.isArray(m) ? m : [])
-    setDealers(Array.isArray(d) ? d : [])
+    try {
+      console.log('Loading mobiles data...')
+      const [mRes, dRes] = await Promise.all([
+        fetch(`${apiBase}/api/mobiles?dealerId=${q.dealerId}&modelNumber=${q.modelNumber}`),
+        fetch(`${apiBase}/api/dealers`),
+      ])
+      const m = await mRes.json(); const d = await dRes.json()
+      console.log('Loaded mobiles:', m.length, 'items')
+      setRows(Array.isArray(m) ? m : [])
+      setDealers(Array.isArray(d) ? d : [])
+      
+      // Show notification if there are items
+      if (Array.isArray(m) && m.length > 0) {
+        console.log('Mobiles loaded successfully:', m.length, 'items')
+      }
+    } catch (error) {
+      console.error('Error loading mobiles:', error)
+    }
   }
 
   useEffect(() => { load() }, [])
+  
+  // Refresh data when page comes into focus (useful when returning from other pages)
+  useEffect(() => {
+    const handleFocus = () => load()
+    window.addEventListener('focus', handleFocus)
+    return () => window.removeEventListener('focus', handleFocus)
+  }, [])
 
-  const filtered = useMemo(() => rows.filter(r => (Number(r.totalQuantity)||0) > 0), [rows])
+  const filtered = useMemo(() => {
+    const list = rows.filter(r => (Number(r.totalQuantity)||0) > 0)
+    const pid = String(q.productId||'').trim().toUpperCase()
+    if (!pid) return list
+    return list.filter(r => Array.isArray(r.productIds) && r.productIds.some(x => String(x||'').toUpperCase().includes(pid)))
+  }, [rows, q.productId])
 
   const submit = async (e) => {
     e.preventDefault()
@@ -73,6 +98,8 @@ const MobilesStock = () => {
         mobileName: '', 
         brand: '',
         modelNumber: '', 
+        productId: '',
+        productIds: [],
         imeiNumber1: '', 
         imeiNumber2: '', 
         dealerId: '', 
@@ -91,7 +118,7 @@ const MobilesStock = () => {
       })
       setEditingId('')
       await load()
-      alert('Saved')
+      alert('Added to Inventory')
     } catch (ex) { alert(ex.message) } finally { setSaving(false) }
   }
 
@@ -101,6 +128,8 @@ const MobilesStock = () => {
       mobileName: row.mobileName,
       brand: row.brand || '',
       modelNumber: row.modelNumber,
+      productId: '',
+      productIds: Array.isArray(row.productIds) ? row.productIds : [],
       imeiNumber1: row.imeiNumber1,
       imeiNumber2: row.imeiNumber2 || '',
       dealerId: row.dealerId,
@@ -132,6 +161,17 @@ const MobilesStock = () => {
     } catch (ex) { alert(ex.message) }
   }
 
+  const moveToInventory = async (row) => {
+    if (!confirm(`Move ${row.mobileName} (${row.modelNumber}) to Inventory?`)) return
+    try {
+      // This will move the product to inventory by updating its status
+      // For now, we'll just show a success message as the product is already in the inventory system
+      alert(`${row.mobileName} is now available in Inventory! You can view it in the Inventory section.`)
+    } catch (ex) { 
+      alert('Error moving to inventory: ' + ex.message) 
+    }
+  }
+
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <h1 className="text-3xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Update Stock - Mobiles</h1>
@@ -161,6 +201,15 @@ const MobilesStock = () => {
                   }
                 } catch {}
               }} placeholder="e.g., F29 Pro, V30" />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-slate-700 mb-1">Product ID (optional)</label>
+              <input className="w-full rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all" value={form.productId} onChange={e=>setForm({...form, productId:e.target.value})} placeholder="e.g., VIV-MOB-Y21-0001" />
+              {Array.isArray(form.productIds) && form.productIds.length > 0 && (
+                <div className="mt-1 text-xs text-slate-600">
+                  Existing: {form.productIds.join(', ')}
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-sm font-medium text-slate-700 mb-1">Dealer</label>
@@ -323,7 +372,7 @@ const MobilesStock = () => {
               </div>
             </div>
             <div className="flex gap-2">
-              <button disabled={saving} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white disabled:opacity-50 shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all">{saving ? 'Saving...' : (editingId ? 'Update' : 'Save')}</button>
+              <button disabled={saving} className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-blue-500 to-blue-600 text-white disabled:opacity-50 shadow-md hover:shadow-lg hover:from-blue-600 hover:to-blue-700 transition-all">{saving ? 'Saving...' : (editingId ? 'Update' : 'Add to Inventory')}</button>
               {editingId ? (
                 <button type="button" onClick={()=>{ 
                   setEditingId(''); 
@@ -331,6 +380,8 @@ const MobilesStock = () => {
                     mobileName: '', 
                     brand: '',
                     modelNumber: '', 
+                    productId: '',
+                    productIds: [],
                     imeiNumber1: '', 
                     imeiNumber2: '', 
                     dealerId: '', 
@@ -359,7 +410,9 @@ const MobilesStock = () => {
               {dealers.map(d=> <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
             <input placeholder="Model Number" className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all" value={q.modelNumber} onChange={e=>setQ({...q, modelNumber:e.target.value})} />
+            <input placeholder="Product ID" className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all" value={q.productId} onChange={e=>setQ({...q, productId:e.target.value})} />
             <button onClick={load} className="px-4 py-2.5 rounded-xl border-2 border-slate-300 hover:bg-slate-50 transition-all">Filter</button>
+            <button onClick={load} className="px-4 py-2.5 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all">Refresh</button>
           </div>
           <div className="overflow-x-auto">
             <table className="min-w-full text-sm">
@@ -373,6 +426,7 @@ const MobilesStock = () => {
                   <th className="py-2 pr-4">IMEI1</th>
                   <th className="py-2 pr-4">IMEI2</th>
                   <th className="py-2 pr-4">Dealer</th>
+                  <th className="py-2 pr-4">Product IDs</th>
                   <th className="py-2 pr-4">Cost</th>
                   <th className="py-2 pr-4">Sell</th>
                   <th className="py-2 pr-4">Qty</th>
@@ -390,12 +444,14 @@ const MobilesStock = () => {
                     <td className="py-2 pr-4">{r.imeiNumber1}</td>
                     <td className="py-2 pr-4">{r.imeiNumber2 || '-'}</td>
                     <td className="py-2 pr-4">{r.dealerName}</td>
+                    <td className="py-2 pr-4 max-w-xs whitespace-pre-wrap break-words">{Array.isArray(r.productIds) && r.productIds.length ? r.productIds.join(', ') : '-'}</td>
                     <td className="py-2 pr-4">{r.pricePerProduct}</td>
                     <td className="py-2 pr-4">{r.sellingPrice || '-'}</td>
                     <td className="py-2 pr-4">{r.totalQuantity}</td>
                     <td className="py-2 pr-2">
                       <div className="flex gap-2">
                         <button onClick={()=>onEdit(r)} className="text-blue-600 hover:text-blue-800">Edit</button>
+                        <button onClick={()=>moveToInventory(r)} className="text-green-600 hover:text-green-800">Move to Inventory</button>
                         <button onClick={()=>onDelete(r)} className="text-red-600 hover:text-red-800">Delete</button>
                       </div>
                     </td>

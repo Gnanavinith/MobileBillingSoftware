@@ -2,6 +2,7 @@ const Mobile = require('../models/Mobile')
 const Accessory = require('../models/Accessory')
 const Dealer = require('../models/Dealer')
 const BrandModel = require('../models/BrandModel')
+const ProductCounter = require('../models/ProductCounter')
 
 function genId(prefix) {
   const now = new Date()
@@ -44,6 +45,7 @@ exports.createMobile = async (req, res) => {
       imeiNumber2: norm(b.imeiNumber2),
       dealerId: dealer.id,
       dealerName: dealer.name,
+      productIds: Array.isArray(b.productIds) ? b.productIds : (b.productId ? [String(b.productId).trim()] : []),
       pricePerProduct: Number(b.pricePerProduct)||0,
       sellingPrice: Number(b.sellingPrice)||Number(b.pricePerProduct)||0,
       totalQuantity: 1,
@@ -97,8 +99,13 @@ exports.updateMobile = async (req, res) => {
       doc.dealerName = dealer.name
     }
     const norm = (s) => (s && String(s).trim() ? String(s).trim() : undefined)
-    const fields = ['mobileName','brand','modelNumber','pricePerProduct','sellingPrice','totalQuantity','color','ram','storage','simSlot','processor','displaySize','camera','battery','operatingSystem','networkType']
+    const fields = ['mobileName','brand','modelNumber','pricePerProduct','sellingPrice','totalQuantity','color','ram','storage','simSlot','processor','displaySize','camera','battery','operatingSystem','networkType','productIds']
     fields.forEach(k => { if (b[k] != null) doc[k] = b[k] })
+    if (b.productId) {
+      if (!Array.isArray(doc.productIds)) doc.productIds = []
+      const pid = String(b.productId).trim()
+      if (pid && !doc.productIds.includes(pid)) doc.productIds.push(pid)
+    }
     if ('imeiNumber1' in b) doc.imeiNumber1 = norm(b.imeiNumber1)
     if ('imeiNumber2' in b) doc.imeiNumber2 = norm(b.imeiNumber2)
     await doc.save()
@@ -245,6 +252,58 @@ exports.listLowStock = async (req, res) => {
       })),
     ].sort((a, b) => a.quantity - b.quantity)
     res.json(list)
+  } catch (err) {
+    res.status(500).json({ error: 'Internal Server Error', details: String(err?.message || err) })
+  }
+}
+
+// Lookup by generated product ID across mobiles and accessories
+exports.findByProductId = async (req, res) => {
+  try {
+    const { id } = req.params
+    if (!id) return res.status(400).json({ error: 'Missing id' })
+    const pid = String(id).trim().toUpperCase()
+    let acc = await Accessory.findOne({ $or: [ { productIds: pid }, { productId: pid } ] }).lean()
+    if (acc) {
+      return res.json({
+        type: 'accessory',
+        productId: pid,
+        prefix: acc.productId,
+        name: acc.productName,
+        quantity: acc.quantity,
+        unitPrice: acc.unitPrice,
+        sellingPrice: acc.sellingPrice,
+        dealerId: acc.dealerId,
+        dealerName: acc.dealerName,
+      })
+    }
+    const mob = await Mobile.findOne({ productIds: pid }).lean()
+    if (mob) {
+      return res.json({
+        type: 'mobile',
+        productId: pid,
+        name: mob.mobileName,
+        model: mob.modelNumber,
+        quantity: mob.totalQuantity,
+        pricePerProduct: mob.pricePerProduct,
+        sellingPrice: mob.sellingPrice,
+        dealerId: mob.dealerId,
+        dealerName: mob.dealerName,
+        features: {
+          color: mob.color,
+          ram: mob.ram,
+          storage: mob.storage,
+          simSlot: mob.simSlot,
+          processor: mob.processor,
+          displaySize: mob.displaySize,
+          camera: mob.camera,
+          battery: mob.battery,
+          operatingSystem: mob.operatingSystem,
+          networkType: mob.networkType,
+        }
+      })
+    }
+    res.status(404).json({ error: 'Not found' })
   } catch (err) {
     res.status(500).json({ error: 'Internal Server Error', details: String(err?.message || err) })
   }
