@@ -66,6 +66,22 @@ const AccessoriesStock = () => {
     } catch (ex) { alert(ex.message) }
   }
 
+  const moveToInventory = async (row) => {
+    if (!confirm(`Move ${row.productName} (${row.productId}) to Inventory?`)) return
+    try {
+      // Delete the record from stock update list since it's now moved to inventory
+      const res = await fetch(`${apiBase}/api/accessories/${row.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const msg = await res.json().catch(()=>({}))
+        throw new Error(msg.error || 'Failed to move to inventory')
+      }
+      await load() // Refresh the list
+      alert(`${row.productName} has been moved to Inventory! You can view it in the Inventory section.`)
+    } catch (ex) { 
+      alert('Error moving to inventory: ' + ex.message) 
+    }
+  }
+
   return (
     <div className="p-6 min-h-screen bg-gradient-to-br from-slate-50 to-blue-50">
       <h1 className="text-3xl font-extrabold mb-4 bg-gradient-to-r from-blue-600 to-purple-600 bg-clip-text text-transparent">Update Stock - Accessories</h1>
@@ -144,6 +160,7 @@ const AccessoriesStock = () => {
                     <td className="py-2 pr-2">
                       <div className="flex gap-2">
                         <button onClick={()=>onEdit(r)} className="text-blue-600 hover:text-blue-800">Edit</button>
+                        <button onClick={()=>moveToInventory(r)} className="text-green-600 hover:text-green-800">Move to Inventory</button>
                         <button onClick={()=>onDelete(r)} className="text-red-600 hover:text-red-800">Delete</button>
                       </div>
                     </td>

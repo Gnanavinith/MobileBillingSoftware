@@ -23,6 +23,11 @@ const SecondHandMobiles = () => {
     sellerName: '',
     sellerPhone: '',
     sellerAddress: '',
+    // Customer Details
+    customerType: 'individual', // 'individual' or 'shop'
+    customerAddress: '',
+    idProofType: '',
+    idProofNumber: '',
     color: '',
     ram: '',
     storage: '',
@@ -150,6 +155,11 @@ const SecondHandMobiles = () => {
       sellerName: '',
       sellerPhone: '',
       sellerAddress: '',
+      // Customer Details
+      customerType: 'individual',
+      customerAddress: '',
+      idProofType: '',
+      idProofNumber: '',
       color: '',
       ram: '',
       storage: '',
@@ -290,6 +300,7 @@ const SecondHandMobiles = () => {
                 <tr>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Mobile</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Seller</th>
+                  <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Customer</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Condition</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Prices</th>
                   <th className="px-6 py-3 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">Status</th>
@@ -314,6 +325,17 @@ const SecondHandMobiles = () => {
                         <div className="text-sm text-gray-900">{mobile.sellerName}</div>
                         {mobile.sellerPhone && (
                           <div className="text-sm text-gray-500">{mobile.sellerPhone}</div>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div>
+                        <div className="text-sm text-gray-900 capitalize">{mobile.customerType || 'N/A'}</div>
+                        {mobile.idProofType && (
+                          <div className="text-sm text-gray-500 capitalize">{mobile.idProofType}</div>
+                        )}
+                        {mobile.idProofNumber && (
+                          <div className="text-xs text-gray-400">{mobile.idProofNumber}</div>
                         )}
                       </div>
                     </td>
@@ -479,17 +501,7 @@ const SecondHandMobiles = () => {
               </div>
 
               {/* Seller Information */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Seller Name *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formData.sellerName}
-                    onChange={(e) => setFormData({ ...formData, sellerName: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                  />
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Seller Phone</label>
                   <input
@@ -505,6 +517,79 @@ const SecondHandMobiles = () => {
                     type="text"
                     value={formData.color}
                     onChange={(e) => setFormData({ ...formData, color: e.target.value })}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  />
+                </div>
+              </div>
+
+              {/* Customer Details */}
+              <div className="border-t pt-6">
+                <h3 className="text-lg font-medium text-gray-900 mb-4 flex items-center gap-2">
+                  <MdPerson className="w-5 h-5" />
+                  Customer Details
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Seller Name *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.sellerName}
+                      onChange={(e) => setFormData({ ...formData, sellerName: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Customer Type *</label>
+                    <select
+                      required
+                      value={formData.customerType}
+                      onChange={(e) => setFormData({ ...formData, customerType: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="individual">Individual</option>
+                      <option value="shop">Shop/Business</option>
+                    </select>
+                  </div>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ID Proof Type *</label>
+                    <select
+                      required
+                      value={formData.idProofType}
+                      onChange={(e) => setFormData({ ...formData, idProofType: e.target.value })}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    >
+                      <option value="">Select ID Proof</option>
+                      <option value="aadhar">Aadhar Card</option>
+                      <option value="voter">Voter ID</option>
+                      <option value="license">Driving License</option>
+                      <option value="pan">PAN Card</option>
+                      <option value="passport">Passport</option>
+                      <option value="other">Other</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">ID Proof Number *</label>
+                    <input
+                      type="text"
+                      required
+                      value={formData.idProofNumber}
+                      onChange={(e) => setFormData({ ...formData, idProofNumber: e.target.value })}
+                      placeholder="Enter ID proof number"
+                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+                <div className="mt-4">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Customer Address *</label>
+                  <textarea
+                    required
+                    value={formData.customerAddress}
+                    onChange={(e) => setFormData({ ...formData, customerAddress: e.target.value })}
+                    placeholder="Enter complete address"
+                    rows="3"
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   />
                 </div>

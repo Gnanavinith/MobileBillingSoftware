@@ -14,6 +14,10 @@ const generateInvoiceNumber = () => {
 const AddPurchase = () => {
   const [dealers, setDealers] = useState([])
   const [products, setProducts] = useState([])
+  const [accessories, setAccessories] = useState([])
+  const [searchResults, setSearchResults] = useState([])
+  const [showSearchResults, setShowSearchResults] = useState(false)
+  const [searchQuery, setSearchQuery] = useState('')
   const [form, setForm] = useState({
     dealerId: '',
     purchaseDate: new Date().toISOString().split('T')[0],
@@ -51,6 +55,139 @@ const AddPurchase = () => {
     totalPrice: 0
   })
 
+  // Predefined options for dropdowns
+  const brandOptions = [
+    'Samsung', 'Apple', 'Xiaomi', 'OnePlus', 'Vivo', 'Oppo', 'Realme', 'Motorola', 
+    'Nokia', 'Huawei', 'Honor', 'Nothing', 'Google', 'Sony', 'LG', 'Other'
+  ]
+
+  const colorOptions = [
+    'Black', 'White', 'Blue', 'Red', 'Green', 'Purple', 'Pink', 'Gold', 'Silver', 
+    'Gray', 'Space Gray', 'Midnight', 'Starlight', 'Product Red', 'Other'
+  ]
+
+  const ramOptions = [
+    '2GB', '3GB', '4GB', '6GB', '8GB', '12GB', '16GB', '18GB', '24GB', 'Other'
+  ]
+
+  const storageOptions = [
+    '16GB', '32GB', '64GB', '128GB', '256GB', '512GB', '1TB', '2TB', 'Other'
+  ]
+
+  const simSlotOptions = [
+    'Single SIM', 'Dual SIM', 'eSIM', 'Hybrid SIM', 'Other'
+  ]
+
+  const processorOptions = [
+    'Snapdragon 8 Gen 2', 'Snapdragon 8 Gen 1', 'Snapdragon 888', 'Snapdragon 870', 
+    'Snapdragon 778G', 'Snapdragon 695', 'A17 Pro', 'A16 Bionic', 'A15 Bionic', 
+    'A14 Bionic', 'A13 Bionic', 'MediaTek Dimensity 9000', 'MediaTek Dimensity 8000', 
+    'MediaTek Dimensity 7000', 'Exynos 2200', 'Exynos 2100', 'Kirin 9000', 'Other'
+  ]
+
+  const displaySizeOptions = [
+    '5.0 inches', '5.5 inches', '6.0 inches', '6.1 inches', '6.2 inches', '6.3 inches', 
+    '6.4 inches', '6.5 inches', '6.6 inches', '6.7 inches', '6.8 inches', '6.9 inches', 
+    '7.0 inches', 'Other'
+  ]
+
+  const cameraOptions = [
+    '12MP', '48MP', '50MP', '64MP', '108MP', '12MP + 12MP', '48MP + 12MP', 
+    '50MP + 12MP', '64MP + 12MP', '108MP + 12MP', '12MP + 12MP + 12MP', 
+    '48MP + 12MP + 12MP', '50MP + 12MP + 12MP', '64MP + 12MP + 12MP', 
+    '108MP + 12MP + 12MP', 'Other'
+  ]
+
+  const batteryOptions = [
+    '2000mAh', '3000mAh', '4000mAh', '4500mAh', '5000mAh', '5500mAh', '6000mAh', 
+    '7000mAh', '8000mAh', 'Other'
+  ]
+
+  const osOptions = [
+    'Android 14', 'Android 13', 'Android 12', 'Android 11', 'Android 10', 
+    'iOS 17', 'iOS 16', 'iOS 15', 'iOS 14', 'iOS 13', 'Other'
+  ]
+
+  const networkOptions = [
+    '5G', '4G LTE', '3G', '2G', '5G + 4G LTE', '4G LTE + 3G', 'Other'
+  ]
+
+  const productNameOptions = [
+    'Ear Buds', 'Charger', 'Cable', 'Case', 'Screen Protector', 'Power Bank', 
+    'Headphones', 'Speaker', 'Memory Card', 'Adapter', 'Other'
+  ]
+
+  // Reusable dropdown component with manual entry option
+  const DropdownWithInput = ({ 
+    value, 
+    onChange, 
+    options, 
+    placeholder, 
+    className = "",
+    label = "",
+    required = false 
+  }) => {
+    const [isCustom, setIsCustom] = useState(false)
+    const [customValue, setCustomValue] = useState("")
+
+    const handleSelectChange = (e) => {
+      const selectedValue = e.target.value
+      if (selectedValue === 'Other') {
+        setIsCustom(true)
+        setCustomValue(value)
+      } else {
+        setIsCustom(false)
+        onChange(selectedValue)
+      }
+    }
+
+    const handleCustomInputChange = (e) => {
+      const inputValue = e.target.value
+      setCustomValue(inputValue)
+      onChange(inputValue)
+    }
+
+    const handleBlur = () => {
+      if (customValue.trim() === '') {
+        setIsCustom(false)
+        onChange('')
+      }
+    }
+
+    return (
+      <div>
+        {label && (
+          <label className="block text-sm font-medium text-slate-700 mb-1">
+            {label} {required && '*'}
+          </label>
+        )}
+        {!isCustom ? (
+          <select
+            value={value || ''}
+            onChange={handleSelectChange}
+            className={`w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5 ${className}`}
+          >
+            <option value="">Select {label || 'option'}</option>
+            {options.map((option, index) => (
+              <option key={index} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        ) : (
+          <input
+            type="text"
+            value={customValue}
+            onChange={handleCustomInputChange}
+            onBlur={handleBlur}
+            placeholder={placeholder}
+            className={`w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5 ${className}`}
+          />
+        )}
+      </div>
+    )
+  }
+
   const genAccessoryId = (name) => {
     const prefix = 'ACC'
     const short = (name || 'XXX').toString().trim().substring(0,3).toUpperCase() || 'XXX'
@@ -77,6 +214,66 @@ const AddPurchase = () => {
     }
     load()
   }, [])
+
+  // Search accessories function
+  const searchAccessories = async (query) => {
+    if (!query || query.trim().length < 2) {
+      setSearchResults([])
+      setShowSearchResults(false)
+      return
+    }
+
+    try {
+      const res = await fetch(`${apiBase}/api/accessories?search=${encodeURIComponent(query)}`)
+      const data = await res.json()
+      setSearchResults(Array.isArray(data) ? data : [])
+      setShowSearchResults(true)
+    } catch (error) {
+      console.error('Error searching accessories:', error)
+      setSearchResults([])
+      setShowSearchResults(false)
+    }
+  }
+
+  // Handle search input change
+  const handleSearchChange = (value) => {
+    setSearchQuery(value)
+    if (value.trim().length >= 2) {
+      searchAccessories(value)
+    } else {
+      setSearchResults([])
+      setShowSearchResults(false)
+    }
+  }
+
+  // Handle accessory selection
+  const handleAccessorySelect = (accessory) => {
+    setNewItem(prev => ({
+      ...prev,
+      productName: accessory.productName,
+      model: accessory.productId, // Use productId as model/variant for accessories
+      productId: accessory.productId,
+      purchasePrice: accessory.unitPrice || 0,
+      sellingPrice: accessory.sellingPrice || accessory.unitPrice || 0
+    }))
+    setSearchQuery('')
+    setSearchResults([])
+    setShowSearchResults(false)
+  }
+
+  // Close search results when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (showSearchResults && !event.target.closest('.search-dropdown')) {
+        setShowSearchResults(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [showSearchResults])
 
   const calculateItemTotal = (item) => {
     return item.quantity * item.purchasePrice
@@ -337,28 +534,61 @@ const AddPurchase = () => {
                 </select>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Product Name *</label>
-                <input
-                  type="text"
-                  value={newItem.productName}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    setNewItem(prev => {
-                      const next = { ...prev, productName: val }
-                      const isEmpty = !val || !val.trim()
-                      // Only auto-generate Product ID; do not auto-fill model/variant
-                      if (prev.category === 'Accessories') {
-                        next.productId = isEmpty ? '' : genAccessoryId(val)
-                      } else if (prev.category === 'Mobile') {
-                        next.productId = isEmpty ? '' : genMobileId(prev.brand, prev.model)
-                      }
-                      return next
-                    })
-                  }}
-                  className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
-                  placeholder="e.g., Ear Buds"
-                />
+              <div className="relative">
+                <label className="block text-sm font-medium text-slate-700 mb-1">
+                  Product Name {newItem.category === 'Accessories' ? '(Search existing or enter new)' : ''} *
+                </label>
+                {newItem.category === 'Accessories' ? (
+                  <div className="relative search-dropdown">
+                    <input
+                      type="text"
+                      value={searchQuery || newItem.productName}
+                      onChange={(e) => {
+                        const val = e.target.value
+                        handleSearchChange(val)
+                        setNewItem(prev => {
+                          const next = { ...prev, productName: val }
+                          const isEmpty = !val || !val.trim()
+                          next.productId = isEmpty ? '' : genAccessoryId(val)
+                          return next
+                        })
+                      }}
+                      onFocus={() => {
+                        if (searchResults.length > 0) {
+                          setShowSearchResults(true)
+                        }
+                      }}
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
+                      placeholder="Search for existing accessories (e.g., headphone) or enter new product name"
+                    />
+                    {showSearchResults && searchResults.length > 0 && (
+                      <div className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-60 overflow-y-auto search-dropdown">
+                        {searchResults.map((accessory, index) => (
+                          <div
+                            key={index}
+                            onClick={() => handleAccessorySelect(accessory)}
+                            className="px-4 py-3 hover:bg-slate-50 cursor-pointer border-b border-slate-100 last:border-b-0"
+                          >
+                            <div className="font-medium text-slate-900">{accessory.productName}</div>
+                            <div className="text-sm text-slate-600">ID: {accessory.productId}</div>
+                            <div className="text-sm text-slate-500">Price: ₹{accessory.unitPrice}</div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <DropdownWithInput
+                    label=""
+                    required={true}
+                    value={newItem.productName}
+                    onChange={(val) => {
+                      setNewItem(prev => ({ ...prev, productName: val }))
+                    }}
+                    options={['iPhone', 'Galaxy', 'Redmi', 'OnePlus', 'Vivo', 'Oppo', 'Realme', 'Other']}
+                    placeholder="e.g., iPhone"
+                  />
+                )}
               </div>
 
               {newItem.category === 'Mobile' && (
@@ -366,56 +596,54 @@ const AddPurchase = () => {
                   <label className="block text-sm font-medium text-slate-700 mb-1">Brand *</label>
                   <input
                     type="text"
+                    required
                     value={newItem.brand}
                     onChange={(e) => {
                       const val = e.target.value
-                      setNewItem(prev => {
-                        const next = { ...prev, brand: val }
-                        // Auto-generate Product ID when brand or model changes
-                        next.productId = genMobileId(val, prev.model)
-                        return next
-                      })
+                      setNewItem(prev => ({ ...prev, brand: val }))
                     }}
-                    className="w-full rounded-xl border-2 border-slate-200 focus:border-blue-400 focus:ring-4 focus:ring-blue-100 transition-all px-4 py-2.5"
+                    list="brandOptions"
+                    className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                     placeholder="e.g., Vivo"
                   />
+                  <datalist id="brandOptions">
+                    {brandOptions.map((option, index) => (
+                      <option key={index} value={option} />
+                    ))}
+                  </datalist>
                 </div>
               )}
 
               <div>
                 <label className="block text-sm font-medium text-slate-700 mb-1">
-                  {newItem.category === 'Accessories' ? 'Product ID (unique) *' : 'Model/Variant'}
+                  {newItem.category === 'Accessories' ? 'Model/Variant (Product ID) *' : 'Model/Variant'}
                 </label>
                 <input
                   type="text"
-                  value={newItem.model}
+                  value={newItem.category === 'Accessories' ? newItem.productId : newItem.model}
                   onChange={(e) => {
-                    const val = e.target.value
-                    setNewItem(prev => {
-                      const next = { ...prev, model: val }
-                      // Auto-generate Product ID when model changes for mobiles
-                      if (prev.category === 'Mobile') {
-                        next.productId = genMobileId(prev.brand, val)
-                      }
-                      return next
-                    })
-                  }}
+                      const val = e.target.value
+                      setNewItem(prev => {
+                        const next = { ...prev }
+                        if (prev.category === 'Accessories') {
+                          next.productId = val
+                          next.model = val // For accessories, model is the same as productId
+                        } else {
+                          next.model = val
+                        }
+                        return next
+                      })
+                    }}
                   className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                   placeholder={newItem.category === 'Accessories' ? 'e.g., ACC-EAR-5632' : 'e.g., Y21 (optional)'}
                 />
+                {newItem.category === 'Accessories' && (
+                  <p className="text-xs text-slate-500 mt-1">
+                    This will be used as both Product ID and Model/Variant for accessories
+                  </p>
+                )}
               </div>
 
-              {/* Product ID for both categories */}
-              <div>
-                <label className="block text-sm font-medium text-slate-700 mb-1">Product ID</label>
-                <input
-                  type="text"
-                  value={newItem.productId}
-                  onChange={(e) => setNewItem({ ...newItem, productId: e.target.value })}
-                  className="w-full rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all px-4 py-2.5"
-                  placeholder="Auto-generated; you can edit"
-                />
-              </div>
 
               {newItem.category === 'Mobile' && (
                 <>
@@ -425,9 +653,15 @@ const AddPurchase = () => {
                       type="text"
                       value={newItem.color}
                       onChange={(e) => setNewItem({ ...newItem, color: e.target.value })}
-                      className="w-full rounded-xl border-2 border-slate-200 focus:border-pink-400 focus:ring-4 focus:ring-pink-100 transition-all px-4 py-2.5"
+                      list="colorOptions"
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                       placeholder="e.g., Black"
                     />
+                    <datalist id="colorOptions">
+                      {colorOptions.map((option, index) => (
+                        <option key={index} value={option} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">RAM</label>
@@ -435,9 +669,15 @@ const AddPurchase = () => {
                       type="text"
                       value={newItem.ram}
                       onChange={(e) => setNewItem({ ...newItem, ram: e.target.value })}
-                      className="w-full rounded-xl border-2 border-slate-200 focus:border-amber-400 focus:ring-4 focus:ring-amber-100 transition-all px-4 py-2.5"
+                      list="ramOptions"
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                       placeholder="e.g., 8GB"
                     />
+                    <datalist id="ramOptions">
+                      {ramOptions.map((option, index) => (
+                        <option key={index} value={option} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Storage</label>
@@ -445,9 +685,15 @@ const AddPurchase = () => {
                       type="text"
                       value={newItem.storage}
                       onChange={(e) => setNewItem({ ...newItem, storage: e.target.value })}
-                      className="w-full rounded-xl border-2 border-slate-200 focus:border-teal-400 focus:ring-4 focus:ring-teal-100 transition-all px-4 py-2.5"
+                      list="storageOptions"
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                       placeholder="e.g., 128GB"
                     />
+                    <datalist id="storageOptions">
+                      {storageOptions.map((option, index) => (
+                        <option key={index} value={option} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">IMEI 1</label>
@@ -479,9 +725,15 @@ const AddPurchase = () => {
                       type="text"
                       value={newItem.simSlot}
                       onChange={(e) => setNewItem({ ...newItem, simSlot: e.target.value })}
-                      className="w-full rounded-xl border-2 border-slate-200 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all px-4 py-2.5"
+                      list="simSlotOptions"
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                       placeholder="e.g., Dual SIM"
                     />
+                    <datalist id="simSlotOptions">
+                      {simSlotOptions.map((option, index) => (
+                        <option key={index} value={option} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Processor</label>
@@ -489,9 +741,15 @@ const AddPurchase = () => {
                       type="text"
                       value={newItem.processor}
                       onChange={(e) => setNewItem({ ...newItem, processor: e.target.value })}
-                      className="w-full rounded-xl border-2 border-slate-200 focus:border-orange-400 focus:ring-4 focus:ring-orange-100 transition-all px-4 py-2.5"
+                      list="processorOptions"
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                       placeholder="e.g., Snapdragon 888"
                     />
+                    <datalist id="processorOptions">
+                      {processorOptions.map((option, index) => (
+                        <option key={index} value={option} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Display Size</label>
@@ -499,9 +757,15 @@ const AddPurchase = () => {
                       type="text"
                       value={newItem.displaySize}
                       onChange={(e) => setNewItem({ ...newItem, displaySize: e.target.value })}
-                      className="w-full rounded-xl border-2 border-slate-200 focus:border-cyan-400 focus:ring-4 focus:ring-cyan-100 transition-all px-4 py-2.5"
+                      list="displaySizeOptions"
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                       placeholder="e.g., 6.7 inches"
                     />
+                    <datalist id="displaySizeOptions">
+                      {displaySizeOptions.map((option, index) => (
+                        <option key={index} value={option} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Camera</label>
@@ -509,9 +773,15 @@ const AddPurchase = () => {
                       type="text"
                       value={newItem.camera}
                       onChange={(e) => setNewItem({ ...newItem, camera: e.target.value })}
-                      className="w-full rounded-xl border-2 border-slate-200 focus:border-green-400 focus:ring-4 focus:ring-green-100 transition-all px-4 py-2.5"
+                      list="cameraOptions"
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                       placeholder="e.g., 108MP + 12MP"
                     />
+                    <datalist id="cameraOptions">
+                      {cameraOptions.map((option, index) => (
+                        <option key={index} value={option} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Battery</label>
@@ -519,9 +789,15 @@ const AddPurchase = () => {
                       type="text"
                       value={newItem.battery}
                       onChange={(e) => setNewItem({ ...newItem, battery: e.target.value })}
-                      className="w-full rounded-xl border-2 border-slate-200 focus:border-red-400 focus:ring-4 focus:ring-red-100 transition-all px-4 py-2.5"
+                      list="batteryOptions"
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                       placeholder="e.g., 5000mAh"
                     />
+                    <datalist id="batteryOptions">
+                      {batteryOptions.map((option, index) => (
+                        <option key={index} value={option} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Operating System</label>
@@ -529,9 +805,15 @@ const AddPurchase = () => {
                       type="text"
                       value={newItem.operatingSystem}
                       onChange={(e) => setNewItem({ ...newItem, operatingSystem: e.target.value })}
-                      className="w-full rounded-xl border-2 border-slate-200 focus:border-violet-400 focus:ring-4 focus:ring-violet-100 transition-all px-4 py-2.5"
+                      list="osOptions"
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                       placeholder="e.g., Android 12"
                     />
+                    <datalist id="osOptions">
+                      {osOptions.map((option, index) => (
+                        <option key={index} value={option} />
+                      ))}
+                    </datalist>
                   </div>
                   <div>
                     <label className="block text-sm font-medium text-slate-700 mb-1">Network Type</label>
@@ -539,9 +821,15 @@ const AddPurchase = () => {
                       type="text"
                       value={newItem.networkType}
                       onChange={(e) => setNewItem({ ...newItem, networkType: e.target.value })}
-                      className="w-full rounded-xl border-2 border-slate-200 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all px-4 py-2.5"
+                      list="networkOptions"
+                      className="w-full rounded-xl border-2 border-slate-200 focus:border-emerald-400 focus:ring-4 focus:ring-emerald-100 transition-all px-4 py-2.5"
                       placeholder="e.g., 5G, 4G LTE"
                     />
+                    <datalist id="networkOptions">
+                      {networkOptions.map((option, index) => (
+                        <option key={index} value={option} />
+                      ))}
+                    </datalist>
                   </div>
                 </>
               )}

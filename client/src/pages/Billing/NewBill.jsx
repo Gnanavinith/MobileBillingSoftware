@@ -40,8 +40,222 @@ const NewBill = () => {
   const [billNumber] = useState(() => `INV-${Date.now().toString().slice(-6)}`)
   const invoiceRef = useRef(null)
   const [lookupLoading, setLookupLoading] = useState(false)
+  
+  // Auto-completion states
+  const [productSuggestions, setProductSuggestions] = useState([])
+  const [imeiSuggestions, setImeiSuggestions] = useState([])
+  const [showProductSuggestions, setShowProductSuggestions] = useState(false)
+  const [showImeiSuggestions, setShowImeiSuggestions] = useState(false)
+  const [allProducts, setAllProducts] = useState([])
+  const [allMobiles, setAllMobiles] = useState([])
+  const [allAccessories, setAllAccessories] = useState([])
 
   const removeItem = (index) => setItems(prev => prev.filter((_, i) => i !== index))
+
+  // Load all products for auto-completion
+  const loadAllProducts = async () => {
+    try {
+      const [mobilesRes, accessoriesRes] = await Promise.all([
+        fetch(`${apiBase}/api/mobiles`),
+        fetch(`${apiBase}/api/accessories`)
+      ])
+      
+      const mobiles = await mobilesRes.json()
+      const accessories = await accessoriesRes.json()
+      
+      setAllMobiles(Array.isArray(mobiles) ? mobiles : [])
+      setAllAccessories(Array.isArray(accessories) ? accessories : [])
+      
+      // Combine all products for general search
+      const allProducts = [
+        ...(Array.isArray(mobiles) ? mobiles.map(m => ({
+          ...m,
+          type: 'Mobile',
+          searchName: m.mobileName,
+          searchId: m.imeiNumber1 || m.imeiNumber2 || m.productIds?.[0] || ''
+        })) : []),
+        ...(Array.isArray(accessories) ? accessories.map(a => ({
+          ...a,
+          type: 'Accessory',
+          searchName: a.productName,
+          searchId: a.productId
+        })) : [])
+      ]
+      setAllProducts(allProducts)
+    } catch (error) {
+      console.error('Error loading products:', error)
+    }
+  }
+
+  // Filter products based on search query
+  const filterProducts = (query, type = null) => {
+    if (!query || query.length < 2) return []
+    
+    const searchQuery = query.toLowerCase().trim()
+    let productsToSearch = allProducts
+    
+    if (type) {
+      productsToSearch = allProducts.filter(p => p.type === type)
+    }
+    
+    return productsToSearch.filter(product => {
+      const nameMatch = product.searchName?.toLowerCase().includes(searchQuery)
+      const idMatch = product.searchId?.toLowerCase().includes(searchQuery)
+      const imeiMatch = product.imeiNumber1?.includes(searchQuery) || product.imeiNumber2?.includes(searchQuery)
+      const productIdMatch = product.productIds?.some(id => id.toLowerCase().includes(searchQuery))
+      
+      // For accessories, also search in productName field
+      const accessoryNameMatch = product.productName?.toLowerCase().includes(searchQuery)
+      
+      return nameMatch || idMatch || imeiMatch || productIdMatch || accessoryNameMatch
+    })
+    .sort((a, b) => {
+      // Prioritize exact matches and name matches
+      const aNameMatch = a.searchName?.toLowerCase().includes(searchQuery) || a.productName?.toLowerCase().includes(searchQuery)
+      const bNameMatch = b.searchName?.toLowerCase().includes(searchQuery) || b.productName?.toLowerCase().includes(searchQuery)
+      
+      if (aNameMatch && !bNameMatch) return -1
+      if (!aNameMatch && bNameMatch) return 1
+      return 0
+    })
+    .slice(0, 10) // Limit to 10 suggestions
+  }
+
+  // Handle product name input with auto-completion
+  const handleProductNameChange = (value) => {
+    setDraftItem({ ...draftItem, name: value })
+    
+    if (value.length >= 2) {
+      const suggestions = filterProducts(value, draftItem.type)
+      console.log('Generated suggestions:', suggestions) // Debug log
+      setProductSuggestions(suggestions)
+      setShowProductSuggestions(true)
+    } else {
+      setShowProductSuggestions(false)
+      setProductSuggestions([])
+    }
+  }
+
+  // Handle IMEI/Product ID input with auto-completion
+  const handleImeiChange = (value) => {
+    setDraftItem({ ...draftItem, imei: value })
+    
+    if (value.length >= 2) {
+      const suggestions = filterProducts(value, 'Mobile')
+      setImeiSuggestions(suggestions)
+      setShowImeiSuggestions(true)
+    } else {
+      setShowImeiSuggestions(false)
+      setImeiSuggestions([])
+    }
+  }
+
+  // Handle Product ID input with auto-completion
+  const handleProductIdChange = (value) => {
+    setDraftItem({ ...draftItem, productId: value })
+    
+    if (value.length >= 2) {
+      const suggestions = filterProducts(value, draftItem.type)
+      setImeiSuggestions(suggestions)
+      setShowImeiSuggestions(true)
+    } else {
+      setShowImeiSuggestions(false)
+      setImeiSuggestions([])
+    }
+  }
+
+  // Select a suggestion
+  const selectProductSuggestion = (product) => {
+    console.log('Selected product:', product) // Debug log
+    // Keep current quantity and other billing fields, but reset product-specific fields
+    const currentQuantity = draftItem.quantity || 1
+    const currentGstPercent = draftItem.gstPercent || 18
+    const currentDiscountType = draftItem.discountType || 'percent'
+    const currentDiscountValue = draftItem.discountValue || 0
+
+    if (product.type === 'Accessory') {
+      setDraftItem({
+        type: 'Accessory',
+        name: product.searchName || product.productName || '',
+        productId: product.productId || product.searchId || '',
+        imei: '', // Accessories don't have IMEI
+        model: product.productId || product.searchId || '', // For accessories, model is the same as productId
+        quantity: currentQuantity, // Keep current quantity
+        price: product.sellingPrice || product.unitPrice || 0,
+        gstPercent: currentGstPercent, // Keep current GST
+        discountType: currentDiscountType, // Keep current discount type
+        discountValue: currentDiscountValue, // Keep current discount value
+        // Mobile features (not applicable for accessories, but keep them empty)
+        color: '',
+        ram: '',
+        storage: '',
+        simSlot: '',
+        processor: '',
+        displaySize: '',
+        camera: '',
+        battery: '',
+        operatingSystem: '',
+        networkType: ''
+      })
+    } else if (product.type === 'Mobile') {
+      setDraftItem({
+        type: 'Mobile',
+        name: product.mobileName || product.searchName || '',
+        productId: product.searchId || '',
+        imei: product.imeiNumber1 || product.imeiNumber2 || '',
+        model: product.modelNumber || product.model || '',
+        quantity: currentQuantity, // Keep current quantity
+        price: product.sellingPrice || product.pricePerProduct || 0,
+        gstPercent: currentGstPercent, // Keep current GST
+        discountType: currentDiscountType, // Keep current discount type
+        discountValue: currentDiscountValue, // Keep current discount value
+        // Mobile features - fetch all available data
+        color: product.color || '',
+        ram: product.ram || '',
+        storage: product.storage || '',
+        simSlot: product.simSlot || '',
+        processor: product.processor || '',
+        displaySize: product.displaySize || '',
+        camera: product.camera || '',
+        battery: product.battery || '',
+        operatingSystem: product.operatingSystem || '',
+        networkType: product.networkType || ''
+      })
+    } else {
+      // Fallback for any other type
+      setDraftItem({
+        type: product.type || draftItem.type,
+        name: product.searchName || product.productName || product.mobileName || '',
+        productId: product.searchId || product.productId || '',
+        imei: product.imeiNumber1 || product.imeiNumber2 || '',
+        model: product.modelNumber || product.model || product.productId || '',
+        quantity: currentQuantity, // Keep current quantity
+        price: product.sellingPrice || product.pricePerProduct || product.unitPrice || 0,
+        gstPercent: currentGstPercent, // Keep current GST
+        discountType: currentDiscountType, // Keep current discount type
+        discountValue: currentDiscountValue, // Keep current discount value
+        // Mobile features
+        color: product.color || '',
+        ram: product.ram || '',
+        storage: product.storage || '',
+        simSlot: product.simSlot || '',
+        processor: product.processor || '',
+        displaySize: product.displaySize || '',
+        camera: product.camera || '',
+        battery: product.battery || '',
+        operatingSystem: product.operatingSystem || '',
+        networkType: product.networkType || ''
+      })
+    }
+    
+    setShowProductSuggestions(false)
+    setShowImeiSuggestions(false)
+  }
+
+  // Load products on component mount
+  React.useEffect(() => {
+    loadAllProducts()
+  }, [])
 
   // Fetch available stock for a given item (prefer Product ID; fallback IMEI/model/name)
   const getAvailableStock = async (it) => {
@@ -124,80 +338,136 @@ const NewBill = () => {
   const removeLastItem = () => setItems(prev => prev.slice(0, -1))
 
   const lookupByImeiOrProduct = async () => {
-      const pid = String(draftItem.productId || '').trim()
-      setLookupLoading(true)
-      try {
+    const pid = String(draftItem.productId || '').trim()
+    const imei = String(draftItem.imei || '').trim()
+    
+    if (!pid && !imei) {
+      alert('Enter Product ID or IMEI to lookup')
+      return
+    }
+    
+    // Prevent multiple simultaneous calls
+    if (lookupLoading) {
+      return
+    }
+    
+    setLookupLoading(true)
+    try {
+      // First try Product ID lookup
       if (pid) {
         const res = await fetch(`${apiBase}/api/product-by-id/${encodeURIComponent(pid)}`)
         if (res.ok) {
           const data = await res.json()
           if (data?.type === 'accessory') {
-          setDraftItem(prev => ({
-            ...prev,
+            // Keep current quantity and billing fields
+            const currentQuantity = draftItem.quantity || 1
+            const currentGstPercent = draftItem.gstPercent || 18
+            const currentDiscountType = draftItem.discountType || 'percent'
+            const currentDiscountValue = draftItem.discountValue || 0
+            
+            setDraftItem({
               type: 'Accessory',
-              name: data.name || prev.name,
-              price: Number(data.sellingPrice ?? data.unitPrice) || prev.price,
+              name: data.name || '',
               productId: pid,
-              imei: '',
-              model: '',
-          }))
+              imei: '', // Accessories don't have IMEI
+              model: pid, // For accessories, model is the same as productId
+              quantity: currentQuantity, // Keep current quantity
+              price: Number(data.sellingPrice ?? data.unitPrice) || 0,
+              gstPercent: currentGstPercent, // Keep current GST
+              discountType: currentDiscountType, // Keep current discount type
+              discountValue: currentDiscountValue, // Keep current discount value
+              // Mobile features (not applicable for accessories)
+              color: '',
+              ram: '',
+              storage: '',
+              simSlot: '',
+              processor: '',
+              displaySize: '',
+              camera: '',
+              battery: '',
+              operatingSystem: '',
+              networkType: ''
+            })
+            return
+          }
+          if (data?.type === 'mobile') {
+            // Keep current quantity and billing fields
+            const currentQuantity = draftItem.quantity || 1
+            const currentGstPercent = draftItem.gstPercent || 18
+            const currentDiscountType = draftItem.discountType || 'percent'
+            const currentDiscountValue = draftItem.discountValue || 0
+            
+            setDraftItem({
+              type: 'Mobile',
+              name: data.name || '',
+              productId: pid,
+              imei: '', // Will be filled from IMEI lookup if needed
+              model: data.model || '',
+              quantity: currentQuantity, // Keep current quantity
+              price: Number(data.sellingPrice ?? data.pricePerProduct) || 0,
+              gstPercent: currentGstPercent, // Keep current GST
+              discountType: currentDiscountType, // Keep current discount type
+              discountValue: currentDiscountValue, // Keep current discount value
+              // Mobile features - fetch all available data
+              color: data.features?.color || '',
+              ram: data.features?.ram || '',
+              storage: data.features?.storage || '',
+              simSlot: data.features?.simSlot || '',
+              processor: data.features?.processor || '',
+              displaySize: data.features?.displaySize || '',
+              camera: data.features?.camera || '',
+              battery: data.features?.battery || '',
+              operatingSystem: data.features?.operatingSystem || '',
+              networkType: data.features?.networkType || ''
+            })
+            return
+          }
+        }
+      }
+      
+      // If Product ID lookup failed or not provided, try IMEI lookup
+      if (imei) {
+        const mobRes = await fetch(`${apiBase}/api/mobiles`)
+        const mobiles = await mobRes.json()
+        const mobile = Array.isArray(mobiles) ? mobiles.find(m => m.imeiNumber1 === imei || m.imeiNumber2 === imei) : null
+        if (mobile) {
+          // Keep current quantity and billing fields
+          const currentQuantity = draftItem.quantity || 1
+          const currentGstPercent = draftItem.gstPercent || 18
+          const currentDiscountType = draftItem.discountType || 'percent'
+          const currentDiscountValue = draftItem.discountValue || 0
+          
+          setDraftItem({
+            type: 'Mobile',
+            name: mobile.mobileName || '',
+            productId: mobile.productIds?.[0] || '', // Use first product ID if available
+            imei: imei,
+            model: mobile.modelNumber || '',
+            quantity: currentQuantity, // Keep current quantity
+            price: Number((mobile.sellingPrice ?? mobile.pricePerProduct)) || 0,
+            gstPercent: currentGstPercent, // Keep current GST
+            discountType: currentDiscountType, // Keep current discount type
+            discountValue: currentDiscountValue, // Keep current discount value
+            // Mobile features - fetch all available data
+            color: mobile.color || '',
+            ram: mobile.ram || '',
+            storage: mobile.storage || '',
+            simSlot: mobile.simSlot || '',
+            processor: mobile.processor || '',
+            displaySize: mobile.displaySize || '',
+            camera: mobile.camera || '',
+            battery: mobile.battery || '',
+            operatingSystem: mobile.operatingSystem || '',
+            networkType: mobile.networkType || ''
+          })
           return
         }
-          if (data?.type === 'mobile') {
-            setDraftItem(prev => ({
-              ...prev,
-              type: 'Mobile',
-              name: data.name || prev.name,
-              price: Number(data.sellingPrice ?? data.pricePerProduct) || prev.price,
-              productId: pid,
-              imei: '',
-              model: data.model || prev.model,
-              color: data.features?.color || prev.color,
-              ram: data.features?.ram || prev.ram,
-              storage: data.features?.storage || prev.storage,
-              simSlot: data.features?.simSlot || prev.simSlot,
-              processor: data.features?.processor || prev.processor,
-              displaySize: data.features?.displaySize || prev.displaySize,
-              camera: data.features?.camera || prev.camera,
-              battery: data.features?.battery || prev.battery,
-              operatingSystem: data.features?.operatingSystem || prev.operatingSystem,
-              networkType: data.features?.networkType || prev.networkType,
-            }))
-      return
-    }
-        }
-        // If not found via productId, fall through to IMEI for mobiles
-      }
-    const imei = String(draftItem.imei || '').trim()
-      if (imei) {
-      const mobRes = await fetch(`${apiBase}/api/mobiles`)
-      const mobiles = await mobRes.json()
-      const mobile = Array.isArray(mobiles) ? mobiles.find(m => m.imeiNumber1 === imei || m.imeiNumber2 === imei) : null
-      if (mobile) {
-        setDraftItem(prev => ({
-          ...prev,
-            type: 'Mobile',
-          name: mobile.mobileName || prev.name,
-          price: Number((mobile.sellingPrice ?? mobile.pricePerProduct)) || prev.price,
-          imei: imei,
-          model: mobile.modelNumber || prev.model,
-          color: mobile.color || prev.color,
-          ram: mobile.ram || prev.ram,
-          storage: mobile.storage || prev.storage,
-          simSlot: mobile.simSlot || prev.simSlot,
-          processor: mobile.processor || prev.processor,
-          displaySize: mobile.displaySize || prev.displaySize,
-          camera: mobile.camera || prev.camera,
-          battery: mobile.battery || prev.battery,
-          operatingSystem: mobile.operatingSystem || prev.operatingSystem,
-          networkType: mobile.networkType || prev.networkType
-        }))
+        alert('No mobile found with this IMEI')
         return
       }
-      alert('No mobile found with this IMEI')
-        return
-      }
-      alert('Enter Product ID or IMEI to lookup')
+      
+      // If neither Product ID nor IMEI found anything
+      alert('No product found with the provided Product ID or IMEI')
     } catch (error) {
       console.error('Lookup failed:', error)
       alert('Failed to lookup product details')
@@ -380,33 +650,133 @@ const NewBill = () => {
                   <option value="Accessory">Accessory</option>
                 </select>
               </div>
-              <div>
+              <div className="relative">
                 <label className="text-sm font-semibold text-slate-700 mb-2 block">Product Name</label>
-                <input value={draftItem.name} onChange={e => setDraftItem({ ...draftItem, name: e.target.value })} className="w-full rounded-xl border-2 border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-200 px-4 py-3 bg-white shadow-sm" placeholder="Search / type product name" />
+                <input 
+                  value={draftItem.name} 
+                  onChange={e => handleProductNameChange(e.target.value)}
+                  onFocus={() => {
+                    if (draftItem.name.length >= 2) {
+                      setShowProductSuggestions(true)
+                    }
+                  }}
+                  onBlur={() => {
+                    // Delay hiding suggestions to allow clicking on them
+                    setTimeout(() => setShowProductSuggestions(false), 500)
+                  }}
+                  className="w-full rounded-xl border-2 border-green-200 focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-200 px-4 py-3 bg-white shadow-sm" 
+                  placeholder="Search / type product name" 
+                  autoComplete="off"
+                />
+                
+                {/* Product Name Suggestions */}
+                {showProductSuggestions && productSuggestions.length > 0 && (
+                  <div 
+                    className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto"
+                    onMouseDown={(e) => e.preventDefault()} // Prevent blur when clicking on suggestions
+                  >
+                    {productSuggestions.map((product, index) => (
+                      <div
+                        key={index}
+                        onClick={(e) => {
+                          e.preventDefault()
+                          e.stopPropagation()
+                          console.log('Clicked on product:', product) // Debug log
+                          selectProductSuggestion(product)
+                        }}
+                        className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                      >
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <div className="font-medium text-gray-900">
+                              {product.searchName || product.productName || product.mobileName}
+                            </div>
+                            <div className="text-sm text-gray-500">
+                              {product.type} • {product.searchId || product.productId || 'No ID'}
+                              {product.brand && ` • ${product.brand}`}
+                              {product.modelNumber && ` • ${product.modelNumber}`}
+                              {product.type === 'Accessory' && product.productId && ` • ID: ${product.productId}`}
+                            </div>
+                          </div>
+                          <div className="text-sm text-gray-400">
+                            ₹{product.sellingPrice || product.pricePerProduct || product.unitPrice || 0}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
               {draftItem.type === 'Mobile' ? (
                 <div>
                   <label className="text-sm font-semibold text-slate-700 mb-2 block flex items-center gap-2"><MdSearch /> IMEI Number or Product ID</label>
                   <div className="flex gap-3">
-                    <input 
-                      value={draftItem.imei} 
-                      onChange={e => setDraftItem({ ...draftItem, imei: e.target.value })} 
-                      onBlur={lookupByImeiOrProduct}
-                      onKeyDown={(e)=>{ if(e.key==='Enter'){ e.preventDefault(); lookupByImeiOrProduct(); } }}
-                      autoFocus
-                      autoComplete="off"
-                      inputMode="numeric"
-                      pattern="[0-9]*"
-                      className="flex-1 rounded-xl border-2 border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 px-4 py-3 bg-white shadow-sm" 
-                      placeholder="Enter/Scan IMEI or type Product ID and press Enter" 
-                    />
-                    <input 
-                      value={draftItem.productId}
-                      onChange={e => setDraftItem({ ...draftItem, productId: e.target.value })}
-                      onBlur={lookupByImeiOrProduct}
-                      className="flex-1 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 px-4 py-3 bg-white shadow-sm" 
-                      placeholder="Or enter Product ID (e.g., VIV-MOB-Y21-0001)" 
-                    />
+                    <div className="flex-1 relative">
+                      <input 
+                        value={draftItem.imei} 
+                        onChange={e => handleImeiChange(e.target.value)} 
+                        onKeyDown={(e)=>{ if(e.key==='Enter'){ e.preventDefault(); lookupByImeiOrProduct(); } }}
+                        onFocus={() => {
+                          if (draftItem.imei.length >= 2) {
+                            setShowImeiSuggestions(true)
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => setShowImeiSuggestions(false), 200)
+                        }}
+                        autoFocus
+                        autoComplete="off"
+                        inputMode="numeric"
+                        pattern="[0-9]*"
+                        className="w-full rounded-xl border-2 border-blue-200 focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 px-4 py-3 bg-white shadow-sm" 
+                        placeholder="Enter/Scan IMEI or type Product ID and press Enter" 
+                      />
+                      
+                      {/* IMEI Suggestions */}
+                      {showImeiSuggestions && imeiSuggestions.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                          {imeiSuggestions.map((product, index) => (
+                            <div
+                              key={index}
+                              onClick={() => selectProductSuggestion(product)}
+                              className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium text-gray-900">{product.searchName}</div>
+                                  <div className="text-sm text-gray-500">
+                                    IMEI: {product.imeiNumber1 || product.imeiNumber2 || 'N/A'}
+                                    {product.modelNumber && ` • ${product.modelNumber}`}
+                                    {product.brand && ` • ${product.brand}`}
+                                  </div>
+                                </div>
+                                <div className="text-sm text-gray-400">
+                                  ₹{product.sellingPrice || product.pricePerProduct || 0}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
+                    <div className="flex-1 relative">
+                      <input 
+                        value={draftItem.productId}
+                        onChange={e => handleProductIdChange(e.target.value)}
+                        onFocus={() => {
+                          if (draftItem.productId.length >= 2) {
+                            setShowImeiSuggestions(true)
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => setShowImeiSuggestions(false), 200)
+                        }}
+                        className="w-full rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 px-4 py-3 bg-white shadow-sm" 
+                        placeholder="Or enter Product ID (e.g., VIV-MOB-Y21-0001)" 
+                      />
+                    </div>
+                    
                     <button 
                       type="button"
                       onClick={lookupByImeiOrProduct}
@@ -421,13 +791,49 @@ const NewBill = () => {
                 <div>
                   <label className="text-sm font-semibold text-slate-700 mb-2 block flex items-center gap-2"><MdSearch /> Product ID</label>
                   <div className="flex gap-3">
-                    <input 
-                      value={draftItem.productId} 
-                      onChange={e => setDraftItem({ ...draftItem, productId: e.target.value })} 
-                      onBlur={lookupByImeiOrProduct}
-                      className="flex-1 rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 px-4 py-3 bg-white shadow-sm" 
-                      placeholder="Enter Product ID to auto-fill details" 
-                    />
+                    <div className="flex-1 relative">
+                      <input 
+                        value={draftItem.productId} 
+                        onChange={e => handleProductIdChange(e.target.value)} 
+                        onFocus={() => {
+                          if (draftItem.productId.length >= 2) {
+                            setShowImeiSuggestions(true)
+                          }
+                        }}
+                        onBlur={() => {
+                          setTimeout(() => setShowImeiSuggestions(false), 200)
+                        }}
+                        className="w-full rounded-xl border-2 border-purple-200 focus:border-purple-500 focus:ring-4 focus:ring-purple-100 transition-all duration-200 px-4 py-3 bg-white shadow-sm" 
+                        placeholder="Enter Product ID to auto-fill details" 
+                      />
+                      
+                      {/* Accessory Suggestions */}
+                      {showImeiSuggestions && imeiSuggestions.length > 0 && (
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-gray-200 rounded-xl shadow-lg max-h-60 overflow-y-auto">
+                          {imeiSuggestions.map((product, index) => (
+                            <div
+                              key={index}
+                              onClick={() => selectProductSuggestion(product)}
+                              className="px-4 py-3 hover:bg-gray-50 cursor-pointer border-b border-gray-100 last:border-b-0"
+                            >
+                              <div className="flex items-center justify-between">
+                                <div>
+                                  <div className="font-medium text-gray-900">{product.searchName}</div>
+                                  <div className="text-sm text-gray-500">
+                                    {product.type} • {product.searchId || 'No ID'}
+                                    {product.dealerName && ` • ${product.dealerName}`}
+                                  </div>
+                                </div>
+                                <div className="text-sm text-gray-400">
+                                  ₹{product.sellingPrice || product.unitPrice || 0}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                    
                     <button 
                       type="button"
                       onClick={lookupByImeiOrProduct}

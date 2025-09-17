@@ -180,10 +180,16 @@ exports.createAccessory = async (req, res) => {
 
 exports.listAccessories = async (req, res) => {
   try {
-    const { dealerId, productId } = req.query
+    const { dealerId, productId, search } = req.query
     const q = {}
     if (dealerId) q.dealerId = dealerId
     if (productId) q.productId = productId
+    if (search) {
+      q.$or = [
+        { productName: { $regex: search, $options: 'i' } },
+        { productId: { $regex: search, $options: 'i' } }
+      ]
+    }
     const rows = await Accessory.find(q).sort({ createdAt: -1 }).lean()
     res.json(rows)
   } catch (err) {

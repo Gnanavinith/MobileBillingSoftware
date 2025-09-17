@@ -24,6 +24,21 @@ const SecondHandMobileSchema = new mongoose.Schema({
   sellerPhone: { type: String, default: '' },
   sellerAddress: { type: String, default: '' },
   
+  // Customer details
+  customerType: { 
+    type: String, 
+    required: true, 
+    enum: ['individual', 'shop'],
+    default: 'individual'
+  },
+  customerAddress: { type: String, required: true },
+  idProofType: { 
+    type: String, 
+    required: true,
+    enum: ['aadhar', 'voter', 'license', 'pan', 'passport', 'other']
+  },
+  idProofNumber: { type: String, required: true },
+  
   // Selling details
   sellingPrice: { type: Number, required: true, min: 0 },
   profitMargin: { type: Number, default: 0 },

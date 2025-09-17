@@ -38,7 +38,7 @@ const Sidebar = () => {
 
         {showPurchases ? (
           <SidebarItem label="Purchases" icon={MdShoppingCart} childrenItems={[
-            { label: 'Add Purchase', to: '/purchases/add' },
+            { label: 'Purchase order', to: '/purchases/add' },
             { label: 'Purchase History', to: '/purchases/history' },
           ]} />
         ) : null}

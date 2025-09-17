@@ -5,7 +5,7 @@ const apiBase = 'http://localhost:5000'
 const MobilesStock = () => {
   const [rows, setRows] = useState([])
   const [dealers, setDealers] = useState([])
-  const [q, setQ] = useState({ dealerId: '', modelNumber: '', productId: '' })
+  const [q, setQ] = useState({ dealerId: '', modelNumber: '' })
   const [form, setForm] = useState({
     mobileName: '',
     brand: '',
@@ -78,10 +78,8 @@ const MobilesStock = () => {
 
   const filtered = useMemo(() => {
     const list = rows.filter(r => (Number(r.totalQuantity)||0) > 0)
-    const pid = String(q.productId||'').trim().toUpperCase()
-    if (!pid) return list
-    return list.filter(r => Array.isArray(r.productIds) && r.productIds.some(x => String(x||'').toUpperCase().includes(pid)))
-  }, [rows, q.productId])
+    return list
+  }, [rows])
 
   const submit = async (e) => {
     e.preventDefault()
@@ -164,9 +162,14 @@ const MobilesStock = () => {
   const moveToInventory = async (row) => {
     if (!confirm(`Move ${row.mobileName} (${row.modelNumber}) to Inventory?`)) return
     try {
-      // This will move the product to inventory by updating its status
-      // For now, we'll just show a success message as the product is already in the inventory system
-      alert(`${row.mobileName} is now available in Inventory! You can view it in the Inventory section.`)
+      // Delete the record from stock update list since it's now moved to inventory
+      const res = await fetch(`${apiBase}/api/mobiles/${row.id}`, { method: 'DELETE' })
+      if (!res.ok) {
+        const msg = await res.json().catch(()=>({}))
+        throw new Error(msg.error || 'Failed to move to inventory')
+      }
+      await load() // Refresh the list
+      alert(`${row.mobileName} has been moved to Inventory! You can view it in the Inventory section.`)
     } catch (ex) { 
       alert('Error moving to inventory: ' + ex.message) 
     }
@@ -410,7 +413,6 @@ const MobilesStock = () => {
               {dealers.map(d=> <option key={d.id} value={d.id}>{d.name}</option>)}
             </select>
             <input placeholder="Model Number" className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-indigo-400 focus:ring-4 focus:ring-indigo-100 transition-all" value={q.modelNumber} onChange={e=>setQ({...q, modelNumber:e.target.value})} />
-            <input placeholder="Product ID" className="rounded-xl border-2 border-slate-200 px-3 py-2 focus:border-purple-400 focus:ring-4 focus:ring-purple-100 transition-all" value={q.productId} onChange={e=>setQ({...q, productId:e.target.value})} />
             <button onClick={load} className="px-4 py-2.5 rounded-xl border-2 border-slate-300 hover:bg-slate-50 transition-all">Filter</button>
             <button onClick={load} className="px-4 py-2.5 rounded-xl bg-blue-500 text-white hover:bg-blue-600 transition-all">Refresh</button>
           </div>
@@ -426,7 +428,6 @@ const MobilesStock = () => {
                   <th className="py-2 pr-4">IMEI1</th>
                   <th className="py-2 pr-4">IMEI2</th>
                   <th className="py-2 pr-4">Dealer</th>
-                  <th className="py-2 pr-4">Product IDs</th>
                   <th className="py-2 pr-4">Cost</th>
                   <th className="py-2 pr-4">Sell</th>
                   <th className="py-2 pr-4">Qty</th>
@@ -444,7 +445,6 @@ const MobilesStock = () => {
                     <td className="py-2 pr-4">{r.imeiNumber1}</td>
                     <td className="py-2 pr-4">{r.imeiNumber2 || '-'}</td>
                     <td className="py-2 pr-4">{r.dealerName}</td>
-                    <td className="py-2 pr-4 max-w-xs whitespace-pre-wrap break-words">{Array.isArray(r.productIds) && r.productIds.length ? r.productIds.join(', ') : '-'}</td>
                     <td className="py-2 pr-4">{r.pricePerProduct}</td>
                     <td className="py-2 pr-4">{r.sellingPrice || '-'}</td>
                     <td className="py-2 pr-4">{r.totalQuantity}</td>
